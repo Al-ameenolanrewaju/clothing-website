@@ -434,12 +434,12 @@ def test_storefront_filters_and_product_pages(app, client):
     detail = client.get("/product/blue-coat", base_url="http://store-a.test")
     home = client.get("/", base_url="http://store-a.test")
     assert b"Blue Coat" in listing.data and b"Black Trousers" not in listing.data
-    assert detail.status_code == 200 and b"Add to bag" in detail.data
+    assert detail.status_code == 200 and b"Order on WhatsApp" in detail.data
     assert home.status_code == 200 and b"Shop all" in home.data
     assert client.get("/cart", base_url="http://store-a.test").status_code == 200
     login_owner(client)
     dashboard = client.get("/dashboard/", base_url="http://store-a.test")
-    assert dashboard.status_code == 200 and b"Popular product views" in dashboard.data
+    assert dashboard.status_code == 200 and b"Manage products" in dashboard.data
 
 
 def test_cart_and_checkout_use_server_price_stock_and_snapshot(app, client):
