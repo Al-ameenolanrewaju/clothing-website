@@ -1,8 +1,15 @@
-<a class="product-card" href="{{ url_for('storefront.product_detail', slug=product.slug) }}">
-  <div class="product-photo">
-    {% if product.images %}<img src="{{ product.images[0].url }}" alt="{{ product.images[0].alt_text or product.name }}" loading="lazy">{% else %}<span>Image coming soon</span>{% endif %}
-    {% if product.new_arrival %}<span class="product-tag">New</span>{% endif %}
+<article class="product-card luxury-product-card">
+  <a class="product-card-image-link" href="{{ url_for('storefront.product_detail', slug=product.slug) }}">
+    <div class="product-photo">
+      {% if product.images %}<img src="{{ product.images[0].url }}" alt="{{ product.images[0].alt_text or product.name }}" loading="lazy">
+      {% else %}<div class="fashion-placeholder"><span>Sample photo pending</span></div>{% endif %}
+      {% if product.new_arrival %}<span class="product-tag">New collection</span>{% endif %}
+    </div>
+  </a>
+  <div class="luxury-product-info">
+    {% if product.category %}<p class="product-category">{{ product.category.name }}</p>{% endif %}
+    <h3><a href="{{ url_for('storefront.product_detail', slug=product.slug) }}">{{ product.name }}</a></h3>
+    <p class="luxury-price">From {{ product.price|currency }}</p>
+    <a class="luxury-order-link" href="{{ url_for('storefront.product_detail', slug=product.slug) }}">Order on WhatsApp <span>→</span></a>
   </div>
-  <div class="product-meta"><h3>{{ product.name }}</h3><span>{{ product.price }}</span></div>
-  {% if product.category %}<p class="product-category">{{ product.category.name }}</p>{% endif %}
-</a>
+</article>
