@@ -65,3 +65,27 @@ def delete_image(storage_key: str):
         target.unlink(missing_ok=True)
     except OSError as error:
         raise MediaError("The image could not be deleted from upload storage.") from error
+
+
+IMAGE_MIME_TYPES = {
+    "image/jpeg": lambda data: data.startswith(b"\xff\xd8\xff"),
+    "image/png": lambda data: data.startswith(b"\x89PNG\r\n\x1a\n"),
+    "image/webp": lambda data: len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP",
+}
+
+
+def read_image(file: FileStorage, max_bytes=5 * 1024 * 1024):
+    """Read and validate an image for storage in the relational database."""
+    if not file or not file.filename:
+        raise ValueError("Choose an image file.")
+    data = file.stream.read(max_bytes + 1)
+    file.stream.seek(0)
+    if len(data) > max_bytes:
+        raise ValueError("Each image must be 5 MB or smaller.")
+    mime_type = next(
+        (mime for mime, signature in IMAGE_MIME_TYPES.items() if signature(data)),
+        None,
+    )
+    if not mime_type:
+        raise ValueError("Use a valid JPEG, PNG or WebP image.")
+    return data, mime_type, Path(file.filename).name[:255]

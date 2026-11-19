@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, g, request, session, send_from_directory
+from flask import Flask, g, request, session, send_from_directory, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -102,6 +102,40 @@ def create_app(config_object=None):
     app.register_blueprint(admin_bp)
     app.register_blueprint(owner_bp)
     app.register_blueprint(storefront_bp)
+
+    @app.get("/media/products/<int:image_id>")
+    def product_image(image_id):
+        image = models.ProductImage.query.filter_by(id=image_id).first_or_404()
+        if not image.image_data or not image.mime_type:
+            # Preserve old filesystem-backed catalogue image URLs.
+            from flask import abort
+            abort(404)
+        response = Response(image.image_data, mimetype=image.mime_type)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Cache-Control"] = "public, max-age=86400, immutable"
+        return response
+
+    @app.get("/media/businesses/<int:business_id>/logo")
+    def business_logo(business_id):
+        business = models.Business.query.filter_by(id=business_id).first_or_404()
+        if not business.logo_data or not business.logo_mime_type:
+            from flask import abort
+            abort(404)
+        response = Response(business.logo_data, mimetype=business.logo_mime_type)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Cache-Control"] = "public, max-age=86400"
+        return response
+
+    @app.get("/media/businesses/<int:business_id>/banner")
+    def business_banner(business_id):
+        business = models.Business.query.filter_by(id=business_id).first_or_404()
+        if not business.banner_data or not business.banner_mime_type:
+            from flask import abort
+            abort(404)
+        response = Response(business.banner_data, mimetype=business.banner_mime_type)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Cache-Control"] = "public, max-age=86400"
+        return response
 
     @app.get("/media/<path:filename>")
     def uploaded_media(filename):

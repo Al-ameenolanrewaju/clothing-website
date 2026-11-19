@@ -336,11 +336,8 @@ def test_product_create_edit_publish_and_archive(app, client):
         assert db.session.get(Product, product_id).is_published is False
 
 
-def test_multiple_product_images_are_saved_and_deleted(app, client, monkeypatch):
+def test_multiple_product_images_are_saved_and_deleted(app, client):
     business_id, _ = make_tenant(app)
-    monkeypatch.setattr("app.routes.owner.upload_image", lambda file, folder: (
-        f"https://media.example/{file.filename}", f"{folder}/{file.filename}",
-    ))
     login_owner(client)
     response = client.post("/dashboard/products", data={
         "name": "Photo Coat",
@@ -360,16 +357,16 @@ def test_multiple_product_images_are_saved_and_deleted(app, client, monkeypatch)
         product = Product.query.filter_by(business_id=business_id, slug="photo-coat").one()
         assert ProductImage.query.filter_by(product_id=product.id).count() == 2
         image_id = product.images[0].id
-    deleted = []
-    monkeypatch.setattr("app.routes.owner.delete_image", lambda public_id: deleted.append(public_id))
+        assert all(image.image_data and image.mime_type for image in product.images)
     response = client.post(
         f"/dashboard/products/{product.id}/images/{image_id}/delete",
         base_url="http://store-a.test",
     )
     assert response.status_code == 302
-    assert deleted
     with app.app_context():
-        assert ProductImage.query.filter_by(product_id=product.id).count() == 1
+        remaining = ProductImage.query.filter_by(product_id=product.id).all()
+        assert len(remaining) == 1
+        assert remaining[0].image_data
 
 
 def test_discount_cannot_exceed_regular_price(app, client):
@@ -540,11 +537,8 @@ def test_cart_rejects_unavailable_variants_and_changed_stock(app, client):
         assert Order.query.count() == 0
 
 
-def test_owner_can_change_profile_and_password(app, client, monkeypatch):
+def test_owner_can_change_profile_and_password(app, client):
     business_id, owner_id = make_tenant(app)
-    monkeypatch.setattr("app.routes.owner.upload_image", lambda file, folder: (
-        "https://media.example/store-logo.webp", f"{folder}/store-logo",
-    ))
     login_owner(client)
     settings_page = client.get("/dashboard/settings", base_url="http://store-a.test")
     assert settings_page.status_code == 200 and b"Store information" in settings_page.data
@@ -567,7 +561,8 @@ def test_owner_can_change_profile_and_password(app, client, monkeypatch):
         business = db.session.get(Business, business_id)
         assert business.name == "My Updated Store"
         assert business.whatsapp_number == "+234 801 222 3333"
-        assert business.logo_url == "https://media.example/store-logo.webp"
+        assert business.logo_url == f"/media/businesses/{business_id}/logo"
+        assert business.logo_data.startswith(b"RIFF") and business.logo_mime_type == "image/webp"
         assert StoreSettings.query.filter_by(business_id=business_id).one().hero_title == "The collection"
     password_response = client.post("/dashboard/account/password", data={
         "current_password": "secret123",
@@ -895,3 +890,59 @@ def test_csrf_is_required_outside_disabled_test_configuration():
     app = create_app(CsrfConfig)
     response = app.test_client().post("/login", data={"email": "admin@example.com", "password": "secret123"})
     assert response.status_code == 400
+
+
+def test_database_image_storage_and_public_serving(app):
+    business_id, _ = make_tenant(app)
+    product_id = make_product(app, business_id)
+    image_bytes = b"\x89PNG\r\n\x1a\n" + b"\x00" * 12
+    with app.app_context():
+        business = db.session.get(Business, business_id)
+        business.logo_data = image_bytes
+        business.logo_mime_type = "image/png"
+        business.logo_url = f"/media/businesses/{business_id}/logo"
+        product_image = ProductImage(
+            business_id=business_id,
+            product_id=product_id,
+            url="",
+            image_data=image_bytes,
+            mime_type="image/png",
+            original_filename="catalogue.png",
+            alt_text="Linen Shirt",
+            sort_order=0,
+        )
+        db.session.add(product_image)
+        db.session.flush()
+        product_image.url = f"/media/products/{product_image.id}"
+        image_url = product_image.url
+        db.session.commit()
+        image_id = product_image.id
+
+    client = app.test_client()
+    product_response = client.get(image_url)
+    logo_response = client.get(f"/media/businesses/{business_id}/logo")
+    assert product_response.status_code == 200
+    assert product_response.data == image_bytes
+    assert product_response.mimetype == "image/png"
+    assert product_response.headers["X-Content-Type-Options"] == "nosniff"
+    assert logo_response.status_code == 200
+    assert logo_response.data == image_bytes
+
+    with app.app_context():
+        stored = db.session.get(ProductImage, image_id)
+        assert stored.image_data == image_bytes
+        assert stored.original_filename == "catalogue.png"
+
+
+def test_database_image_upload_validation_rejects_oversized_or_invalid_files():
+    from app.media import read_image
+
+    invalid = FileStorage(stream=BytesIO(b"not-an-image"), filename="bad.png")
+    with pytest.raises(ValueError, match="valid JPEG"):
+        read_image(invalid)
+    oversized = FileStorage(
+        stream=BytesIO(b"\x89PNG\r\n\x1a\n" + b"x" * (5 * 1024 * 1024 + 1)),
+        filename="large.png",
+    )
+    with pytest.raises(ValueError, match="5 MB"):
+        read_image(oversized)

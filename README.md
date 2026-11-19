@@ -63,10 +63,10 @@ can still point to the shop.
 | `SECRET_KEY` | Required outside testing; at least 32 random characters |
 | `DATABASE_URL` | PostgreSQL in production; SQLite for local development |\n| `APP_ENV` | Set to `production` on Render to enforce production database requirements |
 | `COOKIE_SECURE` | Keep `true` on HTTPS; set `false` only for local HTTP |
-| `UPLOAD_FOLDER` | Directory used to store product and logo images; defaults to `instance/uploads` |
+| `UPLOAD_FOLDER` | Legacy image directory used only to serve images uploaded by older versions |
 | `RENDER_API_KEY`, `RENDER_SERVICE_ID` | Optional existing custom-domain integration |
 
-Image uploads validate JPEG, PNG and WebP signatures and are stored on the server filesystem. No third-party image-hosting account or API key is required. The upload directory must be persistent in production.
+New product images and business logos validate JPEG, PNG and WebP signatures and are stored as binary data in PostgreSQL. They remain available across Render redeploys without Cloudinary or a persistent image disk. The legacy `/media/<filename>` route remains available for images uploaded by older versions; those old files still require their original persistent disk until re-uploaded.
 
 ## Deploy to Render
 
@@ -74,13 +74,10 @@ Image uploads validate JPEG, PNG and WebP signatures and are stored on the serve
 2. Build command: `pip install -r requirements.txt`.
 3. Start command: `gunicorn run:app`.
 4. Configure `APP_ENV=production`, `SECRET_KEY`, `DATABASE_URL` and `COOKIE_SECURE=true`.
-5. Add a Render persistent disk mounted at `/var/data` and set
-   `UPLOAD_FOLDER=/var/data/uploads`. Without a persistent disk, uploaded images
-   can disappear when the service is redeployed or its instance is replaced.
-6. Run `python -m flask --app run:app db upgrade` once from the Render shell.
-7. Create the shop and owner account with the Flask shell if they do not
+5. Run `python -m flask --app run:app db upgrade` once from the Render shell.
+6. Create the shop and owner account with the Flask shell if they do not
    already exist.
-8. Visit `/health` to check application and database readiness.
+7. Visit `/health` to check application and database readiness.
 
 ## Customer ordering
 

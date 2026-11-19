@@ -9,7 +9,7 @@ from wtforms import StringField, TextAreaField, SelectField, DecimalField, Boole
 from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange, Optional, Regexp
 
 from .. import db
-from ..media import delete_image, upload_image, validate_image
+from ..media import delete_image, read_image
 from ..models import ActivityLog, Business, Category, Customer, Domain, Order, OrderItem, PasswordResetToken, Product, ProductImage, ProductVariant, StoreEvent, StoreSettings, StoreVisit
 from ..security import roles_required
 from ..utils import slugify
@@ -83,27 +83,24 @@ def _product_form_choices(form):
 def _save_product_images(product):
     images = [image for image in request.files.getlist("images") if image and image.filename]
     if len(images) > 8:
-        flash("Upload no more than eight images at a time.", "danger")
-        return
-    try:
-        for image in images:
-            validate_image(image)
-        uploaded = []
-        for image in images:
-            url, public_id = upload_image(image, f"clothing-catalogue/{product.business_id}/products/{product.id}")
-            uploaded.append((url, public_id))
-    except (ValueError, RuntimeError) as error:
-        flash(str(error), "danger")
-        return
-    for offset, (url, public_id) in enumerate(uploaded, start=len(product.images)):
-        db.session.add(ProductImage(
+        raise ValueError("Upload no more than eight images at a time.")
+    # Validate/read all files before adding rows so a bad later file cannot
+    # leave a partially uploaded product gallery.
+    uploaded = [read_image(image) for image in images]
+    for offset, (image_data, mime_type, filename) in enumerate(uploaded, start=len(product.images)):
+        image = ProductImage(
             business_id=product.business_id,
             product_id=product.id,
-            url=url,
-            cloudinary_public_id=public_id,
+            url="",
+            image_data=image_data,
+            mime_type=mime_type,
+            original_filename=filename,
             alt_text=product.name,
             sort_order=offset,
-        ))
+        )
+        db.session.add(image)
+        db.session.flush()
+        image.url = url_for("product_image", image_id=image.id)
 
 
 @bp.route("/")
@@ -159,8 +156,13 @@ def products():
                 is_published=form.is_published.data,
             )
             db.session.add(product)
-            db.session.commit()
-            _save_product_images(product)
+            db.session.flush()
+            try:
+                _save_product_images(product)
+            except ValueError as error:
+                db.session.rollback()
+                flash(str(error), "danger")
+                return redirect(url_for("owner.products"))
             db.session.commit()
             db.session.add(ActivityLog(business_id=current_user.business_id, user_id=current_user.id,
                                        action="PRODUCT_CREATED", details=product.name))
@@ -201,7 +203,12 @@ def edit_product(product_id):
             product.featured = form.featured.data
             product.new_arrival = form.new_arrival.data
             product.is_published = form.is_published.data
-            _save_product_images(product)
+            try:
+                _save_product_images(product)
+            except ValueError as error:
+                db.session.rollback()
+                flash(str(error), "danger")
+                return redirect(url_for("owner.edit_product", product_id=product.id))
             db.session.commit()
             db.session.add(ActivityLog(business_id=current_user.business_id, user_id=current_user.id,
                                        action="PRODUCT_UPDATED", details=product.name))
@@ -255,7 +262,7 @@ def delete_product(product_id):
         flash("This product has order history and cannot be permanently deleted. Archive it instead.", "warning")
         return redirect(url_for("owner.products"))
     for image in product.images:
-        if image.cloudinary_public_id:
+        if image.cloudinary_public_id and not image.image_data:
             try:
                 delete_image(image.cloudinary_public_id)
             except RuntimeError as error:
@@ -279,7 +286,7 @@ def delete_product_image(product_id, image_id):
         product_id=product.id,
         business_id=current_user.business_id,
     ).first_or_404()
-    if image.cloudinary_public_id:
+    if image.cloudinary_public_id and not image.image_data:
         try:
             delete_image(image.cloudinary_public_id)
         except RuntimeError as error:
@@ -531,8 +538,8 @@ def settings():
         new_logo = None
         if logo and logo.filename:
             try:
-                new_logo = upload_image(logo, f"clothing-catalogue/{business.id}/brand")
-            except (ValueError, RuntimeError) as error:
+                new_logo = read_image(logo)
+            except ValueError as error:
                 flash(str(error), "danger")
                 return render_template("owner/settings.html", form=form, business=business, domains=business.domains)
         old_logo_id = business.logo_public_id
@@ -547,7 +554,9 @@ def settings():
         store_settings.hero_title = form.hero_title.data.strip() or None
         store_settings.about_text = form.about_text.data.strip() or None
         if new_logo:
-            business.logo_url, business.logo_public_id = new_logo
+            business.logo_data, business.logo_mime_type, _filename = new_logo
+            business.logo_url = url_for("business_logo", business_id=business.id)
+            business.logo_public_id = None
         db.session.add(ActivityLog(business_id=business.id, user_id=current_user.id,
                                    action="STORE_SETTINGS_UPDATED", details=business.name))
         db.session.commit()
