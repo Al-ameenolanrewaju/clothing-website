@@ -63,21 +63,29 @@ def create_app(config_object=None):
         return user
 
     @app.before_request
-    def resolve_tenant():
+    def resolve_store():
+        """Resolve the one configured shop; a connected custom domain may override it."""
         host = (request.host or "").split(":")[0].rstrip(".").lower()
-        if host in {"localhost", "127.0.0.1", "www"}:
-            default_slug = app.config.get("DEFAULT_STORE_SLUG")
-            g.business = models.Business.query.filter_by(slug=default_slug, status="ACTIVE").first() if default_slug else None
-            g.domain_status = "local" if default_slug else "NOT_FOUND"
-            return None
         domain = models.Domain.query.filter(
             db.func.lower(models.Domain.host) == host
         ).first()
-        g.business = domain.business if domain and domain.status == "CONNECTED" else None
-        g.domain_status = domain.status if domain else "NOT_FOUND"
-        if g.business and g.business.status != "ACTIVE":
-            g.business = None
-            g.domain_status = "SUSPENDED"
+
+        if domain:
+            business = domain.business if domain.status == "CONNECTED" else None
+            if business and business.status == "ACTIVE":
+                g.business = business
+                g.domain_status = "CONNECTED"
+            else:
+                g.business = None
+                g.domain_status = domain.status
+            return None
+
+        default_slug = app.config.get("DEFAULT_STORE_SLUG")
+        business = models.Business.query.filter_by(
+            slug=default_slug, status="ACTIVE"
+        ).first() if default_slug else None
+        g.business = business
+        g.domain_status = "default" if business else "NOT_CONFIGURED"
 
     from .routes.auth import bp as auth_bp
     from .routes.admin import bp as admin_bp
