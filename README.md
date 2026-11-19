@@ -16,7 +16,6 @@ py -3 -m venv .venv
 python -m pip install -r requirements.txt
 $env:SECRET_KEY = "replace-with-a-random-secret-at-least-32-characters"
 $env:DATABASE_URL = "sqlite:///clothing_store.db"
-$env:DEFAULT_STORE_SLUG = "your-shop"
 $env:COOKIE_SECURE = "false"
 python -m flask --app run:app db upgrade
 python run.py
@@ -51,11 +50,11 @@ db.session.add(shop)
 db.session.commit()
 ```
 
-Set `DEFAULT_STORE_SLUG` to the exact shop slug (here, `your-shop`) in the
-local environment and in Render. This makes the same single shop appear on the
-Render URL and any hostnames that are not explicitly mapped to a connected
-custom domain. A configured, connected custom domain can still point to the
-shop. No vendor registration or tenant provisioning is needed.
+The app automatically loads the first active business from the database on
+the Render URL and any hostname that is not explicitly mapped to a connected
+custom domain. You do not need to configure a store slug. Keep only one active
+business in the database for this single-shop setup. A connected custom domain
+can still point to the shop.
 
 ## Configuration
 
@@ -63,7 +62,6 @@ shop. No vendor registration or tenant provisioning is needed.
 |---|---|
 | `SECRET_KEY` | Required outside testing; at least 32 random characters |
 | `DATABASE_URL` | PostgreSQL in production; SQLite for local development |
-| `DEFAULT_STORE_SLUG` | Required to resolve the one shop on the public website |
 | `COOKIE_SECURE` | Keep `true` on HTTPS; set `false` only for local HTTP |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Product and logo image uploads |
 | `RENDER_API_KEY`, `RENDER_SERVICE_ID` | Optional existing custom-domain integration |
