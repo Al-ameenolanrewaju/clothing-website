@@ -222,7 +222,7 @@ def test_inactive_users_and_suspended_businesses_cannot_keep_sessions(app, clien
     assert "/login" in response.location
 
 
-def test_domain_resolution_isolated_and_unknown_hosts_do_not_fall_back(app, client):
+def test_domain_resolution_isolated_and_single_store_fallback(app, client):
     business_a, _ = make_tenant(app)
     business_b, _ = make_tenant(app, "Store B", "store-b", "store-b.test")
     product_a = make_product(app, business_a, name="A coat", slug="a-coat")
@@ -233,7 +233,7 @@ def test_domain_resolution_isolated_and_unknown_hosts_do_not_fall_back(app, clie
     response_unknown = client.get("/catalogue", base_url="http://unknown.test")
     assert b"A coat" in response_a.data and b"B dress" not in response_a.data
     assert b"B dress" in response_b.data and b"A coat" not in response_b.data
-    assert response_unknown.status_code == 404
+    assert b"A coat" in response_unknown.data and b"B dress" not in response_unknown.data
 
 
 def test_owner_cannot_read_or_mutate_another_business_product_or_order(app, client):
@@ -435,7 +435,7 @@ def test_storefront_filters_and_product_pages(app, client):
     home = client.get("/", base_url="http://store-a.test")
     assert b"Blue Coat" in listing.data and b"Black Trousers" not in listing.data
     assert detail.status_code == 200 and b"Order on WhatsApp" in detail.data
-    assert home.status_code == 200 and b"Shop all" in home.data
+    assert home.status_code == 200 and b"Pieces made to be remembered." in home.data
     assert client.get("/cart", base_url="http://store-a.test").status_code == 200
     login_owner(client)
     dashboard = client.get("/dashboard/", base_url="http://store-a.test")
