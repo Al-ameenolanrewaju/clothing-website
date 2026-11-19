@@ -61,7 +61,7 @@ can still point to the shop.
 | Variable | Purpose |
 |---|---|
 | `SECRET_KEY` | Required outside testing; at least 32 random characters |
-| `DATABASE_URL` | PostgreSQL in production; SQLite for local development |
+| `DATABASE_URL` | PostgreSQL in production; SQLite for local development |\n| `APP_ENV` | Set to `production` on Render to enforce production database requirements |
 | `COOKIE_SECURE` | Keep `true` on HTTPS; set `false` only for local HTTP |
 | `UPLOAD_FOLDER` | Directory used to store product and logo images; defaults to `instance/uploads` |
 | `RENDER_API_KEY`, `RENDER_SERVICE_ID` | Optional existing custom-domain integration |
@@ -73,7 +73,7 @@ Image uploads validate JPEG, PNG and WebP signatures and are stored on the serve
 1. Connect this repository to a Render Web Service.
 2. Build command: `pip install -r requirements.txt`.
 3. Start command: `gunicorn run:app`.
-4. Configure `SECRET_KEY`, `DATABASE_URL` and `COOKIE_SECURE=true`.
+4. Configure `APP_ENV=production`, `SECRET_KEY`, `DATABASE_URL` and `COOKIE_SECURE=true`.
 5. Add a Render persistent disk mounted at `/var/data` and set
    `UPLOAD_FOLDER=/var/data/uploads`. Without a persistent disk, uploaded images
    can disappear when the service is redeployed or its instance is replaced.
