@@ -241,7 +241,16 @@ def publish_product(product_id):
 @roles_required("OWNER")
 def delete_product(product_id):
     product = Product.query.filter_by(id=product_id, business_id=current_user.business_id).first_or_404()
-    linked_orders = OrderItem.query.filter_by(product_id=product.id, business_id=current_user.business_id).first()
+    linked_variant_ids = db.session.query(ProductVariant.id).filter_by(
+        product_id=product.id, business_id=current_user.business_id
+    )
+    linked_orders = OrderItem.query.filter(
+        OrderItem.business_id == current_user.business_id,
+        db.or_(
+            OrderItem.product_id == product.id,
+            OrderItem.variant_id.in_(linked_variant_ids),
+        ),
+    ).first()
     if linked_orders:
         flash("This product has order history and cannot be permanently deleted. Archive it instead.", "warning")
         return redirect(url_for("owner.products"))
