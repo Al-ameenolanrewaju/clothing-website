@@ -15,11 +15,15 @@ csrf = CSRFProtect()
 
 def create_app(config_object=None):
     app = Flask(__name__)
+    database_url = os.getenv("DATABASE_URL", "sqlite:///clothing_store.db").strip()
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
     app.config.update(
         SECRET_KEY=os.getenv("SECRET_KEY"),
-        SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL", "sqlite:///clothing_store.db").replace(
-            "postgres://", "postgresql://"
-        ),
+        SQLALCHEMY_DATABASE_URI=database_url,
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         WTF_CSRF_ENABLED=True,
         SESSION_COOKIE_HTTPONLY=True,
@@ -30,6 +34,8 @@ def create_app(config_object=None):
     )
     if config_object:
         app.config.from_object(config_object)
+    if not app.testing and app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite:"):
+        raise RuntimeError("Configure DATABASE_URL with a persistent PostgreSQL database for production.")
     if not app.testing:
         secret_key = app.config.get("SECRET_KEY")
         if not isinstance(secret_key, str) or len(secret_key) < 32:
