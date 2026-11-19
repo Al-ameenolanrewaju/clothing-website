@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from uuid import uuid4
 
-from flask import url_for
+from flask import current_app, url_for
 from werkzeug.datastructures import FileStorage
 
 
@@ -36,7 +36,7 @@ def upload_image(file: FileStorage, folder: str):
     file.stream.seek(0)
     extension = next(ext for ext, signature in ALLOWED_IMAGE_TYPES.items() if signature(header))
     relative_path = Path(*parts, f"{uuid4().hex}.{extension}")
-    upload_root = Path(os.getenv("UPLOAD_FOLDER", "instance/uploads")).resolve()
+    upload_root = Path(current_app.config["UPLOAD_FOLDER"]).resolve()
     destination = (upload_root / relative_path).resolve()
     if upload_root not in destination.parents:
         raise ValueError("Invalid image destination.")
