@@ -12,13 +12,13 @@ images, inventory and store details.
 
 ```powershell
 py -3 -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\\.venv\\Scripts\\Activate.ps1
 python -m pip install -r requirements.txt
 $env:SECRET_KEY = "replace-with-a-random-secret-at-least-32-characters"
 $env:DATABASE_URL = "sqlite:///clothing_store.db"
 $env:COOKIE_SECURE = "false"
-python -m flask --app run:app db upgrade
-python run.py
+python -m flask --app "app:create_app()" db upgrade
+python -m flask --app "app:create_app()" run
 ```
 
 Open `http://127.0.0.1:5000/login` for the owner login. The app requires a
@@ -26,7 +26,7 @@ Open `http://127.0.0.1:5000/login` for the owner login. The app requires a
 
 ## Create the shop and owner account
 
-Run `python -m flask --app run:app shell` using the same environment variables,
+Run `python -m flask --app "app:create_app()" shell` using the same environment variables,
 then create the single shop and its owner:
 
 ```python
@@ -61,7 +61,8 @@ can still point to the shop.
 | Variable | Purpose |
 |---|---|
 | `SECRET_KEY` | Required outside testing; at least 32 random characters |
-| `DATABASE_URL` | PostgreSQL in production; SQLite for local development |\n| `APP_ENV` | Set to `production` on Render to enforce production database requirements |
+| `DATABASE_URL` | PostgreSQL in production; SQLite for local development |
+| `APP_ENV` | Set to `production` on Render to enforce production database requirements |
 | `COOKIE_SECURE` | Keep `true` on HTTPS; set `false` only for local HTTP |
 | `UPLOAD_FOLDER` | Legacy image directory used only to serve images uploaded by older versions |
 | `RENDER_API_KEY`, `RENDER_SERVICE_ID` | Optional existing custom-domain integration |
@@ -72,12 +73,17 @@ New product images and business logos validate JPEG, PNG and WebP signatures and
 
 1. Connect this repository to a Render Web Service.
 2. Build command: `pip install -r requirements.txt`.
-3. Start command: `gunicorn run:app`.
+3. Start command: `gunicorn 'app:create_app()'`.
 4. Configure `APP_ENV=production`, `SECRET_KEY`, `DATABASE_URL` and `COOKIE_SECURE=true`.
-5. Run `python -m flask --app run:app db upgrade` once from the Render shell.
+5. Run `python -m flask --app "app:create_app()" db upgrade` once from the Render shell.
 6. Create the shop and owner account with the Flask shell if they do not
    already exist.
 7. Visit `/health` to check application and database readiness.
+
+The repository Procfile also sets the web start command to
+`gunicorn 'app:create_app()'`. If the Render dashboard has a custom Start
+Command saved, it must match this command because dashboard settings override
+the Procfile.
 
 ## Customer ordering
 
