@@ -1,16 +1,38 @@
 {% extends "base.html" %}
-{% block title %}Owner Dashboard{% endblock %}
+{% block title %}Catalogue Dashboard{% endblock %}
 {% block body %}
-<nav class="navbar navbar-expand-lg bg-white border-bottom px-3"><a class="navbar-brand fw-bold" href="{{ url_for('owner.dashboard') }}">Store Dashboard</a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ownerNav" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="ownerNav"><div class="navbar-nav ms-auto gap-lg-2"><a class="nav-link" href="{{ url_for('owner.products') }}">Products</a><a class="nav-link" href="{{ url_for('owner.categories') }}">Categories</a><a class="nav-link" href="{{ url_for('owner.orders') }}">Orders</a><a class="nav-link" href="{{ url_for('owner.customers') }}">Customers</a><a class="nav-link" href="{{ url_for('owner.settings') }}">Store information</a><a class="nav-link" href="{{ url_for('owner.change_password') }}">Account settings</a><form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-dark">Sign out</button></form></div></div></nav>
-<main class="container py-4">
-  <h1 class="h3 mb-4">Overview</h1>
-  <div class="row g-3">{% for label,value in [('Products',stats.products),('Active',stats.active),('Out of stock variants',stats.out_of_stock),('Order initiations',stats.initiated),('Pending orders',stats.pending),('Confirmed orders',stats.confirmed),('Store visits',stats.visits),('WhatsApp clicks',stats.whatsapp_clicks)] %}<div class="col-6 col-md-4 col-lg-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">{{ label }}</div><div class="fs-3 fw-bold">{{ value }}</div></div></div></div>{% endfor %}</div>
-  <h2 class="h5 mt-5">Recent orders</h2>
-  <div class="table-responsive"><table class="table"><thead><tr><th>Reference</th><th>Status</th><th>Total</th><th>Date</th></tr></thead><tbody>{% for order in recent_orders %}<tr><td><a href="{{ url_for('owner.order_detail', order_id=order.id) }}">{{ order.reference }}</a></td><td>{{ order.status }}</td><td>{{ order.total }}</td><td>{{ order.created_at.strftime('%Y-%m-%d') }}</td></tr>{% else %}<tr><td colspan="4">No orders yet.</td></tr>{% endfor %}</tbody></table></div>
-  <div class="row g-4 mt-4">
-    <div class="col-lg-6"><h2 class="h5">Popular product views</h2><div class="list-group">{% for name,views in popular_products %}<div class="list-group-item d-flex justify-content-between"><span>{{ name }}</span><strong>{{ views }} views</strong></div>{% else %}<div class="list-group-item text-secondary">No product views yet.</div>{% endfor %}</div></div>
-    <div class="col-lg-6"><h2 class="h5">Confirmed order preferences</h2><div class="card"><div class="card-body"><p class="mb-2"><strong>Popular sizes</strong></p><p>{% for size,units in popular_sizes %}<span class="badge text-bg-light me-1">{{ size }} · {{ units }} units</span>{% else %}<span class="text-secondary">No confirmed orders yet.</span>{% endfor %}</p><p class="mb-2"><strong>Popular colours</strong></p><p>{% for colour,units in popular_colours %}<span class="badge text-bg-light me-1">{{ colour }} · {{ units }} units</span>{% else %}<span class="text-secondary">No confirmed orders yet.</span>{% endfor %}</p></div></div></div>
+<nav class="navbar navbar-expand-lg bg-white border-bottom px-3">
+  <a class="navbar-brand fw-bold" href="{{ url_for('owner.dashboard') }}">Store Dashboard</a>
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ownerNav" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+  <div class="collapse navbar-collapse" id="ownerNav">
+    <div class="navbar-nav ms-auto gap-lg-2">
+      <a class="nav-link" href="{{ url_for('owner.products') }}">Products</a>
+      <a class="nav-link" href="{{ url_for('owner.categories') }}">Categories</a>
+      <a class="nav-link" href="{{ url_for('owner.settings') }}">Store information</a>
+      <a class="nav-link" href="{{ url_for('owner.change_password') }}">Change password</a>
+      <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-dark">Sign out</button></form>
+    </div>
   </div>
-  <h2 class="h5 mt-5">Recent activity</h2><div class="list-group">{% for activity in recent_activity %}<div class="list-group-item d-flex justify-content-between"><span>{{ activity.action }}{% if activity.details %} · {{ activity.details }}{% endif %}</span><small>{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</small></div>{% else %}<div class="list-group-item text-secondary">No recent management activity.</div>{% endfor %}</div>
+</nav>
+<main class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div><p class="text-secondary small mb-1">YOUR CLOTHING CATALOGUE</p><h1 class="h3 mb-1">Welcome, {{ current_user.name }}</h1><p class="text-secondary mb-0">{{ business.name }}</p></div>
+    <a class="btn btn-dark" href="{{ url_for('owner.products') }}">+ Add a product</a>
+  </div>
+  <div class="alert alert-light border d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div><strong>Your shop is ready to take orders.</strong><br><span class="text-secondary small">Customers choose a product and send their order directly to your WhatsApp.</span></div>
+    <a class="btn btn-outline-dark btn-sm" href="{{ url_for('storefront.home') }}" target="_blank" rel="noopener">View public catalogue</a>
+  </div>
+  <div class="row g-3 mt-2">
+    {% for label,value in [('Products',stats.products),('Published',stats.published),('Categories',stats.categories),('Out of stock variants',stats.out_of_stock)] %}
+    <div class="col-6 col-md-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">{{ label }}</div><div class="fs-3 fw-bold">{{ value }}</div></div></div></div>
+    {% endfor %}
+  </div>
+  <div class="d-flex justify-content-between align-items-center mt-5 mb-3"><h2 class="h5 mb-0">Recently updated products</h2><a href="{{ url_for('owner.products') }}">Manage products</a></div>
+  <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Product</th><th>Price</th><th>Visibility</th><th>Last updated</th><th></th></tr></thead><tbody>
+    {% for product in recent_products %}
+    <tr><td>{{ product.name }}</td><td>₦{{ '{:,.2f}'.format(product.price|float) }}</td><td>{{ 'Published' if product.is_published else 'Hidden' }}</td><td>{{ product.updated_at.strftime('%d %b %Y') }}</td><td><a class="btn btn-sm btn-outline-dark" href="{{ url_for('owner.edit_product', product_id=product.id) }}">Edit</a></td></tr>
+    {% else %}<tr><td colspan="5" class="text-secondary">No products yet. Add your first product to start building the catalogue.</td></tr>{% endfor %}
+  </tbody></table></div>
 </main>
 {% endblock %}
