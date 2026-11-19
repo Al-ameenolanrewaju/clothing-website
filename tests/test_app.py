@@ -7,6 +7,7 @@ from werkzeug.datastructures import FileStorage
 
 from app import create_app, db
 from app.models import (
+    ActivityLog,
     Business,
     Category,
     Customer,
