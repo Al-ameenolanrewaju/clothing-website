@@ -17,7 +17,6 @@ def create_app(config_object=None):
     app = Flask(__name__)
     app.config.update(
         SECRET_KEY=os.getenv("SECRET_KEY"),
-        DEFAULT_STORE_SLUG=os.getenv("DEFAULT_STORE_SLUG"),
         SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL", "sqlite:///clothing_store.db").replace(
             "postgres://", "postgresql://"
         ),
@@ -80,10 +79,11 @@ def create_app(config_object=None):
                 g.domain_status = domain.status
             return None
 
-        default_slug = app.config.get("DEFAULT_STORE_SLUG")
+        # This app is configured as a single-business catalogue. Use the
+        # first active business automatically; no store slug setting is needed.
         business = models.Business.query.filter_by(
-            slug=default_slug, status="ACTIVE"
-        ).first() if default_slug else None
+            status="ACTIVE"
+        ).order_by(models.Business.id.asc()).first()
         g.business = business
         g.domain_status = "default" if business else "NOT_CONFIGURED"
 
