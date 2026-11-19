@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ business.name }}{% endblock %}
+{% block body_class %}fashion-store{% endblock %}
+{% block body %}
+{% include "storefront/_nav.html" %}
+<header class="fashion-hero" {% if business.banner_url %}style="background-image:linear-gradient(90deg,rgba(18,18,18,.48),rgba(18,18,18,.04)),url('{{ business.banner_url }}')"{% endif %}>
+  <div class="hero-copy"><span class="eyebrow">A considered wardrobe</span><h1>{{ settings.hero_title if settings and settings.hero_title else 'Modern pieces, made for every day.' }}</h1><p>Discover expressive essentials and enduring silhouettes.</p><a class="button button-light" href="{{ url_for('storefront.catalogue') }}">Explore the collection <span>↗</span></a></div>
+  <div class="hero-index"><span>01</span><span class="hero-rule"></span><span>04</span></div>
+</header>
+<main>
+  <section class="section-block container-fluid px-3 px-lg-5">
+    <div class="section-heading"><div><span class="eyebrow">The edit</span><h2>Pieces with presence</h2></div><a href="{{ url_for('storefront.catalogue') }}">Shop all <span>↗</span></a></div>
+    <div class="product-grid">{% for product in featured %}{% include "storefront/_product_card.html" %}{% else %}<p class="empty-note">Our collection is taking shape. Check back soon.</p>{% endfor %}</div>
+  </section>
+  <section class="collection-band"><div><span class="eyebrow">For every expression</span><h2>Find your point of view.</h2></div><div class="collection-links"><a href="{{ url_for('storefront.catalogue', gender='Women') }}">Women <span>↗</span></a><a href="{{ url_for('storefront.catalogue', gender='Men') }}">Men <span>↗</span></a></div></section>
+  {% if new_arrivals %}<section class="section-block container-fluid px-3 px-lg-5"><div class="section-heading"><div><span class="eyebrow">Just arrived</span><h2>New this season</h2></div><a href="{{ url_for('storefront.catalogue') }}">Discover more <span>↗</span></a></div><div class="product-grid">{% for product in new_arrivals %}{% include "storefront/_product_card.html" %}{% endfor %}</div></section>{% endif %}
+  {% if men_products %}<section class="editorial-split"><div class="editorial-copy"><span class="eyebrow">The men's collection</span><h2>Quiet confidence.<br>Considered form.</h2><a href="{{ url_for('storefront.catalogue', gender='Men') }}">Shop men <span>↗</span></a></div><div class="editorial-products">{% for product in men_products[:2] %}{% include "storefront/_product_card.html" %}{% endfor %}</div></section>{% endif %}
+  {% if women_products %}<section class="editorial-split editorial-reverse"><div class="editorial-copy"><span class="eyebrow">The women's collection</span><h2>Soft strength.<br>Distinctly yours.</h2><a href="{{ url_for('storefront.catalogue', gender='Women') }}">Shop women <span>↗</span></a></div><div class="editorial-products">{% for product in women_products[:2] %}{% include "storefront/_product_card.html" %}{% endfor %}</div></section>{% endif %}
+  {% if best_sellers %}<section class="section-block container-fluid px-3 px-lg-5"><div class="section-heading"><div><span class="eyebrow">Loved by our community</span><h2>Customer favourites</h2></div></div><div class="product-grid">{% for product in best_sellers %}{% include "storefront/_product_card.html" %}{% endfor %}</div></section>{% endif %}
+  <section class="brand-note"><span class="eyebrow">The point of view</span><h2>{{ business.name }}</h2><p>{{ (settings.about_text if settings and settings.about_text else business.description) or 'Thoughtfully selected clothing, made to become part of your everyday.' }}</p>{% if business.whatsapp_number %}<a href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','') }}" target="_blank" rel="noopener">Talk to us on WhatsApp <span>↗</span></a>{% endif %}</section>
+</main>
+{% include "storefront/_footer.html" %}
+{% endblock %}

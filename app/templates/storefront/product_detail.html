@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} - {{ business.name }}{% endblock %}
+{% block body_class %}fashion-store{% endblock %}
+{% block body %}
+{% include "storefront/_nav.html" %}
+<main class="container-fluid px-3 px-lg-5 py-5">
+  {% for category,message in get_flashed_messages(with_categories=true) %}<div class="alert alert-{{ category }}">{{ message }}</div>{% endfor %}
+  <div class="product-detail-layout">
+    <div class="product-gallery">{% for image in product.images %}<img src="{{ image.url }}" alt="{{ image.alt_text or product.name }}" {% if loop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>{% else %}<div class="product-photo product-photo-empty"><span>Image coming soon</span></div>{% endfor %}</div>
+    <section class="product-info">
+      <a class="eyebrow text-decoration-none" href="{{ url_for('storefront.catalogue', gender=product.gender) }}">{{ product.category.name if product.category else product.gender }}</a>
+      <h1>{{ product.name }}</h1><p class="product-detail-price" id="product-price">{{ product.price }}</p>
+      {% if product.discounted_price %}<p class="old-price">Regular {{ product.regular_price }}</p>{% endif %}
+      <div class="product-description">{{ product.description or '' }}</div>
+      {% if product.variants|selectattr('is_available')|selectattr('stock_quantity','gt',0)|list %}
+      <form method="post" action="{{ url_for('storefront.cart_add') }}" id="variant-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="product_id" value="{{ product.id }}">
+        <label class="form-label" for="size-select">Size</label><select name="size" id="size-select" class="form-select mb-3" required><option value="">Select size</option>{% for size in sizes %}<option value="{{ size }}">{{ size }}</option>{% endfor %}</select>
+        <label class="form-label" for="colour-select">Colour</label><select name="colour" id="colour-select" class="form-select mb-3" required><option value="">Select colour</option>{% for colour in colours %}<option value="{{ colour }}">{{ colour }}</option>{% endfor %}</select>
+        <label class="form-label" for="quantity-select">Quantity</label><input id="quantity-select" name="quantity" type="number" min="1" max="100" value="1" class="form-control mb-4" required>
+        <button id="add-button" class="button button-dark w-100" type="submit" disabled>Add to bag</button>
+        <p id="variant-hint" class="variant-hint" aria-live="polite">Choose a size and colour to check availability.</p>
+      </form>
+      {% else %}<p class="variant-hint">Currently unavailable.</p>{% endif %}
+      <div class="product-assurance"><span>Thoughtful fit</span><span>WhatsApp checkout</span></div>
+    </section>
+  </div>
+  {% if related %}<section class="section-block"><div class="section-heading"><div><span class="eyebrow">A few more to love</span><h2>You may also like</h2></div></div><div class="product-grid">{% for product in related %}{% include "storefront/_product_card.html" %}{% endfor %}</div></section>{% endif %}
+</main>
+{% include "storefront/_footer.html" %}
+{% endblock %}
+{% block scripts %}
+<script>
+const variants={{ variants|tojson }};
+const sizeSelect=document.querySelector('#size-select');
+const colourSelect=document.querySelector('#colour-select');
+const quantityInput=document.querySelector('#quantity-select');
+const addButton=document.querySelector('#add-button');
+const price=document.querySelector('#product-price');
+const hint=document.querySelector('#variant-hint');
+if(addButton){function updateVariant(){const selected=variants.find(v=>v.size===sizeSelect.value&&v.colour===colourSelect.value&&v.is_available&&v.stock_quantity>0);addButton.disabled=!selected;if(selected){price.textContent=selected.price;quantityInput.max=Math.min(100,selected.stock_quantity);hint.textContent=selected.stock_quantity+' available';}else{hint.textContent='Choose an available size and colour.';}}sizeSelect.addEventListener('change',updateVariant);colourSelect.addEventListener('change',updateVariant);}
+</script>
+{% endblock %}

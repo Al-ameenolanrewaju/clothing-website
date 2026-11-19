@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ product.name }}{% endblock %}
+{% block body %}
+<nav class="navbar bg-white border-bottom px-3"><a class="navbar-brand fw-bold" href="{{ url_for('owner.dashboard') }}">Store Dashboard</a><a class="btn btn-sm btn-dark" href="{{ url_for('owner.products') }}">Products</a></nav>
+<main class="container py-4">
+  {% for category,message in get_flashed_messages(with_categories=true) %}<div class="alert alert-{{ category }}">{{ message }}</div>{% endfor %}
+  <h1 class="h3 mb-3">Edit {{ product.name }}</h1>
+  <div class="card mb-4"><div class="card-body"><form method="post" enctype="multipart/form-data">{{ form.hidden_tag() }}<div class="row g-3">
+    {% for field in [form.name,form.slug,form.sku,form.regular_price,form.discounted_price,form.category_id,form.gender,form.fashion_type] %}<div class="col-md-6"><label class="form-label">{{ field.label.text }}</label>{{ field(class="form-control") }}</div>{% endfor %}
+    <div class="col-12"><label class="form-label">Description</label>{{ form.description(class="form-control", rows=4) }}</div>
+    <div class="col-12"><label class="form-label">Add product images</label><input type="file" name="images" class="form-control" accept="image/jpeg,image/png,image/webp" multiple></div>
+    <div class="col-12">{{ form.featured() }} {{ form.featured.label }} &nbsp; {{ form.new_arrival() }} {{ form.new_arrival.label }} &nbsp; {{ form.is_published() }} {{ form.is_published.label }}</div>
+    <div class="col-12">{{ form.submit(class="btn btn-dark") }}</div></div></form></div></div>
+  <h2 class="h5">Product images</h2><div class="row g-3">{% for image in product.images %}<div class="col-6 col-md-3"><img class="w-100 mb-2" src="{{ image.url }}" alt="{{ image.alt_text or product.name }}"><form method="post" action="{{ url_for('owner.delete_product_image', product_id=product.id, image_id=image.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-danger">Remove image</button></form></div>{% else %}<p>No product images uploaded.</p>{% endfor %}</div>
+</main>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Delivery - {{ business.name }}{% endblock %}
+{% block body_class %}fashion-store{% endblock %}
+{% block body %}
+{% include "storefront/_nav.html" %}
+<main class="container-fluid px-3 px-lg-5 py-5"><div class="checkout-heading"><span class="eyebrow">A few details</span><h1>Delivery &amp; contact</h1><p>Your order will be recorded as an initiation. The store confirms it separately in WhatsApp.</p></div>
+  <div class="checkout-layout"><section>{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}<form method="post" class="checkout-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="mb-3"><label for="customer-name">Name</label><input id="customer-name" name="name" class="form-control" maxlength="160" autocomplete="name" required></div><div class="mb-3"><label for="customer-phone">Phone number</label><input id="customer-phone" name="phone" class="form-control" maxlength="40" type="tel" autocomplete="tel" required></div><div class="mb-3"><label for="delivery-address">Delivery address</label><textarea id="delivery-address" name="address" class="form-control" rows="3" maxlength="2000" autocomplete="street-address" required></textarea></div><div class="mb-4"><label for="delivery-notes">Delivery instructions <span>(optional)</span></label><textarea id="delivery-notes" name="instructions" class="form-control" rows="3" maxlength="1000"></textarea></div><button class="button button-dark w-100" type="submit">Create order and continue to WhatsApp</button></form></section>
+  <aside class="checkout-summary"><h2>Order summary</h2>{% for line in lines %}<div class="summary-line"><div><strong>{{ line.product.name }}</strong><span>{{ line.quantity }} × {{ line.variant.size }} / {{ line.variant.colour }}</span></div><strong>{{ line.line_total }}</strong></div>{% endfor %}<div class="summary-total"><span>Total</span><strong>{{ total }}</strong></div><p>No online payment is collected. Your order is not confirmed until the store confirms it.</p></aside></div>
+</main>
+{% include "storefront/_footer.html" %}
+{% endblock %}

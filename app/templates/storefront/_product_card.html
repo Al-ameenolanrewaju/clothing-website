@@ -1,0 +1,8 @@
+<a class="product-card" href="{{ url_for('storefront.product_detail', slug=product.slug) }}">
+  <div class="product-photo">
+    {% if product.images %}<img src="{{ product.images[0].url }}" alt="{{ product.images[0].alt_text or product.name }}" loading="lazy">{% else %}<span>Image coming soon</span>{% endif %}
+    {% if product.new_arrival %}<span class="product-tag">New</span>{% endif %}
+  </div>
+  <div class="product-meta"><h3>{{ product.name }}</h3><span>{{ product.price }}</span></div>
+  {% if product.category %}<p class="product-category">{{ product.category.name }}</p>{% endif %}
+</a>

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ category.name }}{% endblock %}
+{% block body %}
+<nav class="navbar bg-white border-bottom px-3"><a class="navbar-brand fw-bold" href="{{ url_for('owner.dashboard') }}">Store Dashboard</a><a class="btn btn-sm btn-dark" href="{{ url_for('owner.categories') }}">Categories</a></nav>
+<main class="container py-4"><h1 class="h3">Edit category</h1><div class="card mt-3"><div class="card-body"><form method="post">{{ form.hidden_tag() }}<div class="mb-3">{{ form.name.label(class="form-label") }}{{ form.name(class="form-control") }}</div><div class="mb-3">{{ form.slug.label(class="form-label") }}{{ form.slug(class="form-control") }}</div><div class="mb-3">{{ form.gender.label(class="form-label") }}{{ form.gender(class="form-select") }}</div>{{ form.submit(class="btn btn-dark") }}</form></div></div></main>
+{% endblock %}

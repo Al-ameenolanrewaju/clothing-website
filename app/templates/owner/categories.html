@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Categories{% endblock %}
+{% block body %}
+<nav class="navbar bg-white border-bottom px-3"><a class="navbar-brand fw-bold" href="{{ url_for('owner.dashboard') }}">Store Dashboard</a><a class="btn btn-sm btn-dark" href="{{ url_for('owner.dashboard') }}">Overview</a></nav>
+<main class="container py-4">
+  {% for category,message in get_flashed_messages(with_categories=true) %}<div class="alert alert-{{ category }}">{{ message }}</div>{% endfor %}
+  <h1 class="h3">Categories</h1>
+  <div class="card my-3"><div class="card-body"><form method="post">{{ form.hidden_tag() }}<div class="row g-3"><div class="col-md-4">{{ form.name.label(class="form-label") }}{{ form.name(class="form-control") }}</div><div class="col-md-4">{{ form.slug.label(class="form-label") }}{{ form.slug(class="form-control") }}</div><div class="col-md-4">{{ form.gender.label(class="form-label") }}{{ form.gender(class="form-control") }}</div><div class="col-12">{{ form.submit(class="btn btn-dark") }}</div></div></form></div></div>
+  <div class="table-responsive"><table class="table"><thead><tr><th>Name</th><th>Slug</th><th>Gender</th><th>Actions</th></tr></thead><tbody>{% for item in items %}<tr><td>{{ item.name }}</td><td>{{ item.slug }}</td><td>{{ item.gender or '-' }}</td><td><div class="d-flex gap-1"><a class="btn btn-sm btn-outline-dark" href="{{ url_for('owner.edit_category', category_id=item.id) }}">Edit</a><form method="post" action="{{ url_for('owner.delete_category', category_id=item.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-danger">Delete</button></form></div></td></tr>{% else %}<tr><td colspan="4">No categories yet.</td></tr>{% endfor %}</tbody></table></div>
+</main>
+{% endblock %}
