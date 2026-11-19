@@ -12,17 +12,21 @@
       <h1>{{ product.name }}</h1><p class="product-detail-price" id="product-price">{{ product.price }}</p>
       {% if product.discounted_price %}<p class="old-price">Regular {{ product.regular_price }}</p>{% endif %}
       <div class="product-description">{{ product.description or '' }}</div>
-      {% if product.variants|selectattr('is_available')|selectattr('stock_quantity','gt',0)|list %}
-      <form method="post" action="{{ url_for('storefront.cart_add') }}" id="variant-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="product_id" value="{{ product.id }}">
-        <label class="form-label" for="size-select">Size</label><select name="size" id="size-select" class="form-select mb-3" required><option value="">Select size</option>{% for size in sizes %}<option value="{{ size }}">{{ size }}</option>{% endfor %}</select>
-        <label class="form-label" for="colour-select">Colour</label><select name="colour" id="colour-select" class="form-select mb-3" required><option value="">Select colour</option>{% for colour in colours %}<option value="{{ colour }}">{{ colour }}</option>{% endfor %}</select>
-        <label class="form-label" for="quantity-select">Quantity</label><input id="quantity-select" name="quantity" type="number" min="1" max="100" value="1" class="form-control mb-4" required>
-        <button id="add-button" class="button button-dark w-100" type="submit" disabled>Add to bag</button>
+      {% if product.variants|selectattr('is_available')|selectattr('stock_quantity','gt',0)|list and business.whatsapp_number %}
+      <div id="whatsapp-order" data-number="{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','') }}">
+        <label class="form-label" for="size-select">Size</label>
+        <select id="size-select" class="form-select mb-3" required><option value="">Select size</option>{% for size in sizes %}<option value="{{ size }}">{{ size }}</option>{% endfor %}</select>
+        <label class="form-label" for="colour-select">Colour</label>
+        <select id="colour-select" class="form-select mb-3" required><option value="">Select colour</option>{% for colour in colours %}<option value="{{ colour }}">{{ colour }}</option>{% endfor %}</select>
+        <label class="form-label" for="quantity-select">Quantity</label>
+        <input id="quantity-select" type="number" min="1" max="100" value="1" class="form-control mb-4" required>
+        <a id="whatsapp-button" class="button button-dark w-100 text-center disabled" href="#" aria-disabled="true" target="_blank" rel="noopener">Order on WhatsApp</a>
         <p id="variant-hint" class="variant-hint" aria-live="polite">Choose a size and colour to check availability.</p>
-      </form>
+      </div>
+      {% elif not business.whatsapp_number %}
+      <p class="variant-hint">WhatsApp ordering is not configured yet. Please contact the store.</p>
       {% else %}<p class="variant-hint">Currently unavailable.</p>{% endif %}
-      <div class="product-assurance"><span>Thoughtful fit</span><span>WhatsApp checkout</span></div>
+      <div class="product-assurance"><span>Choose your fit</span><span>Order directly on WhatsApp</span></div>
     </section>
   </div>
   {% if related %}<section class="section-block"><div class="section-heading"><div><span class="eyebrow">A few more to love</span><h2>You may also like</h2></div></div><div class="product-grid">{% for product in related %}{% include "storefront/_product_card.html" %}{% endfor %}</div></section>{% endif %}
@@ -31,13 +35,67 @@
 {% endblock %}
 {% block scripts %}
 <script>
-const variants={{ variants|tojson }};
-const sizeSelect=document.querySelector('#size-select');
-const colourSelect=document.querySelector('#colour-select');
-const quantityInput=document.querySelector('#quantity-select');
-const addButton=document.querySelector('#add-button');
-const price=document.querySelector('#product-price');
-const hint=document.querySelector('#variant-hint');
-if(addButton){function updateVariant(){const selected=variants.find(v=>v.size===sizeSelect.value&&v.colour===colourSelect.value&&v.is_available&&v.stock_quantity>0);addButton.disabled=!selected;if(selected){price.textContent=selected.price;quantityInput.max=Math.min(100,selected.stock_quantity);hint.textContent=selected.stock_quantity+' available';}else{hint.textContent='Choose an available size and colour.';}}sizeSelect.addEventListener('change',updateVariant);colourSelect.addEventListener('change',updateVariant);}
+(() => {
+  const root = document.querySelector('#whatsapp-order');
+  if (!root) return;
+  const variants = {{ variants|tojson }};
+  const sizeSelect = root.querySelector('#size-select');
+  const colourSelect = root.querySelector('#colour-select');
+  const quantityInput = root.querySelector('#quantity-select');
+  const button = root.querySelector('#whatsapp-button');
+  const price = document.querySelector('#product-price');
+  const hint = root.querySelector('#variant-hint');
+  const phone = root.dataset.number.replace(/[^0-9]/g, '');
+
+  function updateOrderLink() {
+    const variant = variants.find(item =>
+      item.size === sizeSelect.value &&
+      item.colour === colourSelect.value &&
+      item.is_available &&
+      item.stock_quantity > 0
+    );
+    const quantity = Number.parseInt(quantityInput.value, 10);
+    const validQuantity = Number.isInteger(quantity) && quantity > 0 &&
+      variant && quantity <= variant.stock_quantity && quantity <= 100;
+
+    if (!variant) {
+      button.href = '#';
+      button.classList.add('disabled');
+      button.setAttribute('aria-disabled', 'true');
+      hint.textContent = 'Choose an available size and colour.';
+      return;
+    }
+
+    price.textContent = variant.price;
+    quantityInput.max = Math.min(100, variant.stock_quantity);
+    hint.textContent = variant.stock_quantity + ' available';
+
+    if (!validQuantity || !phone) {
+      button.href = '#';
+      button.classList.add('disabled');
+      button.setAttribute('aria-disabled', 'true');
+      if (variant && !validQuantity) hint.textContent = 'Enter a quantity between 1 and ' + Math.min(100, variant.stock_quantity) + '.';
+      return;
+    }
+
+    const message = [
+      'Hello ' + {{ business.name|tojson }} + ', I would like to order:',
+      'Product: ' + {{ product.name|tojson }},
+      'Price: ' + variant.price,
+      'Size: ' + variant.size,
+      'Colour: ' + variant.colour,
+      'Quantity: ' + quantity,
+      'Product link: ' + window.location.href
+    ].join('\n');
+    button.href = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(message);
+    button.classList.remove('disabled');
+    button.removeAttribute('aria-disabled');
+  }
+
+  sizeSelect.addEventListener('change', updateOrderLink);
+  colourSelect.addEventListener('change', updateOrderLink);
+  quantityInput.addEventListener('input', updateOrderLink);
+  updateOrderLink();
+})();
 </script>
 {% endblock %}
