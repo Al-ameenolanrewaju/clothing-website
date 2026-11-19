@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, g, request, session
+from flask import Flask, g, request, session, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -29,7 +29,7 @@ def create_app(config_object=None):
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=os.getenv("COOKIE_SECURE", "true").lower() == "true",
-        UPLOAD_FOLDER=os.getenv("UPLOAD_FOLDER", "app/static/uploads"),
+        UPLOAD_FOLDER=os.getenv("UPLOAD_FOLDER", os.path.join(app.instance_path, "uploads")),
         MAX_CONTENT_LENGTH=10 * 1024 * 1024,
     )
     if config_object:
@@ -102,6 +102,16 @@ def create_app(config_object=None):
     app.register_blueprint(admin_bp)
     app.register_blueprint(owner_bp)
     app.register_blueprint(storefront_bp)
+
+    @app.get("/media/<path:filename>")
+    def uploaded_media(filename):
+        response = send_from_directory(
+            app.config["UPLOAD_FOLDER"],
+            filename,
+            max_age=86400,
+        )
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
 
     @app.get("/health")
     def health():
