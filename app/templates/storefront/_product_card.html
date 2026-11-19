@@ -9,7 +9,7 @@
   <div class="luxury-product-info">
     {% if product.category %}<p class="product-category">{{ product.category.name }}</p>{% endif %}
     <h3><a href="{{ url_for('storefront.product_detail', slug=product.slug) }}">{{ product.name }}</a></h3>
-    <p class="luxury-price">From {{ product.price|currency }}</p>
+    <p class="luxury-price">From ₦{{ "{:,.0f}".format(product.price) }}</p>
     <a class="luxury-order-link" href="{{ url_for('storefront.product_detail', slug=product.slug) }}">Order on WhatsApp <span>→</span></a>
   </div>
 </article>
