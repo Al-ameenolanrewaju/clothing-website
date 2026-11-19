@@ -73,9 +73,11 @@ Image uploads validate JPEG, PNG and WebP signatures and are stored on the serve
 1. Connect this repository to a Render Web Service.
 2. Build command: `pip install -r requirements.txt`.
 3. Start command: `gunicorn run:app`.
-4. Configure `SECRET_KEY`, `DATABASE_URL` and `COOKIE_SECURE=true`. Add
-   Cloudinary credentials to enable image uploads.
-5. Run `python -m flask --app run:app db upgrade` once from the Render shell.
+4. Configure `SECRET_KEY`, `DATABASE_URL` and `COOKIE_SECURE=true`.
+5. Add a Render persistent disk mounted at `/var/data` and set
+   `UPLOAD_FOLDER=/var/data/uploads`. Without a persistent disk, uploaded images
+   can disappear when the service is redeployed or its instance is replaced.
+6. Run `python -m flask --app run:app db upgrade` once from the Render shell.
 7. Create the shop and owner account with the Flask shell if they do not
    already exist.
 8. Visit `/health` to check application and database readiness.
