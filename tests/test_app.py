@@ -738,6 +738,50 @@ def test_image_validation_and_missing_cloudinary_configuration(monkeypatch):
         upload_image(valid_png, "test")
 
 
+def test_product_and_variant_deletion_preserve_order_history(app, client):
+    business_id, _ = make_tenant(app)
+    deletable_id = make_product(app, business_id, name="Unused item", slug="unused-item")
+    protected_id = make_product(app, business_id, name="Ordered item", slug="ordered-item")
+    with app.app_context():
+        variant = ProductVariant(
+            business_id=business_id, product_id=protected_id, size="M", colour="Black",
+            stock_quantity=2, is_available=True,
+        )
+        db.session.add(variant)
+        db.session.flush()
+        customer = Customer(business_id=business_id, name="Buyer", phone="2348000000000")
+        db.session.add(customer)
+        db.session.flush()
+        order = Order(
+            business_id=business_id, customer_id=customer.id, reference="ORDER-KEEP",
+            subtotal=100, total=100,
+        )
+        db.session.add(order)
+        db.session.flush()
+        db.session.add(OrderItem(
+            business_id=business_id, order_id=order.id, product_id=None, variant_id=variant.id,
+            product_name="Ordered item", size="M", colour="Black", quantity=1,
+            unit_price=100, line_total=100,
+        ))
+        variant_id = variant.id
+        db.session.commit()
+    login_owner(client)
+    deleted = client.post(f"/dashboard/products/{deletable_id}/delete", base_url="http://store-a.test")
+    assert deleted.status_code == 302
+    with app.app_context():
+        assert db.session.get(Product, deletable_id) is None
+    blocked_product = client.post(f"/dashboard/products/{protected_id}/delete", base_url="http://store-a.test")
+    blocked_variant = client.post(
+        f"/dashboard/products/{protected_id}/variants/{variant_id}/delete",
+        base_url="http://store-a.test",
+    )
+    assert blocked_product.status_code == 302
+    assert blocked_variant.status_code == 302
+    with app.app_context():
+        assert db.session.get(Product, protected_id) is not None
+        assert db.session.get(ProductVariant, variant_id) is not None
+
+
 def test_csrf_is_required_outside_disabled_test_configuration():
     app = create_app(CsrfConfig)
     response = app.test_client().post("/login", data={"email": "admin@example.com", "password": "secret123"})
