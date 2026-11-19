@@ -1,7 +1,7 @@
-<div class="announcement-bar" style="--brand-color: {{ business.brand_color }}">{{ settings.announcement if settings and settings.announcement else 'Made to be worn. Designed to be kept.' }}</div>
+<div class="announcement-bar" style="--brand-color: {{ business.brand_color }}">{{ settings.announcement if settings and settings.announcement else 'Browse the collection. Order directly on WhatsApp.' }}</div>
 <nav class="store-nav px-3 px-lg-5">
   <a class="store-brand" href="{{ url_for('storefront.home') }}">{% if business.logo_url %}<img src="{{ business.logo_url }}" alt="{{ business.name }}">{% else %}{{ business.name }}{% endif %}</a>
   <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="store-menu" aria-label="Toggle navigation">Menu</button>
-  <div class="store-menu" id="store-menu"><a href="{{ url_for('storefront.catalogue') }}">Shop all</a><a href="{{ url_for('storefront.catalogue', gender='Men') }}">Men</a><a href="{{ url_for('storefront.catalogue', gender='Women') }}">Women</a><a href="{{ url_for('storefront.cart') }}">Bag <span class="bag-count">{{ cart_count }}</span></a></div>
+  <div class="store-menu" id="store-menu"><a href="{{ url_for('storefront.catalogue') }}">Shop all</a><a href="{{ url_for('storefront.catalogue', gender='Men') }}">Men</a><a href="{{ url_for('storefront.catalogue', gender='Women') }}">Women</a>{% if business.whatsapp_number %}<a href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','') }}" target="_blank" rel="noopener">WhatsApp us</a>{% endif %}</div>
   <form class="store-search" action="{{ url_for('storefront.catalogue') }}" method="get"><input name="q" aria-label="Search products" placeholder="Search pieces"><button aria-label="Search">Search</button></form>
 </nav>
