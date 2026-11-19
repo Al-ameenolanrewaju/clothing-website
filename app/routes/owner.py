@@ -225,6 +225,18 @@ def archive_product(product_id):
 
 
 
+@bp.route("/products/<int:product_id>/publish", methods=["POST"])
+@roles_required("OWNER")
+def publish_product(product_id):
+    product = Product.query.filter_by(id=product_id, business_id=current_user.business_id).first_or_404()
+    product.is_published = True
+    db.session.add(ActivityLog(business_id=current_user.business_id, user_id=current_user.id,
+                               action="PRODUCT_PUBLISHED", details=product.name))
+    db.session.commit()
+    flash("Product published on the storefront.", "success")
+    return redirect(url_for("owner.products"))
+
+
 @bp.route("/products/<int:product_id>/delete", methods=["POST"])
 @roles_required("OWNER")
 def delete_product(product_id):
