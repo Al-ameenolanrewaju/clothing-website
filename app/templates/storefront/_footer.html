@@ -3,7 +3,7 @@
     <a class="footer-brand luxury-brand" href="{{ url_for('storefront.home') }}"><strong>{{ business.name.split(' ')[0] }}</strong>{% if business.name.split(' ', 1)|length > 1 %}<em>{{ business.name.split(' ', 1)[1] }}</em>{% endif %}</a>
     <p>{{ (settings.about_text if settings and settings.about_text else business.description) or 'Premium fashion for everyday elegance.' }}</p>
     <span>{{ business.address or 'Orders taken directly on WhatsApp' }}</span>
-    {% if business.whatsapp_number %}<a class="footer-whatsapp" href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','') }}" target="_blank" rel="noopener">Chat with us on WhatsApp</a>{% endif %}
+    {% if business.whatsapp_number %}<a class="footer-whatsapp" href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">Chat with us on WhatsApp</a>{% endif %}
     <small>© {{ business.name }} · All rights reserved</small>
   </div>
 </footer>
