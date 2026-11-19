@@ -223,6 +223,32 @@ def archive_product(product_id):
     return redirect(url_for("owner.products"))
 
 
+
+
+@bp.route("/products/<int:product_id>/delete", methods=["POST"])
+@roles_required("OWNER")
+def delete_product(product_id):
+    product = Product.query.filter_by(id=product_id, business_id=current_user.business_id).first_or_404()
+    linked_orders = OrderItem.query.filter_by(product_id=product.id, business_id=current_user.business_id).first()
+    if linked_orders:
+        flash("This product has order history and cannot be permanently deleted. Archive it instead.", "warning")
+        return redirect(url_for("owner.products"))
+    for image in product.images:
+        if image.cloudinary_public_id:
+            try:
+                delete_image(image.cloudinary_public_id)
+            except RuntimeError as error:
+                flash(f"Product was not deleted because an image could not be removed: {error}", "danger")
+                return redirect(url_for("owner.products"))
+    name = product.name
+    db.session.delete(product)
+    db.session.add(ActivityLog(business_id=current_user.business_id, user_id=current_user.id,
+                               action="PRODUCT_DELETED", details=name))
+    db.session.commit()
+    flash("Product permanently deleted.", "success")
+    return redirect(url_for("owner.products"))
+
+
 @bp.route("/products/<int:product_id>/images/<int:image_id>/delete", methods=["POST"])
 @roles_required("OWNER")
 def delete_product_image(product_id, image_id):
@@ -437,6 +463,25 @@ def variants(product_id):
         flash("Variant saved.", "success")
         return redirect(url_for("owner.variants", product_id=product.id))
     return render_template("owner/variants.html", product=product)
+
+
+
+
+@bp.route("/products/<int:product_id>/variants/<int:variant_id>/delete", methods=["POST"])
+@roles_required("OWNER")
+def delete_variant(product_id, variant_id):
+    product = Product.query.filter_by(id=product_id, business_id=current_user.business_id).first_or_404()
+    variant = ProductVariant.query.filter_by(id=variant_id, product_id=product.id, business_id=current_user.business_id).first_or_404()
+    if OrderItem.query.filter_by(variant_id=variant.id, business_id=current_user.business_id).first():
+        flash("This variant appears in order history. Set its stock to zero and mark it unavailable instead.", "warning")
+    else:
+        label = f"{product.name}: {variant.size}/{variant.colour}"
+        db.session.delete(variant)
+        db.session.add(ActivityLog(business_id=current_user.business_id, user_id=current_user.id,
+                                   action="VARIANT_DELETED", details=label))
+        db.session.commit()
+        flash("Variant deleted.", "success")
+    return redirect(url_for("owner.variants", product_id=product.id))
 
 
 @bp.route("/settings", methods=["GET", "POST"])
