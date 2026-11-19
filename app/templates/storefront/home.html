@@ -11,7 +11,7 @@
       <p>Discover beautifully tailored pieces that blend comfort, confidence, and premium detailing. Designed for modern customers who want refined fashion without the stress of complicated ordering.</p>
       <div class="hero-actions">
         <a class="luxury-button luxury-button-gold" href="{{ url_for('storefront.catalogue') }}">Shop collection</a>
-        {% if business.whatsapp_number %}<a class="luxury-button luxury-button-outline" href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','') }}" target="_blank" rel="noopener">WhatsApp us</a>{% endif %}
+        {% if business.whatsapp_number %}<a class="luxury-button luxury-button-outline" href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">WhatsApp us</a>{% endif %}
       </div>
     </div>
     <div class="luxury-hero-image">
@@ -38,7 +38,7 @@
   {% endif %}
   <section class="luxury-order-banner" id="order">
     <div><span class="eyebrow">Personal styling & orders</span><h2>Need a custom look for your event or brand?</h2><p>Send us a message on WhatsApp and we will guide you through sizing, colours, and styling options.</p></div>
-    {% if business.whatsapp_number %}<a class="luxury-button luxury-button-gold" href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','') }}" target="_blank" rel="noopener">Start your order ↗</a>{% endif %}
+    {% if business.whatsapp_number %}<a class="luxury-button luxury-button-gold" href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">Start your order ↗</a>{% endif %}
   </section>
 </main>
 {% include "storefront/_footer.html" %}
