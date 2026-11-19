@@ -179,3 +179,95 @@ a { color: inherit; }
   .cart-summary { grid-template-columns: 1fr; }
   .cart-summary .cart-total, .cart-summary .button, .cart-summary > p { grid-column: 1; }
 }
+
+/* ANJTOM-inspired luxury catalogue theme */
+.fashion-store { --ink:#f5f0e8; --paper:#15110f; --muted:#aaa096; --line:#39302a; --accent:#d0a75f; background:#15110f; color:#f5f0e8; }
+.luxury-nav { position:sticky; top:0; z-index:50; min-height:108px; justify-content:space-between; padding:18px max(8vw,24px); border-bottom:1px solid #302822; background:rgba(21,17,15,.97); }
+.luxury-brand { display:flex; align-items:baseline; gap:12px; max-width:none; color:#f5f0e8; font-family:Inter,"Segoe UI",sans-serif; font-size:clamp(25px,3vw,42px); letter-spacing:.07em; white-space:nowrap; }
+.luxury-brand strong { font-weight:800; }
+.luxury-brand em { color:#d5b77f; font-family:var(--serif); font-weight:400; letter-spacing:0; }
+.luxury-brand img { max-width:260px; max-height:64px; }
+.luxury-menu { display:flex; gap:34px; margin:0; }
+.luxury-menu a { color:#e6ddd0; font-size:16px; letter-spacing:0; text-transform:none; }
+.luxury-menu a:hover { color:#d5b77f; }
+.luxury-nav .menu-toggle { color:#f5f0e8; }
+.luxury-hero { display:grid; grid-template-columns:1.15fr .85fr; align-items:center; gap:6vw; min-height:650px; padding:80px max(8vw,24px); border-bottom:1px solid var(--line); }
+.luxury-hero-copy { max-width:720px; }
+.luxury-hero .eyebrow,.luxury-collection .eyebrow,.luxury-order-banner .eyebrow { color:#d5b77f; }
+.luxury-hero h1 { margin:18px 0 22px; font-size:clamp(48px,6vw,78px); font-weight:800; line-height:1.05; letter-spacing:-.045em; }
+.luxury-hero h1 em { color:#d5b77f; font-family:var(--serif); font-weight:400; }
+.luxury-hero-copy p { max-width:650px; color:#c6bdb2; font-size:18px; line-height:1.7; }
+.luxury-hero-image { min-height:440px; height: min(44vw,570px); padding:16px; border:1px solid #3b3026; background:#1c1713; }
+.luxury-hero-image img { width:100%; height:100%; object-fit:cover; }
+.fashion-placeholder { display:flex; min-height:100%; width:100%; align-items:center; justify-content:center; position:relative; overflow:hidden; background:linear-gradient(145deg,#211a14,#15110f); color:#c9a96e; }
+.fashion-placeholder:before { content:""; width:28%; height:60%; border:2px solid #b99a66; border-radius:48% 48% 8% 8%; opacity:.8; }
+.fashion-placeholder span { position:absolute; bottom:18px; left:18px; padding:8px 10px; border:1px solid #55442e; color:#c8bca8; font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+.fashion-placeholder-hero:before { width:30%; height:70%; border-color:#d0b47e; }
+.fashion-placeholder-hero span { top:18px; bottom:auto; left:18px; font-size:12px; }
+.hero-actions { display:flex; flex-wrap:wrap; gap:16px; margin-top:34px; }
+.luxury-button { display:inline-flex; min-height:64px; align-items:center; justify-content:center; padding:0 28px; font-size:16px; font-weight:700; letter-spacing:.02em; text-decoration:none; }
+.luxury-button-gold { border:1px solid #d2aa68; background:#d2aa68; color:#17110b; }
+.luxury-button-gold:hover { background:#e1bd7e; color:#17110b; }
+.luxury-button-outline { border:1px solid #514337; color:#f5f0e8; }
+.luxury-button-outline:hover { border-color:#d2aa68; color:#d2aa68; }
+.luxury-collection { padding:74px max(8vw,24px) 88px; }
+.luxury-section-head { display:flex; align-items:end; justify-content:space-between; gap:24px; margin-bottom:30px; }
+.luxury-section-head h2,.luxury-order-banner h2 { margin:0; font-size:clamp(30px,4vw,46px); font-weight:750; }
+.luxury-section-head .text-link { color:#d5b77f; text-decoration:none; }
+.luxury-category-tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); margin-bottom:0; border:1px solid var(--line); }
+.luxury-category-tabs a { padding:20px 12px; border-right:1px solid var(--line); color:#d4c9bb; text-align:center; text-decoration:none; }
+.luxury-category-tabs a:last-child { border-right:0; }
+.luxury-category-tabs a.active,.luxury-category-tabs a:hover { background:#261e17; color:#d5b77f; }
+.luxury-product-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:0; border-left:1px solid var(--line); }
+.luxury-product-card { border-right:1px solid var(--line); border-bottom:1px solid var(--line); }
+.luxury-product-card .product-photo { aspect-ratio:1.12/1; background:#201a15; }
+.luxury-product-card .product-photo img { object-fit:cover; }
+.luxury-product-card .fashion-placeholder:before { width:22%; height:55%; border-radius:42% 42% 3% 3%; }
+.luxury-product-info { padding:20px 22px 26px; }
+.luxury-product-info .product-category { margin:0 0 10px; color:#d5b77f; font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+.luxury-product-info h3 { margin:0 0 10px; font-size:clamp(20px,2.3vw,30px); font-weight:750; }
+.luxury-product-info h3 a { color:#f5f0e8; text-decoration:none; }
+.luxury-price { margin:0 0 14px; color:#d6cbbb; font-size:18px; }
+.luxury-order-link { display:inline-flex; gap:8px; padding-bottom:7px; border-bottom:1px solid #b99760; color:#d5b77f; font-size:17px; font-weight:700; text-decoration:none; }
+.luxury-order-link:hover { color:#f0d49e; }
+.luxury-collection-alt { border-top:1px solid var(--line); background:#1a1512; }
+.luxury-order-banner { display:flex; align-items:center; justify-content:space-between; gap:35px; margin:0 max(8vw,24px) 75px; padding:42px 28px; border:1px solid #45372a; background:#201912; }
+.luxury-order-banner p { max-width:660px; margin:15px 0 0; color:#c6bdb2; font-size:18px; line-height:1.6; }
+.luxury-footer { background:#15110f; border-top:1px solid var(--line); }
+.luxury-footer-inner { display:flex; flex-direction:column; align-items:center; gap:16px; padding:58px 24px 32px; text-align:center; }
+.luxury-footer .footer-brand { font-size:36px; }
+.luxury-footer p,.luxury-footer span { margin:0; color:#c6bdb2; font-size:17px; }
+.luxury-footer .footer-whatsapp { margin:20px 0; color:#e0c18a; font-size:18px; text-decoration:none; }
+.luxury-footer small { width:100%; margin-top:28px; padding-top:22px; border-top:1px solid var(--line); color:#81786f; }
+@media(max-width:900px) {
+ .luxury-nav { min-height:82px; flex-wrap:nowrap; padding:14px 22px; }
+ .luxury-brand { font-size:25px; }
+ .luxury-menu { display:flex; gap:18px; margin-left:auto; }
+ .luxury-menu a { font-size:13px; }
+ .luxury-nav .menu-toggle { display:none; }
+ .luxury-hero { min-height:0; grid-template-columns:1fr 1fr; padding:60px 24px; }
+ .luxury-hero-image { min-height:350px; }
+}
+@media(max-width:600px) {
+ .luxury-nav { min-height:70px; gap:10px; padding:12px 14px; }
+ .luxury-brand { gap:7px; font-size:clamp(18px,5vw,24px); letter-spacing:.04em; }
+ .luxury-menu { gap:12px; }
+ .luxury-menu a { font-size:11px; }
+ .luxury-hero { grid-template-columns:1fr; gap:30px; padding:48px 20px; }
+ .luxury-hero h1 { font-size:48px; }
+ .luxury-hero-copy p { font-size:15px; }
+ .luxury-hero-image { height:360px; min-height:0; }
+ .luxury-button { min-height:54px; padding:0 18px; font-size:14px; }
+ .luxury-collection { padding:52px 16px 58px; }
+ .luxury-section-head { align-items:start; flex-direction:column; }
+ .luxury-category-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .luxury-category-tabs a:nth-child(2) { border-right:0; }
+ .luxury-product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .luxury-product-info { padding:14px 12px 20px; }
+ .luxury-product-info h3 { font-size:18px; }
+ .luxury-price { font-size:15px; }
+ .luxury-order-link { font-size:13px; }
+ .luxury-order-banner { flex-direction:column; align-items:flex-start; margin:0 16px 48px; padding:26px 20px; }
+ .luxury-order-banner p { font-size:15px; }
+ .luxury-footer .footer-brand { font-size:28px; }
+}
