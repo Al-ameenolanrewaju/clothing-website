@@ -7,6 +7,7 @@ from werkzeug.datastructures import FileStorage
 
 from app import create_app, db
 from app.models import (
+    ActivityLog,
     Business,
     Category,
     Customer,
@@ -21,7 +22,7 @@ from app.models import (
     StoreSettings,
     User,
 )
-from app.media import upload_image, validate_image
+from app.media import delete_image, upload_image, validate_image
 from app.utils import normalize_domain
 
 
@@ -137,6 +138,17 @@ def test_short_secret_key_prevents_non_test_startup(monkeypatch):
         create_app(ProductionConfig)
 
 
+def test_production_requires_persistent_database(monkeypatch):
+    class ProductionConfig:
+        TESTING = False
+        SECRET_KEY = "a-production-secret-key-with-at-least-32-characters"
+
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.setenv("APP_ENV", "production")
+    with pytest.raises(RuntimeError, match="persistent PostgreSQL"):
+        create_app(ProductionConfig)
+
+
 def test_session_cookies_are_secure_by_default(monkeypatch):
     class SecureCookieConfig:
         TESTING = True
@@ -222,7 +234,7 @@ def test_inactive_users_and_suspended_businesses_cannot_keep_sessions(app, clien
     assert "/login" in response.location
 
 
-def test_domain_resolution_isolated_and_unknown_hosts_do_not_fall_back(app, client):
+def test_domain_resolution_isolated_and_single_store_fallback(app, client):
     business_a, _ = make_tenant(app)
     business_b, _ = make_tenant(app, "Store B", "store-b", "store-b.test")
     product_a = make_product(app, business_a, name="A coat", slug="a-coat")
@@ -233,7 +245,7 @@ def test_domain_resolution_isolated_and_unknown_hosts_do_not_fall_back(app, clie
     response_unknown = client.get("/catalogue", base_url="http://unknown.test")
     assert b"A coat" in response_a.data and b"B dress" not in response_a.data
     assert b"B dress" in response_b.data and b"A coat" not in response_b.data
-    assert response_unknown.status_code == 404
+    assert b"A coat" in response_unknown.data and b"B dress" not in response_unknown.data
 
 
 def test_owner_cannot_read_or_mutate_another_business_product_or_order(app, client):
@@ -434,12 +446,12 @@ def test_storefront_filters_and_product_pages(app, client):
     detail = client.get("/product/blue-coat", base_url="http://store-a.test")
     home = client.get("/", base_url="http://store-a.test")
     assert b"Blue Coat" in listing.data and b"Black Trousers" not in listing.data
-    assert detail.status_code == 200 and b"Add to bag" in detail.data
-    assert home.status_code == 200 and b"Shop all" in home.data
+    assert detail.status_code == 200 and b"Order on WhatsApp" in detail.data
+    assert home.status_code == 200 and b"Pieces made to be remembered." in home.data
     assert client.get("/cart", base_url="http://store-a.test").status_code == 200
     login_owner(client)
     dashboard = client.get("/dashboard/", base_url="http://store-a.test")
-    assert dashboard.status_code == 200 and b"Popular product views" in dashboard.data
+    assert dashboard.status_code == 200 and b"Manage products" in dashboard.data
 
 
 def test_cart_and_checkout_use_server_price_stock_and_snapshot(app, client):
@@ -715,17 +727,168 @@ def test_domain_normalization():
             normalize_domain(invalid)
 
 
-def test_image_validation_and_missing_cloudinary_configuration(monkeypatch):
+def test_local_image_upload_serve_and_delete(app, tmp_path):
+    app.config["UPLOAD_FOLDER"] = str(tmp_path)
     valid_png = FileStorage(stream=BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 12), filename="test.png")
     validate_image(valid_png)
     invalid = FileStorage(stream=BytesIO(b"<html>not an image"), filename="bad.png")
     with pytest.raises(ValueError, match="valid JPEG"):
         validate_image(invalid)
-    monkeypatch.delenv("CLOUDINARY_CLOUD_NAME", raising=False)
-    monkeypatch.delenv("CLOUDINARY_API_KEY", raising=False)
-    monkeypatch.delenv("CLOUDINARY_API_SECRET", raising=False)
-    with pytest.raises(RuntimeError, match="Cloudinary credentials"):
-        upload_image(valid_png, "test")
+
+    with app.test_request_context():
+        image_url, storage_key = upload_image(valid_png, "clothing-catalogue/1/products/2")
+    assert image_url.startswith("/media/")
+    image_path = tmp_path / storage_key
+    assert image_path.is_file()
+    response = app.test_client().get(image_url)
+    assert response.status_code == 200
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+
+    with app.app_context():
+        delete_image(storage_key)
+    assert not image_path.exists()
+
+
+def test_product_and_variant_deletion_preserve_order_history(app, client):
+    business_id, _ = make_tenant(app)
+    deletable_id = make_product(app, business_id, name="Unused item", slug="unused-item")
+    protected_id = make_product(app, business_id, name="Ordered item", slug="ordered-item")
+    with app.app_context():
+        variant = ProductVariant(
+            business_id=business_id, product_id=protected_id, size="M", colour="Black",
+            stock_quantity=2, is_available=True,
+        )
+        db.session.add(variant)
+        db.session.flush()
+        customer = Customer(business_id=business_id, name="Buyer", phone="2348000000000")
+        db.session.add(customer)
+        db.session.flush()
+        order = Order(
+            business_id=business_id, customer_id=customer.id, reference="ORDER-KEEP",
+            subtotal=100, total=100,
+        )
+        db.session.add(order)
+        db.session.flush()
+        db.session.add(OrderItem(
+            business_id=business_id, order_id=order.id, product_id=None, variant_id=variant.id,
+            product_name="Ordered item", size="M", colour="Black", quantity=1,
+            unit_price=100, line_total=100,
+        ))
+        variant_id = variant.id
+        db.session.commit()
+    login_owner(client)
+    deleted = client.post(f"/dashboard/products/{deletable_id}/delete", base_url="http://store-a.test")
+    assert deleted.status_code == 302
+    with app.app_context():
+        assert db.session.get(Product, deletable_id) is None
+    blocked_product = client.post(f"/dashboard/products/{protected_id}/delete", base_url="http://store-a.test")
+    blocked_variant = client.post(
+        f"/dashboard/products/{protected_id}/variants/{variant_id}/delete",
+        base_url="http://store-a.test",
+    )
+    assert blocked_product.status_code == 302
+    assert blocked_variant.status_code == 302
+    with app.app_context():
+        assert db.session.get(Product, protected_id) is not None
+        assert db.session.get(ProductVariant, variant_id) is not None
+
+
+
+def test_owner_crud_changes_persist_in_database_after_restart(tmp_path):
+    database_path = tmp_path / "catalogue.sqlite"
+    database_uri = f"sqlite:///{database_path.as_posix()}"
+
+    class PersistentConfig(TestConfig):
+        SQLALCHEMY_DATABASE_URI = database_uri
+
+    first_app = create_app(PersistentConfig)
+    with first_app.app_context():
+        db.create_all()
+    client = first_app.test_client()
+    business_id, _ = make_tenant(first_app)
+    login_owner(client)
+
+    created_category = client.post("/dashboard/categories", data={
+        "name": "Everyday Wear", "slug": "everyday-wear", "gender": "Unisex",
+    }, base_url="http://store-a.test")
+    assert created_category.status_code == 302
+    with first_app.app_context():
+        category = Category.query.filter_by(business_id=business_id, slug="everyday-wear").one()
+        category_id = category.id
+
+    updated_category = client.post(f"/dashboard/categories/{category_id}/edit", data={
+        "name": "Daily Essentials", "slug": "daily-essentials", "gender": "Unisex",
+    }, base_url="http://store-a.test")
+    assert updated_category.status_code == 302
+
+    created_product = client.post("/dashboard/products", data={
+        "name": "Classic Shirt", "slug": "classic-shirt",
+        "description": "Database-backed product", "regular_price": "25000.00",
+        "discounted_price": "22000.00", "category_id": str(category_id),
+        "gender": "Unisex", "fashion_type": "Ready-to-wear", "sku": "CLASSIC-001",
+        "featured": "y", "new_arrival": "y", "is_published": "y",
+    }, base_url="http://store-a.test")
+    assert created_product.status_code == 302
+    with first_app.app_context():
+        product = Product.query.filter_by(business_id=business_id, slug="classic-shirt").one()
+        product_id = product.id
+
+    updated_product = client.post(f"/dashboard/products/{product_id}/edit", data={
+        "name": "Classic Shirt Updated", "slug": "classic-shirt-updated",
+        "description": "Updated in the owner dashboard", "regular_price": "30000.00",
+        "discounted_price": "", "category_id": str(category_id),
+        "gender": "Unisex", "fashion_type": "Ready-to-wear", "sku": "CLASSIC-002",
+        "is_published": "y",
+    }, base_url="http://store-a.test")
+    assert updated_product.status_code == 302
+
+    created_variant = client.post(f"/dashboard/products/{product_id}/variants", data={
+        "size": "M", "colour": "Black", "stock": "8", "price_override": "27500.00",
+        "sku": "CLASSIC-M-BLK", "available": "on",
+    }, base_url="http://store-a.test")
+    assert created_variant.status_code == 302
+    updated_variant = client.post(f"/dashboard/products/{product_id}/variants", data={
+        "size": "M", "colour": "Black", "stock": "12", "price_override": "28000.00",
+        "sku": "CLASSIC-M-BLK-2", "available": "on",
+    }, base_url="http://store-a.test")
+    assert updated_variant.status_code == 302
+
+    created_temporary = client.post("/dashboard/products", data={
+        "name": "Temporary Product", "slug": "temporary-product",
+        "description": "", "regular_price": "1000.00", "discounted_price": "",
+        "category_id": "0", "gender": "Unisex", "fashion_type": "Ready-to-wear",
+        "sku": "TEMP-001", "is_published": "y",
+    }, base_url="http://store-a.test")
+    assert created_temporary.status_code == 302
+    with first_app.app_context():
+        temporary = Product.query.filter_by(business_id=business_id, slug="temporary-product").one()
+        temporary_id = temporary.id
+    deleted_temporary = client.post(
+        f"/dashboard/products/{temporary_id}/delete", base_url="http://store-a.test"
+    )
+    assert deleted_temporary.status_code == 302
+
+    with first_app.app_context():
+        db.session.remove()
+
+    second_app = create_app(PersistentConfig)
+    with second_app.app_context():
+        category = db.session.get(Category, category_id)
+        product = db.session.get(Product, product_id)
+        variant = ProductVariant.query.filter_by(
+            product_id=product_id, size="M", colour="Black"
+        ).one()
+        assert category.name == "Daily Essentials"
+        assert product.name == "Classic Shirt Updated"
+        assert product.regular_price == 30000
+        assert product.discounted_price is None
+        assert product.category_id == category_id
+        assert variant.stock_quantity == 12
+        assert variant.price_override == 28000
+        assert variant.sku == "CLASSIC-M-BLK-2"
+        assert Product.query.filter_by(slug="temporary-product").count() == 0
+        assert ActivityLog.query.filter_by(action="PRODUCT_CREATED").count() >= 2
+        db.session.remove()
 
 
 def test_csrf_is_required_outside_disabled_test_configuration():

@@ -110,54 +110,24 @@ def _save_product_images(product):
 @roles_required("OWNER")
 def dashboard():
     business_id = current_user.business_id
+    business = Business.query.filter_by(id=business_id, status="ACTIVE").first_or_404()
     stats = {
         "products": Product.query.filter_by(business_id=business_id).count(),
-        "active": Product.query.filter_by(business_id=business_id, is_published=True).count(),
-        "out_of_stock": ProductVariant.query.filter_by(business_id=business_id, is_available=False).count(),
-        "orders": Order.query.filter_by(business_id=business_id).count(),
-        "pending": Order.query.filter_by(business_id=business_id, status="PENDING").count(),
-        "confirmed": Order.query.filter_by(business_id=business_id, status="CONFIRMED").count(),
-        "initiated": Order.query.filter_by(business_id=business_id, status="WHATSAPP_CHECKOUT_INITIATED").count(),
-        "whatsapp_clicks": StoreEvent.query.filter_by(business_id=business_id, event_type="WHATSAPP_CHECKOUT_CLICK").count(),
-        "visits": StoreVisit.query.filter_by(business_id=business_id).count(),
+        "published": Product.query.filter_by(business_id=business_id, is_published=True).count(),
+        "categories": Category.query.filter_by(business_id=business_id).count(),
+        "out_of_stock": ProductVariant.query.filter(
+            ProductVariant.business_id == business_id,
+            db.or_(ProductVariant.is_available.is_(False), ProductVariant.stock_quantity <= 0),
+        ).count(),
     }
-    recent_orders = Order.query.filter_by(business_id=business_id).order_by(Order.created_at.desc()).limit(8).all()
-    popular_products = db.session.query(
-        Product.name,
-        db.func.count(StoreEvent.id).label("views"),
-    ).join(StoreEvent, StoreEvent.product_id == Product.id).filter(
-        Product.business_id == business_id,
-        StoreEvent.business_id == business_id,
-        StoreEvent.event_type == "PRODUCT_VIEW",
-    ).group_by(Product.id, Product.name).order_by(db.func.count(StoreEvent.id).desc()).limit(5).all()
-    confirmed_statuses = ["CONFIRMED", "PROCESSING", "READY_FOR_DELIVERY", "COMPLETED"]
-    popular_sizes = db.session.query(
-        OrderItem.size,
-        db.func.sum(OrderItem.quantity).label("units"),
-    ).join(Order, Order.id == OrderItem.order_id).filter(
-        OrderItem.business_id == business_id,
-        Order.business_id == business_id,
-        Order.status.in_(confirmed_statuses),
-    ).group_by(OrderItem.size).order_by(db.func.sum(OrderItem.quantity).desc()).limit(5).all()
-    popular_colours = db.session.query(
-        OrderItem.colour,
-        db.func.sum(OrderItem.quantity).label("units"),
-    ).join(Order, Order.id == OrderItem.order_id).filter(
-        OrderItem.business_id == business_id,
-        Order.business_id == business_id,
-        Order.status.in_(confirmed_statuses),
-    ).group_by(OrderItem.colour).order_by(db.func.sum(OrderItem.quantity).desc()).limit(5).all()
-    recent_activity = ActivityLog.query.filter_by(business_id=business_id).order_by(
-        ActivityLog.created_at.desc()
-    ).limit(8).all()
+    recent_products = Product.query.filter_by(business_id=business_id).order_by(
+        Product.updated_at.desc()
+    ).limit(6).all()
     return render_template(
         "owner/dashboard.html",
+        business=business,
         stats=stats,
-        recent_orders=recent_orders,
-        popular_products=popular_products,
-        popular_sizes=popular_sizes,
-        popular_colours=popular_colours,
-        recent_activity=recent_activity,
+        recent_products=recent_products,
     )
 
 
@@ -250,6 +220,53 @@ def archive_product(product_id):
                                action="PRODUCT_ARCHIVED", details=product.name))
     db.session.commit()
     flash("Product archived and removed from the storefront.", "success")
+    return redirect(url_for("owner.products"))
+
+
+
+
+@bp.route("/products/<int:product_id>/publish", methods=["POST"])
+@roles_required("OWNER")
+def publish_product(product_id):
+    product = Product.query.filter_by(id=product_id, business_id=current_user.business_id).first_or_404()
+    product.is_published = True
+    db.session.add(ActivityLog(business_id=current_user.business_id, user_id=current_user.id,
+                               action="PRODUCT_PUBLISHED", details=product.name))
+    db.session.commit()
+    flash("Product published on the storefront.", "success")
+    return redirect(url_for("owner.products"))
+
+
+@bp.route("/products/<int:product_id>/delete", methods=["POST"])
+@roles_required("OWNER")
+def delete_product(product_id):
+    product = Product.query.filter_by(id=product_id, business_id=current_user.business_id).first_or_404()
+    linked_variant_ids = db.session.query(ProductVariant.id).filter_by(
+        product_id=product.id, business_id=current_user.business_id
+    )
+    linked_orders = OrderItem.query.filter(
+        OrderItem.business_id == current_user.business_id,
+        db.or_(
+            OrderItem.product_id == product.id,
+            OrderItem.variant_id.in_(linked_variant_ids),
+        ),
+    ).first()
+    if linked_orders:
+        flash("This product has order history and cannot be permanently deleted. Archive it instead.", "warning")
+        return redirect(url_for("owner.products"))
+    for image in product.images:
+        if image.cloudinary_public_id:
+            try:
+                delete_image(image.cloudinary_public_id)
+            except RuntimeError as error:
+                flash(f"Product was not deleted because an image could not be removed: {error}", "danger")
+                return redirect(url_for("owner.products"))
+    name = product.name
+    db.session.delete(product)
+    db.session.add(ActivityLog(business_id=current_user.business_id, user_id=current_user.id,
+                               action="PRODUCT_DELETED", details=name))
+    db.session.commit()
+    flash("Product permanently deleted.", "success")
     return redirect(url_for("owner.products"))
 
 
@@ -467,6 +484,25 @@ def variants(product_id):
         flash("Variant saved.", "success")
         return redirect(url_for("owner.variants", product_id=product.id))
     return render_template("owner/variants.html", product=product)
+
+
+
+
+@bp.route("/products/<int:product_id>/variants/<int:variant_id>/delete", methods=["POST"])
+@roles_required("OWNER")
+def delete_variant(product_id, variant_id):
+    product = Product.query.filter_by(id=product_id, business_id=current_user.business_id).first_or_404()
+    variant = ProductVariant.query.filter_by(id=variant_id, product_id=product.id, business_id=current_user.business_id).first_or_404()
+    if OrderItem.query.filter_by(variant_id=variant.id, business_id=current_user.business_id).first():
+        flash("This variant appears in order history. Set its stock to zero and mark it unavailable instead.", "warning")
+    else:
+        label = f"{product.name}: {variant.size}/{variant.colour}"
+        db.session.delete(variant)
+        db.session.add(ActivityLog(business_id=current_user.business_id, user_id=current_user.id,
+                                   action="VARIANT_DELETED", details=label))
+        db.session.commit()
+        flash("Variant deleted.", "success")
+    return redirect(url_for("owner.variants", product_id=product.id))
 
 
 @bp.route("/settings", methods=["GET", "POST"])

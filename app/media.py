@@ -1,9 +1,7 @@
-import os
+from pathlib import Path
 from uuid import uuid4
 
-import cloudinary
-import cloudinary.uploader
-from cloudinary.exceptions import Error as CloudinaryError
+from flask import current_app, url_for
 from werkzeug.datastructures import FileStorage
 
 
@@ -12,7 +10,7 @@ class MediaError(RuntimeError):
 
 
 ALLOWED_IMAGE_TYPES = {
-    "jpeg": lambda data: data.startswith(b"\xff\xd8\xff"),
+    "jpg": lambda data: data.startswith(b"\xff\xd8\xff"),
     "png": lambda data: data.startswith(b"\x89PNG\r\n\x1a\n"),
     "webp": lambda data: len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP",
 }
@@ -27,51 +25,43 @@ def validate_image(file: FileStorage):
         raise ValueError("Use a valid JPEG, PNG or WebP image.")
 
 
-def _configure_cloudinary():
-    cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME")
-    api_key = os.getenv("CLOUDINARY_API_KEY")
-    api_secret = os.getenv("CLOUDINARY_API_SECRET")
-    if not all((cloud_name, api_key, api_secret)):
-        raise RuntimeError("Image uploads require Cloudinary credentials to be configured.")
-    cloudinary.config(
-        cloud_name=cloud_name,
-        api_key=api_key,
-        api_secret=api_secret,
-        secure=True,
-    )
-
-
 def upload_image(file: FileStorage, folder: str):
     validate_image(file)
-    _configure_cloudinary()
+    parts = Path(folder).parts
+    if not parts or any(part in {"", ".", ".."} for part in parts) or Path(folder).is_absolute():
+        raise ValueError("Invalid image destination.")
+
+    header = file.stream.read(12)
+    file.stream.seek(0)
+    extension = next(ext for ext, signature in ALLOWED_IMAGE_TYPES.items() if signature(header))
+    relative_path = Path(*parts, f"{uuid4().hex}.{extension}")
+    upload_root = Path(current_app.config["UPLOAD_FOLDER"]).resolve()
+    destination = (upload_root / relative_path).resolve()
+    if upload_root not in destination.parents:
+        raise ValueError("Invalid image destination.")
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
     try:
-        result = cloudinary.uploader.upload(
-            file,
-            folder=folder,
-            public_id=uuid4().hex,
-            resource_type="image",
-            overwrite=False,
-            unique_filename=False,
-            use_filename=False,
-        )
-    except CloudinaryError as error:
-        raise MediaError("Cloudinary could not upload the image.") from error
-    public_id = result["public_id"]
-    url = cloudinary.CloudinaryImage(public_id).build_url(
-        secure=True,
-        quality="auto",
-        fetch_format="auto",
-        width=1600,
-        crop="limit",
-    )
-    return url, public_id
+        file.save(destination)
+    except OSError as error:
+        raise MediaError("The image could not be saved. Check the upload storage configuration.") from error
+
+    stored_key = relative_path.as_posix()
+    return url_for("uploaded_media", filename=stored_key), stored_key
 
 
-def delete_image(public_id: str):
-    _configure_cloudinary()
+def delete_image(storage_key: str):
+    if not storage_key:
+        return
+    relative_path = Path(storage_key)
+    if relative_path.is_absolute() or any(part in {"", ".", ".."} for part in relative_path.parts):
+        raise ValueError("Invalid image reference.")
+
+    upload_root = Path(current_app.config["UPLOAD_FOLDER"]).resolve()
+    target = (upload_root / relative_path).resolve()
+    if upload_root not in target.parents:
+        raise ValueError("Invalid image reference.")
     try:
-        result = cloudinary.uploader.destroy(public_id, resource_type="image", invalidate=True)
-    except CloudinaryError as error:
-        raise MediaError("Cloudinary could not delete the image.") from error
-    if result.get("result") not in {"ok", "not found"}:
-        raise RuntimeError("Cloudinary did not confirm image deletion.")
+        target.unlink(missing_ok=True)
+    except OSError as error:
+        raise MediaError("The image could not be deleted from upload storage.") from error

@@ -83,8 +83,9 @@ def home():
         Order.status.in_(["CONFIRMED", "PROCESSING", "READY_FOR_DELIVERY", "COMPLETED"]),
     ).group_by(Product.id).order_by(db.func.sum(OrderItem.quantity).desc()).limit(4).all()
     settings = StoreSettings.query.filter_by(business_id=business.id).first()
+    categories = Category.query.filter_by(business_id=business.id).order_by(Category.name).all()
     return render_template("storefront/home.html", business=business, products=products,
-                           featured=featured or products[:8], new_arrivals=new_arrivals,
+                           categories=categories, featured=featured or products[:8], new_arrivals=new_arrivals,
                            men_products=men_products, women_products=women_products,
                            best_sellers=best_sellers, settings=settings)
 

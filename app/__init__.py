@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, g, request, session
+from flask import Flask, g, request, session, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -15,18 +15,21 @@ csrf = CSRFProtect()
 
 def create_app(config_object=None):
     app = Flask(__name__)
+    database_url = os.getenv("DATABASE_URL", "sqlite:///clothing_store.db").strip()
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
     app.config.update(
         SECRET_KEY=os.getenv("SECRET_KEY"),
-        DEFAULT_STORE_SLUG=os.getenv("DEFAULT_STORE_SLUG"),
-        SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL", "sqlite:///clothing_store.db").replace(
-            "postgres://", "postgresql://"
-        ),
+        SQLALCHEMY_DATABASE_URI=database_url,
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         WTF_CSRF_ENABLED=True,
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=os.getenv("COOKIE_SECURE", "true").lower() == "true",
-        UPLOAD_FOLDER=os.getenv("UPLOAD_FOLDER", "app/static/uploads"),
+        UPLOAD_FOLDER=os.getenv("UPLOAD_FOLDER", os.path.join(app.instance_path, "uploads")),
         MAX_CONTENT_LENGTH=10 * 1024 * 1024,
     )
     if config_object:
@@ -35,6 +38,8 @@ def create_app(config_object=None):
         secret_key = app.config.get("SECRET_KEY")
         if not isinstance(secret_key, str) or len(secret_key) < 32:
             raise RuntimeError("Configure a SECRET_KEY with at least 32 characters outside testing.")
+        if os.getenv("APP_ENV", "").strip().lower() == "production" and app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite:"):
+            raise RuntimeError("Configure DATABASE_URL with a persistent PostgreSQL database for production.")
 
     db.init_app(app)
     migrate.init_app(app, db)
@@ -63,21 +68,30 @@ def create_app(config_object=None):
         return user
 
     @app.before_request
-    def resolve_tenant():
+    def resolve_store():
+        """Resolve the one configured shop; a connected custom domain may override it."""
         host = (request.host or "").split(":")[0].rstrip(".").lower()
-        if host in {"localhost", "127.0.0.1", "www"}:
-            default_slug = app.config.get("DEFAULT_STORE_SLUG")
-            g.business = models.Business.query.filter_by(slug=default_slug, status="ACTIVE").first() if default_slug else None
-            g.domain_status = "local" if default_slug else "NOT_FOUND"
-            return None
         domain = models.Domain.query.filter(
             db.func.lower(models.Domain.host) == host
         ).first()
-        g.business = domain.business if domain and domain.status == "CONNECTED" else None
-        g.domain_status = domain.status if domain else "NOT_FOUND"
-        if g.business and g.business.status != "ACTIVE":
-            g.business = None
-            g.domain_status = "SUSPENDED"
+
+        if domain:
+            business = domain.business if domain.status == "CONNECTED" else None
+            if business and business.status == "ACTIVE":
+                g.business = business
+                g.domain_status = "CONNECTED"
+            else:
+                g.business = None
+                g.domain_status = domain.status
+            return None
+
+        # This app is configured as a single-business catalogue. Use the
+        # first active business automatically; no store slug setting is needed.
+        business = models.Business.query.filter_by(
+            status="ACTIVE"
+        ).order_by(models.Business.id.asc()).first()
+        g.business = business
+        g.domain_status = "default" if business else "NOT_CONFIGURED"
 
     from .routes.auth import bp as auth_bp
     from .routes.admin import bp as admin_bp
@@ -88,6 +102,16 @@ def create_app(config_object=None):
     app.register_blueprint(admin_bp)
     app.register_blueprint(owner_bp)
     app.register_blueprint(storefront_bp)
+
+    @app.get("/media/<path:filename>")
+    def uploaded_media(filename):
+        response = send_from_directory(
+            app.config["UPLOAD_FOLDER"],
+            filename,
+            max_age=86400,
+        )
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
 
     @app.get("/health")
     def health():

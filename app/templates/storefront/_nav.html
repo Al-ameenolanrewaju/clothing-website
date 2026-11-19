@@ -1,7 +1,5 @@
-<div class="announcement-bar" style="--brand-color: {{ business.brand_color }}">{{ settings.announcement if settings and settings.announcement else 'Made to be worn. Designed to be kept.' }}</div>
-<nav class="store-nav px-3 px-lg-5">
-  <a class="store-brand" href="{{ url_for('storefront.home') }}">{% if business.logo_url %}<img src="{{ business.logo_url }}" alt="{{ business.name }}">{% else %}{{ business.name }}{% endif %}</a>
+<nav class="store-nav luxury-nav">
+  <a class="store-brand luxury-brand" href="{{ url_for('storefront.home') }}">{% if business.logo_url %}<img src="{{ business.logo_url }}" alt="{{ business.name }}">{% else %}<strong>{{ business.name.split(' ')[0] }}</strong>{% if business.name.split(' ', 1)|length > 1 %}<em>{{ business.name.split(' ', 1)[1] }}</em>{% endif %}{% endif %}</a>
+  <div class="store-menu luxury-menu" id="store-menu"><a href="{{ url_for('storefront.catalogue') }}">Catalogue</a><a href="{{ url_for('storefront.home') }}#featured">Featured</a><a href="{{ url_for('storefront.home') }}#order">Order</a></div>
   <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="store-menu" aria-label="Toggle navigation">Menu</button>
-  <div class="store-menu" id="store-menu"><a href="{{ url_for('storefront.catalogue') }}">Shop all</a><a href="{{ url_for('storefront.catalogue', gender='Men') }}">Men</a><a href="{{ url_for('storefront.catalogue', gender='Women') }}">Women</a><a href="{{ url_for('storefront.cart') }}">Bag <span class="bag-count">{{ cart_count }}</span></a></div>
-  <form class="store-search" action="{{ url_for('storefront.catalogue') }}" method="get"><input name="q" aria-label="Search products" placeholder="Search pieces"><button aria-label="Search">Search</button></form>
 </nav>

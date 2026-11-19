@@ -1,9 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Shop - {{ business.name }}{% endblock %}
+{% block title %}Catalogue - {{ business.name }}{% endblock %}
+{% block body_class %}fashion-store{% endblock %}
 {% block body %}
 {% include "storefront/_nav.html" %}
-<main class="container-fluid px-3 px-lg-5 py-4">
-  <div class="catalogue-title"><span class="eyebrow">Designed to be worn</span><h1>Shop all</h1><p>{{ products.total }} pieces</p></div>
+<main class="luxury-collection">
+  <div class="luxury-section-head"><div><span class="eyebrow">The collection</span><h1>Explore the catalogue.</h1><p class="catalogue-count">{{ products.total }} pieces</p></div></div>
+  <div class="luxury-category-tabs">
+    <a class="{% if not request.args.get('category') %}active{% endif %}" href="{{ url_for('storefront.catalogue') }}">All</a>
+    {% for category in categories %}<a class="{% if request.args.get('category')|int == category.id %}active{% endif %}" href="{{ url_for('storefront.catalogue', category=category.id) }}">{{ category.name }}</a>{% endfor %}
+  </div>
   <form class="filter-bar" method="get">
     <input class="filter-search" name="q" value="{{ request.args.get('q','') }}" placeholder="Search pieces" aria-label="Search">
     <select name="gender" aria-label="Gender"><option value="">All collections</option>{% for gender in ['Men','Women','Unisex'] %}<option value="{{ gender }}" {% if request.args.get('gender') == gender %}selected{% endif %}>{{ gender }}</option>{% endfor %}</select>
@@ -14,7 +19,7 @@
     <label class="availability-filter"><input type="checkbox" name="availability" value="available" {% if request.args.get('availability') == 'available' %}checked{% endif %}> In stock</label>
     <button class="button button-dark">Filter</button>
   </form>
-  <div class="product-grid">{% for product in products.items %}{% include "storefront/_product_card.html" %}{% else %}<p class="empty-note">No pieces match these filters.</p>{% endfor %}</div>
+  <div class="product-grid luxury-product-grid">{% for product in products.items %}{% include "storefront/_product_card.html" %}{% else %}<p class="empty-note">No pieces match these filters.</p>{% endfor %}</div>
   {% if products.pages > 1 %}<nav class="pagination-nav" aria-label="Product pages">{% if products.has_prev %}<a href="{{ url_for('storefront.catalogue', page=products.prev_num, q=request.args.get('q'), gender=request.args.get('gender'), category=request.args.get('category'), size=request.args.get('size'), colour=request.args.get('colour'), sort=request.args.get('sort'), availability=request.args.get('availability')) }}">Previous</a>{% endif %}<span>Page {{ products.page }} of {{ products.pages }}</span>{% if products.has_next %}<a href="{{ url_for('storefront.catalogue', page=products.next_num, q=request.args.get('q'), gender=request.args.get('gender'), category=request.args.get('category'), size=request.args.get('size'), colour=request.args.get('colour'), sort=request.args.get('sort'), availability=request.args.get('availability')) }}">Next</a>{% endif %}</nav>{% endif %}
 </main>
 {% include "storefront/_footer.html" %}
