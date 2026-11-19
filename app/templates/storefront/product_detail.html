@@ -9,8 +9,8 @@
     <div class="product-gallery">{% for image in product.images %}<img src="{{ image.url }}" alt="{{ image.alt_text or product.name }}" {% if loop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>{% else %}<div class="product-photo product-photo-empty"><span>Image coming soon</span></div>{% endfor %}</div>
     <section class="product-info">
       <a class="eyebrow text-decoration-none" href="{{ url_for('storefront.catalogue', gender=product.gender) }}">{{ product.category.name if product.category else product.gender }}</a>
-      <h1>{{ product.name }}</h1><p class="product-detail-price" id="product-price">{{ product.price }}</p>
-      {% if product.discounted_price %}<p class="old-price">Regular {{ product.regular_price }}</p>{% endif %}
+      <h1>{{ product.name }}</h1><p class="product-detail-price" id="product-price">₦{{ "{:,.2f}".format(product.price) }}</p>
+      {% if product.discounted_price %}<p class="old-price">Regular ₦{{ "{:,.2f}".format(product.regular_price) }}</p>{% endif %}
       <div class="product-description">{{ product.description or '' }}</div>
       {% if product.variants|selectattr('is_available')|selectattr('stock_quantity','gt',0)|list and business.whatsapp_number %}
       <div id="whatsapp-order" data-number="{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','') }}">
@@ -66,7 +66,7 @@
       return;
     }
 
-    price.textContent = variant.price;
+    price.textContent = '₦' + Number(variant.price).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     quantityInput.max = Math.min(100, variant.stock_quantity);
     hint.textContent = variant.stock_quantity + ' available';
 
@@ -81,7 +81,7 @@
     const message = [
       'Hello ' + {{ business.name|tojson }} + ', I would like to order:',
       'Product: ' + {{ product.name|tojson }},
-      'Price: ' + variant.price,
+      'Price: ₦' + Number(variant.price).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
       'Size: ' + variant.size,
       'Colour: ' + variant.colour,
       'Quantity: ' + quantity,
