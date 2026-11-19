@@ -900,7 +900,7 @@ def test_csrf_is_required_outside_disabled_test_configuration():
 def test_database_image_storage_and_public_serving(app):
     business_id, _ = make_tenant(app)
     product_id = make_product(app, business_id)
-    image_bytes = b"\\x89PNG\\r\\n\\x1a\\n" + b"\\x00" * 12
+    image_bytes = b"\x89PNG\r\n\x1a\n" + b"\x00" * 12
     with app.app_context():
         business = db.session.get(Business, business_id)
         business.logo_data = image_bytes
@@ -933,7 +933,6 @@ def test_database_image_storage_and_public_serving(app):
     assert logo_response.status_code == 200
     assert logo_response.data == image_bytes
 
-    # Database records, including the image bytes, survive a new app context.
     with app.app_context():
         stored = db.session.get(ProductImage, image_id)
         assert stored.image_data == image_bytes
@@ -947,7 +946,7 @@ def test_database_image_upload_validation_rejects_oversized_or_invalid_files():
     with pytest.raises(ValueError, match="valid JPEG"):
         read_image(invalid)
     oversized = FileStorage(
-        stream=BytesIO(b"\\x89PNG\\r\\n\\x1a\\n" + b"x" * (5 * 1024 * 1024 + 1)),
+        stream=BytesIO(b"\x89PNG\r\n\x1a\n" + b"x" * (5 * 1024 * 1024 + 1)),
         filename="large.png",
     )
     with pytest.raises(ValueError, match="5 MB"):

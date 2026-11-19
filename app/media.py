@@ -68,8 +68,8 @@ def delete_image(storage_key: str):
 
 
 IMAGE_MIME_TYPES = {
-    "image/jpeg": lambda data: data.startswith(b"\\xff\\xd8\\xff"),
-    "image/png": lambda data: data.startswith(b"\\x89PNG\\r\\n\\x1a\\n"),
+    "image/jpeg": lambda data: data.startswith(b"\xff\xd8\xff"),
+    "image/png": lambda data: data.startswith(b"\x89PNG\r\n\x1a\n"),
     "image/webp": lambda data: len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP",
 }
 
