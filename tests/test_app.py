@@ -143,6 +143,7 @@ def test_production_requires_persistent_database(monkeypatch):
         SECRET_KEY = "a-production-secret-key-with-at-least-32-characters"
 
     monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.setenv("APP_ENV", "production")
     with pytest.raises(RuntimeError, match="persistent PostgreSQL"):
         create_app(ProductionConfig)
 
