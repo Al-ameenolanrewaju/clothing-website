@@ -74,8 +74,8 @@ credentials in your environment or Render settings; never commit them.
 1. Connect this repository to a Render Web Service.
 2. Build command: `pip install -r requirements.txt`.
 3. Start command: `gunicorn run:app`.
-4. Configure `SECRET_KEY`, `DATABASE_URL`, `DEFAULT_STORE_SLUG` and
-   `COOKIE_SECURE=true`. Add Cloudinary credentials to enable image uploads.
+4. Configure `SECRET_KEY`, `DATABASE_URL` and `COOKIE_SECURE=true`. Add
+   Cloudinary credentials to enable image uploads.
 5. Run `python -m flask --app run:app db upgrade` once from the Render shell.
 6. Create the shop and owner account with the Flask shell if they do not
    already exist.
