@@ -58,7 +58,7 @@ def delete_image(storage_key: str):
     if relative_path.is_absolute() or any(part in {"", ".", ".."} for part in relative_path.parts):
         raise ValueError("Invalid image reference.")
 
-    upload_root = Path(os.getenv("UPLOAD_FOLDER", "instance/uploads")).resolve()
+    upload_root = Path(current_app.config["UPLOAD_FOLDER"]).resolve()
     target = (upload_root / relative_path).resolve()
     if upload_root not in target.parents:
         raise ValueError("Invalid image reference.")
