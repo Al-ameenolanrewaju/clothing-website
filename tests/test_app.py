@@ -793,6 +793,104 @@ def test_product_and_variant_deletion_preserve_order_history(app, client):
         assert db.session.get(ProductVariant, variant_id) is not None
 
 
+
+def test_owner_crud_changes_persist_in_database_after_restart(tmp_path):
+    database_path = tmp_path / "catalogue.sqlite"
+    database_uri = f"sqlite:///{database_path.as_posix()}"
+
+    class PersistentConfig(TestConfig):
+        SQLALCHEMY_DATABASE_URI = database_uri
+
+    first_app = create_app(PersistentConfig)
+    with first_app.app_context():
+        db.create_all()
+    client = first_app.test_client()
+    business_id, _ = make_tenant(first_app)
+    login_owner(client)
+
+    created_category = client.post("/dashboard/categories", data={
+        "name": "Everyday Wear", "slug": "everyday-wear", "gender": "Unisex",
+    }, base_url="http://store-a.test")
+    assert created_category.status_code == 302
+    with first_app.app_context():
+        category = Category.query.filter_by(business_id=business_id, slug="everyday-wear").one()
+        category_id = category.id
+
+    updated_category = client.post(f"/dashboard/categories/{category_id}/edit", data={
+        "name": "Daily Essentials", "slug": "daily-essentials", "gender": "Unisex",
+    }, base_url="http://store-a.test")
+    assert updated_category.status_code == 302
+
+    created_product = client.post("/dashboard/products", data={
+        "name": "Classic Shirt", "slug": "classic-shirt",
+        "description": "Database-backed product", "regular_price": "25000.00",
+        "discounted_price": "22000.00", "category_id": str(category_id),
+        "gender": "Unisex", "fashion_type": "Ready-to-wear", "sku": "CLASSIC-001",
+        "featured": "y", "new_arrival": "y", "is_published": "y",
+    }, base_url="http://store-a.test")
+    assert created_product.status_code == 302
+    with first_app.app_context():
+        product = Product.query.filter_by(business_id=business_id, slug="classic-shirt").one()
+        product_id = product.id
+
+    updated_product = client.post(f"/dashboard/products/{product_id}/edit", data={
+        "name": "Classic Shirt Updated", "slug": "classic-shirt-updated",
+        "description": "Updated in the owner dashboard", "regular_price": "30000.00",
+        "discounted_price": "", "category_id": str(category_id),
+        "gender": "Unisex", "fashion_type": "Ready-to-wear", "sku": "CLASSIC-002",
+        "is_published": "y",
+    }, base_url="http://store-a.test")
+    assert updated_product.status_code == 302
+
+    created_variant = client.post(f"/dashboard/products/{product_id}/variants", data={
+        "size": "M", "colour": "Black", "stock": "8", "price_override": "27500.00",
+        "sku": "CLASSIC-M-BLK", "available": "on",
+    }, base_url="http://store-a.test")
+    assert created_variant.status_code == 302
+    updated_variant = client.post(f"/dashboard/products/{product_id}/variants", data={
+        "size": "M", "colour": "Black", "stock": "12", "price_override": "28000.00",
+        "sku": "CLASSIC-M-BLK-2", "available": "on",
+    }, base_url="http://store-a.test")
+    assert updated_variant.status_code == 302
+
+    created_temporary = client.post("/dashboard/products", data={
+        "name": "Temporary Product", "slug": "temporary-product",
+        "description": "", "regular_price": "1000.00", "discounted_price": "",
+        "category_id": "0", "gender": "Unisex", "fashion_type": "Ready-to-wear",
+        "sku": "TEMP-001", "is_published": "y",
+    }, base_url="http://store-a.test")
+    assert created_temporary.status_code == 302
+    with first_app.app_context():
+        temporary = Product.query.filter_by(business_id=business_id, slug="temporary-product").one()
+        temporary_id = temporary.id
+    deleted_temporary = client.post(
+        f"/dashboard/products/{temporary_id}/delete", base_url="http://store-a.test"
+    )
+    assert deleted_temporary.status_code == 302
+
+    with first_app.app_context():
+        db.session.remove()
+
+    second_app = create_app(PersistentConfig)
+    with second_app.app_context():
+        category = db.session.get(Category, category_id)
+        product = db.session.get(Product, product_id)
+        variant = ProductVariant.query.filter_by(
+            product_id=product_id, size="M", colour="Black"
+        ).one()
+        assert category.name == "Daily Essentials"
+        assert product.name == "Classic Shirt Updated"
+        assert product.regular_price == 30000
+        assert product.discounted_price is None
+        assert product.category_id == category_id
+        assert variant.stock_quantity == 12
+        assert variant.price_override == 28000
+        assert variant.sku == "CLASSIC-M-BLK-2"
+        assert Product.query.filter_by(slug="temporary-product").count() == 0
+        assert ActivityLog.query.filter_by(action="PRODUCT_CREATED").count() >= 2
+        db.session.remove()
+
+
 def test_csrf_is_required_outside_disabled_test_configuration():
     app = create_app(CsrfConfig)
     response = app.test_client().post("/login", data={"email": "admin@example.com", "password": "secret123"})
