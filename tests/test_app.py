@@ -21,7 +21,7 @@ from app.models import (
     StoreSettings,
     User,
 )
-from app.media import upload_image, validate_image
+from app.media import delete_image, upload_image, validate_image
 from app.utils import normalize_domain
 
 
@@ -725,17 +725,25 @@ def test_domain_normalization():
             normalize_domain(invalid)
 
 
-def test_image_validation_and_missing_cloudinary_configuration(monkeypatch):
+def test_local_image_upload_serve_and_delete(app, tmp_path):
+    app.config["UPLOAD_FOLDER"] = str(tmp_path)
     valid_png = FileStorage(stream=BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 12), filename="test.png")
     validate_image(valid_png)
     invalid = FileStorage(stream=BytesIO(b"<html>not an image"), filename="bad.png")
     with pytest.raises(ValueError, match="valid JPEG"):
         validate_image(invalid)
-    monkeypatch.delenv("CLOUDINARY_CLOUD_NAME", raising=False)
-    monkeypatch.delenv("CLOUDINARY_API_KEY", raising=False)
-    monkeypatch.delenv("CLOUDINARY_API_SECRET", raising=False)
-    with pytest.raises(RuntimeError, match="Cloudinary credentials"):
-        upload_image(valid_png, "test")
+
+    with app.test_request_context():
+        image_url, storage_key = upload_image(valid_png, "clothing-catalogue/1/products/2")
+    assert image_url.startswith("/media/")
+    image_path = tmp_path / storage_key
+    assert image_path.is_file()
+    response = app.test_client().get(image_url)
+    assert response.status_code == 200
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+
+    delete_image(storage_key)
+    assert not image_path.exists()
 
 
 def test_product_and_variant_deletion_preserve_order_history(app, client):
