@@ -137,6 +137,16 @@ def test_short_secret_key_prevents_non_test_startup(monkeypatch):
         create_app(ProductionConfig)
 
 
+def test_production_requires_persistent_database(monkeypatch):
+    class ProductionConfig:
+        TESTING = False
+        SECRET_KEY = "a-production-secret-key-with-at-least-32-characters"
+
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    with pytest.raises(RuntimeError, match="persistent PostgreSQL"):
+        create_app(ProductionConfig)
+
+
 def test_session_cookies_are_secure_by_default(monkeypatch):
     class SecureCookieConfig:
         TESTING = True
