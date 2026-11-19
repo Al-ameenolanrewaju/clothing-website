@@ -38,7 +38,7 @@ def create_app(config_object=None):
         secret_key = app.config.get("SECRET_KEY")
         if not isinstance(secret_key, str) or len(secret_key) < 32:
             raise RuntimeError("Configure a SECRET_KEY with at least 32 characters outside testing.")
-        if app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite:"):
+        if os.getenv("APP_ENV", "").strip().lower() == "production" and app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite:"):
             raise RuntimeError("Configure DATABASE_URL with a persistent PostgreSQL database for production.")
 
     db.init_app(app)
