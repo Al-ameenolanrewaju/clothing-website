@@ -336,11 +336,8 @@ def test_product_create_edit_publish_and_archive(app, client):
         assert db.session.get(Product, product_id).is_published is False
 
 
-def test_multiple_product_images_are_saved_and_deleted(app, client, monkeypatch):
+def test_multiple_product_images_are_saved_and_deleted(app, client):
     business_id, _ = make_tenant(app)
-    monkeypatch.setattr("app.routes.owner.upload_image", lambda file, folder: (
-        f"https://media.example/{file.filename}", f"{folder}/{file.filename}",
-    ))
     login_owner(client)
     response = client.post("/dashboard/products", data={
         "name": "Photo Coat",
@@ -360,16 +357,16 @@ def test_multiple_product_images_are_saved_and_deleted(app, client, monkeypatch)
         product = Product.query.filter_by(business_id=business_id, slug="photo-coat").one()
         assert ProductImage.query.filter_by(product_id=product.id).count() == 2
         image_id = product.images[0].id
-    deleted = []
-    monkeypatch.setattr("app.routes.owner.delete_image", lambda public_id: deleted.append(public_id))
+        assert all(image.image_data and image.mime_type for image in product.images)
     response = client.post(
         f"/dashboard/products/{product.id}/images/{image_id}/delete",
         base_url="http://store-a.test",
     )
     assert response.status_code == 302
-    assert deleted
     with app.app_context():
-        assert ProductImage.query.filter_by(product_id=product.id).count() == 1
+        remaining = ProductImage.query.filter_by(product_id=product.id).all()
+        assert len(remaining) == 1
+        assert remaining[0].image_data
 
 
 def test_discount_cannot_exceed_regular_price(app, client):
@@ -540,11 +537,8 @@ def test_cart_rejects_unavailable_variants_and_changed_stock(app, client):
         assert Order.query.count() == 0
 
 
-def test_owner_can_change_profile_and_password(app, client, monkeypatch):
+def test_owner_can_change_profile_and_password(app, client):
     business_id, owner_id = make_tenant(app)
-    monkeypatch.setattr("app.routes.owner.upload_image", lambda file, folder: (
-        "https://media.example/store-logo.webp", f"{folder}/store-logo",
-    ))
     login_owner(client)
     settings_page = client.get("/dashboard/settings", base_url="http://store-a.test")
     assert settings_page.status_code == 200 and b"Store information" in settings_page.data
@@ -567,7 +561,8 @@ def test_owner_can_change_profile_and_password(app, client, monkeypatch):
         business = db.session.get(Business, business_id)
         assert business.name == "My Updated Store"
         assert business.whatsapp_number == "+234 801 222 3333"
-        assert business.logo_url == "https://media.example/store-logo.webp"
+        assert business.logo_url == f"/media/businesses/{business_id}/logo"
+        assert business.logo_data.startswith(b"RIFF") and business.logo_mime_type == "image/webp"
         assert StoreSettings.query.filter_by(business_id=business_id).one().hero_title == "The collection"
     password_response = client.post("/dashboard/account/password", data={
         "current_password": "secret123",
