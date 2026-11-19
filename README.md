@@ -63,11 +63,10 @@ can still point to the shop.
 | `SECRET_KEY` | Required outside testing; at least 32 random characters |
 | `DATABASE_URL` | PostgreSQL in production; SQLite for local development |
 | `COOKIE_SECURE` | Keep `true` on HTTPS; set `false` only for local HTTP |
-| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Product and logo image uploads |
+| `UPLOAD_FOLDER` | Directory used to store product and logo images; defaults to `instance/uploads` |
 | `RENDER_API_KEY`, `RENDER_SERVICE_ID` | Optional existing custom-domain integration |
 
-Image uploads validate JPEG, PNG and WebP signatures and use Cloudinary. Keep
-credentials in your environment or Render settings; never commit them.
+Image uploads validate JPEG, PNG and WebP signatures and are stored on the server filesystem. No third-party image-hosting account or API key is required. The upload directory must be persistent in production.
 
 ## Deploy to Render
 
@@ -77,9 +76,9 @@ credentials in your environment or Render settings; never commit them.
 4. Configure `SECRET_KEY`, `DATABASE_URL` and `COOKIE_SECURE=true`. Add
    Cloudinary credentials to enable image uploads.
 5. Run `python -m flask --app run:app db upgrade` once from the Render shell.
-6. Create the shop and owner account with the Flask shell if they do not
+7. Create the shop and owner account with the Flask shell if they do not
    already exist.
-7. Visit `/health` to check application and database readiness.
+8. Visit `/health` to check application and database readiness.
 
 ## Customer ordering
 
