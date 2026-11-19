@@ -742,7 +742,8 @@ def test_local_image_upload_serve_and_delete(app, tmp_path):
     assert response.status_code == 200
     assert response.headers["X-Content-Type-Options"] == "nosniff"
 
-    delete_image(storage_key)
+    with app.app_context():
+        delete_image(storage_key)
     assert not image_path.exists()
 
 
