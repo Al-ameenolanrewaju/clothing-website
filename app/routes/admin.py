@@ -12,7 +12,7 @@ from wtforms import FileField, StringField, TextAreaField, SelectField, SubmitFi
 from wtforms.validators import DataRequired, Email, Length, Optional, Regexp
 
 from .. import db
-from ..media import upload_image
+from ..media import read_image
 from ..models import AdminAuditLog, Business, Category, Domain, Order, PasswordResetToken, Product, StoreEvent, StoreSettings, StoreVisit, User, utcnow
 from .. import render_api
 from ..render_api import RenderApiError
@@ -143,9 +143,8 @@ def businesses():
             logo = form.logo.data
             if logo and logo.filename:
                 try:
-                    business.logo_url, business.logo_public_id = upload_image(
-                        logo, f"clothing-catalogue/{business.id}/brand"
-                    )
+                    business.logo_data, business.logo_mime_type, _filename = read_image(logo)
+                    business.logo_url = url_for("business_logo", business_id=business.id)
                 except (ValueError, RuntimeError) as error:
                     db.session.rollback()
                     flash(str(error), "danger")

@@ -895,3 +895,60 @@ def test_csrf_is_required_outside_disabled_test_configuration():
     app = create_app(CsrfConfig)
     response = app.test_client().post("/login", data={"email": "admin@example.com", "password": "secret123"})
     assert response.status_code == 400
+
+
+def test_database_image_storage_and_public_serving(app):
+    business_id, _ = make_tenant(app)
+    product_id = make_product(app, business_id)
+    image_bytes = b"\\x89PNG\\r\\n\\x1a\\n" + b"\\x00" * 12
+    with app.app_context():
+        business = db.session.get(Business, business_id)
+        business.logo_data = image_bytes
+        business.logo_mime_type = "image/png"
+        business.logo_url = f"/media/businesses/{business_id}/logo"
+        product_image = ProductImage(
+            business_id=business_id,
+            product_id=product_id,
+            url="",
+            image_data=image_bytes,
+            mime_type="image/png",
+            original_filename="catalogue.png",
+            alt_text="Linen Shirt",
+            sort_order=0,
+        )
+        db.session.add(product_image)
+        db.session.flush()
+        product_image.url = f"/media/products/{product_image.id}"
+        image_url = product_image.url
+        db.session.commit()
+        image_id = product_image.id
+
+    client = app.test_client()
+    product_response = client.get(image_url)
+    logo_response = client.get(f"/media/businesses/{business_id}/logo")
+    assert product_response.status_code == 200
+    assert product_response.data == image_bytes
+    assert product_response.mimetype == "image/png"
+    assert product_response.headers["X-Content-Type-Options"] == "nosniff"
+    assert logo_response.status_code == 200
+    assert logo_response.data == image_bytes
+
+    # Database records, including the image bytes, survive a new app context.
+    with app.app_context():
+        stored = db.session.get(ProductImage, image_id)
+        assert stored.image_data == image_bytes
+        assert stored.original_filename == "catalogue.png"
+
+
+def test_database_image_upload_validation_rejects_oversized_or_invalid_files():
+    from app.media import read_image
+
+    invalid = FileStorage(stream=BytesIO(b"not-an-image"), filename="bad.png")
+    with pytest.raises(ValueError, match="valid JPEG"):
+        read_image(invalid)
+    oversized = FileStorage(
+        stream=BytesIO(b"\\x89PNG\\r\\n\\x1a\\n" + b"x" * (5 * 1024 * 1024 + 1)),
+        filename="large.png",
+    )
+    with pytest.raises(ValueError, match="5 MB"):
+        read_image(oversized)
