@@ -851,3 +851,32 @@ a { color: inherit; }
     transition:none !important;
   }
 }
+
+
+/* Fix mobile catalogue image cropping and single-item alignment */
+.fashion-store .luxury-product-card .product-photo {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  aspect-ratio:3/4;
+  background:#f0eee8;
+}
+.fashion-store .luxury-product-card .product-photo img {
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center;
+}
+.fashion-store .luxury-product-grid:has(> .luxury-product-card:only-child) {
+  grid-template-columns:minmax(0,420px);
+  justify-content:center;
+}
+@media(max-width:600px) {
+  .fashion-store .luxury-product-grid:has(> .luxury-product-card:only-child) {
+    grid-template-columns:minmax(0,1fr);
+    max-width:440px;
+    margin-right:auto;
+    margin-left:auto;
+  }
+}
