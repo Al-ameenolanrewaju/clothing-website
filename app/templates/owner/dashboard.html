@@ -8,7 +8,7 @@
     <div class="navbar-nav ms-auto gap-lg-2">
       <a class="nav-link" href="{{ url_for('owner.products') }}">Products</a>
       <a class="nav-link" href="{{ url_for('owner.categories') }}">Categories</a>
-      <a class="nav-link" href="{{ url_for('owner.settings') }}">Store information</a>
+      <a class="nav-link fw-semibold" href="{{ url_for('owner.settings') }}">Store settings / WhatsApp</a>
       <a class="nav-link" href="{{ url_for('owner.change_password') }}">Change password</a>
       <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-dark">Sign out</button></form>
     </div>
