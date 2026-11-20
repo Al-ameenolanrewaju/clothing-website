@@ -63,7 +63,7 @@ class PasswordChangeForm(FlaskForm):
 
 def _split_options(value):
     return list(dict.fromkeys(
-        item.strip() for item in (value or "").replace("\\n", ",").split(",")
+        item.strip() for item in (value or "").replace("\n", ",").split(",")
         if item.strip()
     ))
 
