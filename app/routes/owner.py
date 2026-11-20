@@ -248,20 +248,8 @@ def edit_product(product_id):
         product.description = form.description.data
         product.regular_price = form.regular_price.data
         product.discounted_price = form.discounted_price.data
-        product.gender = form.gender.data or "Unisex"
-        product.fashion_type = form.fashion_type.data or "Ready-to-wear"
         product.sku = form.sku.data or None
-        product.featured = form.featured.data
-        product.new_arrival = form.new_arrival.data
         product.is_published = form.is_published.data
-        try:
-            parsed_category_id = int(form.category_id.data or 0)
-            product.category_id = parsed_category_id if parsed_category_id > 0 and Category.query.filter_by(
-                id=parsed_category_id,
-                business_id=current_user.business_id,
-            ).first() else None
-        except (TypeError, ValueError):
-            product.category_id = None
         try:
             _save_product_images(product)
             _sync_product_variants(
