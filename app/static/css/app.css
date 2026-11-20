@@ -356,3 +356,74 @@ a { color: inherit; }
  .luxury-order-banner { margin:0 16px 42px; padding:24px 18px; }
  .luxury-footer-inner { padding:44px 20px 26px; }
 }
+
+
+/* Sulex mobile and empty-catalogue corrections */
+.fashion-store .luxury-nav {
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  justify-content:space-between;
+  align-items:center;
+  width:100%;
+  min-width:0;
+  gap:16px;
+  padding:16px clamp(18px,5vw,64px);
+}
+.fashion-store .luxury-brand { flex:0 0 auto; min-width:0; white-space:nowrap; }
+.fashion-store .luxury-menu {
+  display:flex !important;
+  flex:0 1 auto;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  align-items:center;
+  justify-content:flex-end;
+  gap:clamp(12px,2.5vw,30px);
+  margin:0 0 0 auto !important;
+  min-width:0;
+}
+.fashion-store .luxury-menu a { display:inline-flex; flex:0 0 auto; white-space:nowrap; }
+.editorial-brand-panel {
+  display:flex; width:100%; height:100%; min-height:420px;
+  flex-direction:column; justify-content:center; align-items:center;
+  padding:30px; text-align:center;
+  background:radial-gradient(ellipse at 50% 38%,#f5f0e7 0,#e9e1d5 48%,#dcd2c4 100%);
+}
+.editorial-brand-name {
+  color:#292923; font-family:var(--serif);
+  font-size:clamp(42px,7vw,82px); letter-spacing:.06em;
+}
+.editorial-brand-caption {
+  margin-top:18px; color:#8a765f; font-size:10px;
+  letter-spacing:.24em; text-transform:uppercase;
+}
+.catalogue-empty-state {
+  grid-column:1/-1; width:100%; max-width:760px; margin:28px auto 8px;
+  padding:clamp(28px,5vw,54px); text-align:center;
+  border:1px solid #e5dfd5; background:#f5f2ec;
+}
+.catalogue-empty-state h3 {
+  margin:0 0 12px; color:#262620; font-family:var(--serif);
+  font-size:clamp(27px,4vw,40px); font-weight:400;
+}
+.catalogue-empty-state p {
+  max-width:520px; margin:0 auto 20px; color:#6d6a62;
+  font-size:14px; line-height:1.8;
+}
+.catalogue-empty-state a {
+  color:#765d42; font-size:11px; letter-spacing:.1em;
+  text-decoration:none; text-transform:uppercase;
+  border-bottom:1px solid #b9a387; padding-bottom:5px;
+}
+@media(max-width:600px) {
+  .fashion-store .luxury-nav {
+    min-height:66px; padding:12px 16px; gap:10px;
+  }
+  .fashion-store .luxury-brand { font-size:22px; }
+  .fashion-store .luxury-menu { gap:clamp(9px,3vw,15px); }
+  .fashion-store .luxury-menu a { font-size:9px; letter-spacing:.035em; }
+  .fashion-store .luxury-hero { grid-template-columns:minmax(0,1fr); }
+  .fashion-store .luxury-hero-image { height:270px; min-height:270px; }
+  .editorial-brand-panel { min-height:270px; }
+  .catalogue-empty-state { margin-top:12px; padding:30px 20px; }
+}
