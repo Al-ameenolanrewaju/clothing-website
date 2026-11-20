@@ -49,6 +49,74 @@ def create_app(config_object=None):
 
     from . import models
 
+    @app.cli.command("bootstrap-sulex")
+    def bootstrap_sulex():
+        """Create the initial Sulex store and owner from private environment variables."""
+        from sqlalchemy.exc import IntegrityError
+
+        owner_email = os.getenv("SULEX_OWNER_EMAIL", "").strip().lower()
+        owner_password = os.getenv("SULEX_OWNER_PASSWORD", "")
+        existing_business = models.Business.query.filter_by(slug="sulex").first()
+        existing_owner = models.User.query.filter_by(email=owner_email).first() if owner_email else None
+
+        # Safe on every restart after successful setup; never resets an existing password.
+        if existing_business and existing_owner and existing_owner.business_id == existing_business.id:
+            print("Sulex bootstrap already completed.")
+            return
+        if not owner_email or not owner_password:
+            raise RuntimeError("Set SULEX_OWNER_EMAIL and SULEX_OWNER_PASSWORD in the service environment.")
+        if len(owner_password) < 12:
+            raise RuntimeError("SULEX_OWNER_PASSWORD must be at least 12 characters.")
+        if existing_owner:
+            raise RuntimeError("SULEX_OWNER_EMAIL is already assigned to a different account.")
+        if existing_business and existing_business.status != "ACTIVE":
+            raise RuntimeError("The existing Sulex store is not active; refusing to change its status.")
+
+        try:
+            business = existing_business or models.Business(
+                name="Sulex",
+                slug="sulex",
+                description="Sulex clothing store",
+                contact_email=owner_email,
+                status="ACTIVE",
+            )
+            if not existing_business:
+                db.session.add(business)
+                db.session.flush()
+
+            owner = models.User(
+                business_id=business.id,
+                name="Sulex Owner",
+                email=owner_email,
+                role="OWNER",
+                active=True,
+            )
+            owner.set_password(owner_password)
+            db.session.add(owner)
+
+            if not models.StoreSettings.query.filter_by(business_id=business.id).first():
+                db.session.add(models.StoreSettings(business_id=business.id))
+
+            if not models.Category.query.filter_by(business_id=business.id).first():
+                defaults = {
+                    "Men": ["Shirts", "Trousers", "Native Wear", "Senator Outfits", "Agbada", "Kaftans", "Jackets", "Shoes", "Accessories"],
+                    "Women": ["Dresses", "Abayas", "Hijabs", "Jilbabs", "Two-Piece Outfits", "Skirts", "Blouses", "Trousers", "Accessories"],
+                }
+                for gender, names in defaults.items():
+                    for category_name in names:
+                        slug = "-".join((gender + "-" + category_name).lower().replace("&", " ").split())
+                        db.session.add(models.Category(
+                            business_id=business.id,
+                            name=category_name,
+                            slug=slug,
+                            gender=gender,
+                        ))
+            db.session.commit()
+            print("Sulex store and owner account created successfully.")
+        except IntegrityError:
+            db.session.rollback()
+            raise RuntimeError("Sulex bootstrap encountered an existing database record; no partial setup was saved.")
+
     @login_manager.user_loader
     def load_user(user_id):
         try:
