@@ -8,12 +8,21 @@
   <div class="card border-0 shadow-sm mb-4"><div class="card-body p-4">
     <h2 class="h5 mb-4">Add a product</h2>
     <form method="post" enctype="multipart/form-data">{{ form.hidden_tag() }}
-      <div class="mb-3"><label class="form-label" for="{{ form.name.id }}">Product name</label>{{ form.name(class="form-control form-control-lg", placeholder="e.g. Classic Abaya") }}{% for error in form.name.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}</div>
-      <div class="mb-3"><label class="form-label" for="{{ form.regular_price.id }}">Price (₦)</label>{{ form.regular_price(class="form-control form-control-lg", placeholder="e.g. 25000", inputmode="decimal") }}{% for error in form.regular_price.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}</div>
+      <div class="row g-3">
+      <div class="col-md-8 mb-3"><label class="form-label" for="{{ form.name.id }}">Product name</label>{{ form.name(class="form-control form-control-lg", placeholder="e.g. Classic Abaya") }}{% for error in form.name.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}</div>
+      <div class="col-md-4 mb-3"><label class="form-label" for="{{ form.slug.id }}">URL slug</label>{{ form.slug(class="form-control", placeholder="classic-abaya") }}<div class="form-text">Created automatically when left blank.</div></div>
+      <div class="col-md-4 mb-3"><label class="form-label" for="{{ form.regular_price.id }}">Regular price (₦)</label>{{ form.regular_price(class="form-control form-control-lg", placeholder="e.g. 25000", inputmode="decimal") }}{% for error in form.regular_price.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}</div>
+      <div class="col-md-4 mb-3"><label class="form-label" for="{{ form.discounted_price.id }}">Sale price (₦)</label>{{ form.discounted_price(class="form-control form-control-lg", placeholder="Optional") }}</div>
+      <div class="col-md-4 mb-3"><label class="form-label" for="{{ form.sku.id }}">SKU</label>{{ form.sku(class="form-control", placeholder="Optional") }}</div>
+      <div class="col-md-4 mb-3"><label class="form-label" for="{{ form.category_id.id }}">Category</label><select class="form-select" id="{{ form.category_id.id }}" name="{{ form.category_id.name }}"><option value="0">Uncategorised</option>{% for category in categories %}<option value="{{ category.id }}" {% if form.category_id.data|int == category.id %}selected{% endif %}>{{ category.name }}</option>{% endfor %}</select></div>
+      <div class="col-md-4 mb-3"><label class="form-label" for="{{ form.gender.id }}">Collection</label>{{ form.gender(class="form-select") }}</div>
+      <div class="col-md-4 mb-3"><label class="form-label" for="{{ form.fashion_type.id }}">Fashion type</label>{{ form.fashion_type(class="form-control", placeholder="Ready-to-wear") }}</div>
+      </div>
       <div class="mb-3"><label class="form-label" for="{{ form.description.id }}">Description</label>{{ form.description(class="form-control", rows=4, placeholder="Describe the product") }}</div>
       <div class="mb-3"><label class="form-label">Product photos</label><input type="file" name="images" class="form-control" accept="image/jpeg,image/png,image/webp" multiple><div class="form-text">You can select up to 8 photos.</div></div>
       <div class="mb-3"><label class="form-label">Available sizes</label>{{ form.sizes(class="form-control", placeholder="S, M, L, XL or Free Size") }}<div class="form-text">Separate each size with a comma.</div></div>
       <div class="mb-4"><label class="form-label">Available colours</label>{{ form.colours(class="form-control", placeholder="Black, Wine, Navy Blue") }}<div class="form-text">Separate each colour with a comma.</div></div>
+      <div class="d-flex flex-wrap gap-4 mb-4"><label class="form-check">{{ form.featured(class="form-check-input") }} <span class="form-check-label">Feature on homepage</span></label><label class="form-check">{{ form.new_arrival(class="form-check-input", checked=True) }} <span class="form-check-label">Mark as new arrival</span></label><label class="form-check">{{ form.is_published(class="form-check-input", checked=True) }} <span class="form-check-label">Published</span></label></div>
       {{ form.submit(class="btn btn-dark btn-lg w-100", value="Save product") }}
     </form>
   </div></div>

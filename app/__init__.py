@@ -1,10 +1,11 @@
 import os
 
-from flask import Flask, g, request, session, send_from_directory, Response
+from flask import Flask, g, request, session, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_wtf import CSRFProtect
+from werkzeug.utils import safe_join
 
 
 db = SQLAlchemy()
@@ -205,12 +206,20 @@ def create_app(config_object=None):
 
     @app.get("/media/<path:filename>")
     def uploaded_media(filename):
-        response = send_from_directory(
-            app.config["UPLOAD_FOLDER"],
-            filename,
-            max_age=86400,
-        )
+        resolved_path = safe_join(app.config["UPLOAD_FOLDER"], filename)
+        if not resolved_path:
+            from flask import abort
+            abort(404)
+        resolved_path = os.path.realpath(resolved_path)
+        upload_root = os.path.realpath(app.config["UPLOAD_FOLDER"])
+        if os.path.commonpath([resolved_path, upload_root]) != upload_root or not os.path.isfile(resolved_path):
+            from flask import abort
+            abort(404)
+        with open(resolved_path, "rb") as media_file:
+            data = media_file.read()
+        response = Response(data, mimetype="application/octet-stream")
         response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Cache-Control"] = "public, max-age=86400"
         return response
 
     @app.get("/health")

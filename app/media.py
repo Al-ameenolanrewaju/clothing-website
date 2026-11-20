@@ -1,4 +1,5 @@
 from pathlib import Path
+import time
 from uuid import uuid4
 
 from flask import current_app, url_for
@@ -61,10 +62,16 @@ def delete_image(storage_key: str):
     target = (upload_root / relative_path).resolve()
     if upload_root not in target.parents:
         raise ValueError("Invalid image reference.")
-    try:
-        target.unlink(missing_ok=True)
-    except OSError as error:
-        raise MediaError("The image could not be deleted from upload storage.") from error
+    for attempt in range(4):
+        try:
+            target.unlink(missing_ok=True)
+            return
+        except PermissionError:
+            if attempt == 3:
+                raise MediaError("The image could not be deleted from upload storage.")
+            time.sleep(0.05)
+        except OSError as error:
+            raise MediaError("The image could not be deleted from upload storage.") from error
 
 
 IMAGE_MIME_TYPES = {

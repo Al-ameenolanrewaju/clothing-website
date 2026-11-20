@@ -23,6 +23,8 @@ python -m flask --app "app:create_app()" run
 
 Open `http://127.0.0.1:5000/login` for the owner login. The app requires a
 `SECRET_KEY` of at least 32 characters outside test mode.
+Running `python run.py` loads environment variables from a local `.env` file.
+Keep `.env` private and do not commit it.
 
 ## Create the shop and owner account
 

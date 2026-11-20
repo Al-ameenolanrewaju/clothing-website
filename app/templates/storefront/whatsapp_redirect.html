@@ -1,8 +1,0 @@
-{% extends "base.html" %}
-{% block title %}Order {{ order.reference }}{% endblock %}
-{% block body_class %}fashion-store{% endblock %}
-{% block body %}
-{% include "storefront/_nav.html" %}
-<main class="order-created"><span class="eyebrow">Order initiation</span><h1>Your order is ready to send.</h1><p class="order-reference">Reference {{ order.reference }}</p><p>We have saved your order request. It is not confirmed until {{ business.name }} confirms it.</p><a class="button button-dark" href="{{ whatsapp_url }}" target="_blank" rel="noopener">Continue to WhatsApp <span>&rarr;</span></a><p class="small-note">Opening WhatsApp does not send the message automatically.</p></main>
-{% include "storefront/_footer.html" %}
-{% endblock %}

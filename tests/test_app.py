@@ -240,12 +240,13 @@ def test_domain_resolution_isolated_and_single_store_fallback(app, client):
     product_a = make_product(app, business_a, name="A coat", slug="a-coat")
     product_b = make_product(app, business_b, name="B dress", slug="b-dress", gender="Women")
 
-    response_a = client.get("/catalogue", base_url="http://store-a.test")
-    response_b = client.get("/catalogue", base_url="http://store-b.test")
-    response_unknown = client.get("/catalogue", base_url="http://unknown.test")
+    response_a = client.get("/", base_url="http://store-a.test")
+    response_b = client.get("/", base_url="http://store-b.test")
+    response_unknown = client.get("/", base_url="http://unknown.test")
     assert b"A coat" in response_a.data and b"B dress" not in response_a.data
     assert b"B dress" in response_b.data and b"A coat" not in response_b.data
     assert b"A coat" in response_unknown.data and b"B dress" not in response_unknown.data
+    assert client.get("/catalogue", base_url="http://store-a.test").status_code == 404
 
 
 def test_owner_cannot_read_or_mutate_another_business_product_or_order(app, client):
@@ -438,103 +439,27 @@ def test_storefront_filters_and_product_pages(app, client):
                            stock_quantity=1, is_available=True),
         ])
         db.session.commit()
-    listing = client.get("/catalogue?gender=Women&size=M&colour=Blue&availability=available",
-                         base_url="http://store-a.test")
-    detail = client.get("/product/blue-coat", base_url="http://store-a.test")
     home = client.get("/", base_url="http://store-a.test")
-    assert b"Blue Coat" in listing.data and b"Black Trousers" not in listing.data
-    assert detail.status_code == 200 and b"Order on WhatsApp" in detail.data
+    assert b"Blue Coat" in home.data and b"Order on WhatsApp" in home.data
     assert home.status_code == 200 and b"Pieces made to be remembered." in home.data
-    assert client.get("/cart", base_url="http://store-a.test").status_code == 200
+    assert client.get("/catalogue", base_url="http://store-a.test").status_code == 404
+    assert client.get("/product/blue-coat", base_url="http://store-a.test").status_code == 404
+    assert client.get("/cart", base_url="http://store-a.test").status_code == 404
     login_owner(client)
     dashboard = client.get("/dashboard/", base_url="http://store-a.test")
     assert dashboard.status_code == 200 and b"Manage products" in dashboard.data
 
 
 def test_cart_and_checkout_use_server_price_stock_and_snapshot(app, client):
-    business_id, _ = make_tenant(app)
-    product_id = make_product(app, business_id, name="Senator Outfit", slug="senator-outfit")
-    with app.app_context():
-        variant = ProductVariant(
-            business_id=business_id,
-            product_id=product_id,
-            size="L",
-            colour="Blue",
-            price_override=27500,
-            stock_quantity=2,
-            is_available=True,
-        )
-        db.session.add(variant)
-        db.session.commit()
-        variant_id = variant.id
-    added = client.post("/cart/add", data={
-        "product_id": product_id, "variant_id": variant_id,
-        "size": "L", "colour": "Blue", "quantity": "1", "price": "0.01",
-    }, base_url="http://store-a.test")
-    assert added.status_code == 302
-    response = client.post("/checkout", data={
-        "name": "Ada", "phone": "08012345678", "address": "12 Market Road",
-        "instructions": "Call before delivery", "total": "0.01",
-    }, base_url="http://store-a.test")
-    assert response.status_code == 200
-    with app.app_context():
-        order = Order.query.one()
-        item = OrderItem.query.one()
-        order_id = order.id
-        order_reference = order.reference
-        assert order.status == "WHATSAPP_CHECKOUT_INITIATED"
-        assert order.total == 27500 and item.unit_price == 27500
-        assert item.product_name == "Senator Outfit" and item.size == "L" and item.colour == "Blue"
-        assert db.session.get(ProductVariant, variant_id).stock_quantity == 1
-        product = db.session.get(Product, product_id)
-        product.name = "Renamed after order"
-        product.regular_price = 99999
-        db.session.commit()
-        assert item.product_name == "Senator Outfit" and item.unit_price == 27500
-    click = client.get(f"/order/{order_reference}/whatsapp", base_url="http://store-a.test")
-    assert click.status_code == 302 and "wa.me/2348000000000" in click.location
-    assert "Senator%20Outfit" in click.location or "Senator+Outfit" in click.location
-    with app.app_context():
-        assert StoreEvent.query.filter_by(order_id=order_id, event_type="WHATSAPP_CHECKOUT_CLICK").count() == 1
+    make_tenant(app)
+    assert client.post("/cart/add", base_url="http://store-a.test").status_code == 404
+    assert client.post("/checkout", base_url="http://store-a.test").status_code == 404
 
 
 def test_cart_rejects_unavailable_variants_and_changed_stock(app, client):
-    business_id, _ = make_tenant(app)
-    product_id = make_product(app, business_id)
-    with app.app_context():
-        variant = ProductVariant(business_id=business_id, product_id=product_id, size="S", colour="White",
-                                 stock_quantity=1, is_available=True)
-        db.session.add(variant)
-        db.session.commit()
-        variant_id = variant.id
-    response = client.post("/cart/add", data={
-        "product_id": product_id, "variant_id": variant_id,
-        "size": "XL", "colour": "White", "quantity": "1",
-    }, base_url="http://store-a.test")
-    assert response.status_code == 302
-    client.post("/cart/add", data={
-        "product_id": product_id, "size": "S", "colour": "White", "quantity": "1",
-    }, base_url="http://store-a.test")
-    with app.app_context():
-        db.session.get(ProductVariant, variant_id).stock_quantity = 0
-        db.session.commit()
-    checkout = client.post("/checkout", data={
-        "name": "Ada", "phone": "08012345678", "address": "Address",
-    }, base_url="http://store-a.test")
-    assert checkout.status_code == 200
-    assert b"Cart contents changed" in checkout.data
-    with app.app_context():
-        variant = db.session.get(ProductVariant, variant_id)
-        variant.stock_quantity = 1
-        variant.is_available = True
-        db.session.commit()
-    invalid_phone = client.post("/checkout", data={
-        "name": "Ada", "phone": "not a phone 123", "address": "Address",
-    }, base_url="http://store-a.test")
-    assert invalid_phone.status_code == 200
-    assert b"valid name, phone number" in invalid_phone.data
-    with app.app_context():
-        assert Order.query.count() == 0
+    make_tenant(app)
+    assert client.post("/cart/add", base_url="http://store-a.test").status_code == 404
+    assert client.post("/cart/update", base_url="http://store-a.test").status_code == 404
 
 
 def test_owner_can_change_profile_and_password(app, client):
@@ -665,10 +590,10 @@ def test_domain_validation_and_manual_verification(app, client, monkeypatch):
     assert ssl_check.status_code == 302
     with app.app_context():
         assert db.session.get(Domain, domain_id).ssl_status == "ACTIVE"
-    assert client.get("/catalogue", base_url="http://shop.example.com").status_code == 200
+    assert client.get("/", base_url="http://shop.example.com").status_code == 200
     suspended = client.post(f"/admin/domains/{domain_id}/suspend")
     assert suspended.status_code == 302
-    assert client.get("/catalogue", base_url="http://shop.example.com").status_code == 404
+    assert client.get("/", base_url="http://shop.example.com").status_code == 404
     assert b"Reactivate" in client.get("/admin/domains").data
     reactivated = client.post(f"/admin/domains/{domain_id}/reactivate")
     assert reactivated.status_code == 302
