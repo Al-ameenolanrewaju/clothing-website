@@ -33,12 +33,6 @@
       {% endfor %}
     </div>
   </section>
-  {% if new_arrivals %}
-  <section class="luxury-collection luxury-collection-alt">
-    <div class="luxury-section-head"><div><span class="eyebrow">Just added</span><h2>The latest arrivals</h2></div></div>
-    <div class="product-grid luxury-product-grid">{% for product in new_arrivals %}{% include "storefront/_product_card.html" %}{% endfor %}</div>
-  </section>
-  {% endif %}
   <section class="luxury-order-banner" id="order">
     <div><span class="eyebrow">Personal service</span><h2>Need a little more information?</h2><p>Ask us about a piece, confirm available sizes and colours, or place your order directly through WhatsApp.</p></div>
     {% if business.whatsapp_number %}<a class="luxury-button luxury-button-gold" href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">Message Sulex ↗</a>{% endif %}
