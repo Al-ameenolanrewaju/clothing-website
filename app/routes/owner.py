@@ -26,28 +26,16 @@ class CategoryForm(FlaskForm):
 
 
 class ProductForm(FlaskForm):
-    name = StringField("Name", validators=[DataRequired(), Length(max=180)])
-    slug = StringField("Slug", validators=[DataRequired(), Length(max=200), Regexp(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")])
-    description = TextAreaField("Description")
+    name = StringField("Product name", validators=[DataRequired(), Length(max=180)])
     regular_price = DecimalField(
-        "Regular price",
+        "Price",
         places=2,
         validators=[DataRequired(), NumberRange(min=0, max=Decimal("9999999999.99"))],
     )
-    discounted_price = DecimalField(
-        "Discounted price",
-        places=2,
-        validators=[Optional(), NumberRange(min=0, max=Decimal("9999999999.99"))],
-    )
-    category_id = SelectField("Category", coerce=int)
-    gender = SelectField("Gender", choices=[("Men", "Men"), ("Women", "Women"), ("Unisex", "Unisex")])
-    fashion_type = SelectField("Fashion type", choices=[("Ready-to-wear", "Ready-to-wear"), ("Modest fashion", "Modest fashion")])
-    sku = StringField("SKU")
-    featured = BooleanField("Featured")
-    new_arrival = BooleanField("New arrival")
-    is_published = BooleanField("Published")
+    description = TextAreaField("Description")
+    sizes = StringField("Available sizes")
+    colours = StringField("Available colours")
     submit = SubmitField("Save product")
-
 
 class StoreSettingsForm(FlaskForm):
     name = StringField("Business name", validators=[DataRequired(), Length(max=160)])
@@ -73,12 +61,31 @@ class PasswordChangeForm(FlaskForm):
     submit = SubmitField("Change password")
 
 
-def _product_form_choices(form):
-    form.category_id.choices = [(0, "Uncategorized")] + [
-        (category.id, category.name)
-        for category in Category.query.filter_by(business_id=current_user.business_id).order_by(Category.name).all()
-    ]
+def _split_options(value):
+    return list(dict.fromkeys(
+        item.strip() for item in (value or "").replace("\\n", ",").split(",")
+        if item.strip()
+    ))
 
+
+def _sync_product_variants(product, sizes, colours):
+    for size in sizes:
+        for colour in colours:
+            existing = ProductVariant.query.filter_by(
+                business_id=product.business_id,
+                product_id=product.id,
+                size=size,
+                colour=colour,
+            ).first()
+            if not existing:
+                db.session.add(ProductVariant(
+                    business_id=product.business_id,
+                    product_id=product.id,
+                    size=size,
+                    colour=colour,
+                    stock_quantity=1,
+                    is_available=True,
+                ))
 
 def _save_product_images(product):
     images = [image for image in request.files.getlist("images") if image and image.filename]
@@ -132,91 +139,76 @@ def dashboard():
 @roles_required("OWNER")
 def products():
     form = ProductForm()
-    _product_form_choices(form)
     if form.validate_on_submit():
-        slug = slugify(form.slug.data)
-        if form.discounted_price.data is not None and form.discounted_price.data > form.regular_price.data:
-            flash("Discounted price cannot exceed regular price.", "danger")
-        elif Product.query.filter_by(business_id=current_user.business_id, slug=slug).first():
-            flash("A product with that slug already exists.", "danger")
-        else:
-            product = Product(
-                business_id=current_user.business_id,
-                name=form.name.data.strip(),
-                slug=slug,
-                description=form.description.data,
-                regular_price=form.regular_price.data,
-                discounted_price=form.discounted_price.data,
-                category_id=form.category_id.data or None,
-                gender=form.gender.data,
-                fashion_type=form.fashion_type.data,
-                sku=form.sku.data,
-                featured=form.featured.data,
-                new_arrival=form.new_arrival.data,
-                is_published=form.is_published.data,
+        name = form.name.data.strip()
+        base_slug = slugify(name) or "product"
+        slug = base_slug
+        suffix = 2
+        while Product.query.filter_by(business_id=current_user.business_id, slug=slug).first():
+            slug = f"{base_slug}-{suffix}"
+            suffix += 1
+        product = Product(
+            business_id=current_user.business_id,
+            name=name,
+            slug=slug,
+            description=form.description.data,
+            regular_price=form.regular_price.data,
+            is_published=True,
+            featured=False,
+            new_arrival=True,
+        )
+        db.session.add(product)
+        db.session.flush()
+        try:
+            _save_product_images(product)
+            _sync_product_variants(
+                product,
+                _split_options(form.sizes.data),
+                _split_options(form.colours.data),
             )
-            db.session.add(product)
-            db.session.flush()
-            try:
-                _save_product_images(product)
-            except ValueError as error:
-                db.session.rollback()
-                flash(str(error), "danger")
-                return redirect(url_for("owner.products"))
-            db.session.commit()
-            db.session.add(ActivityLog(business_id=current_user.business_id, user_id=current_user.id,
-                                       action="PRODUCT_CREATED", details=product.name))
-            db.session.commit()
-            flash("Product created.", "success")
+        except ValueError as error:
+            db.session.rollback()
+            flash(str(error), "danger")
             return redirect(url_for("owner.products"))
+        db.session.commit()
+        db.session.add(ActivityLog(business_id=current_user.business_id, user_id=current_user.id,
+                                   action="PRODUCT_CREATED", details=product.name))
+        db.session.commit()
+        flash("Product created.", "success")
+        return redirect(url_for("owner.products"))
     items = Product.query.filter_by(business_id=current_user.business_id).order_by(Product.created_at.desc()).all()
     return render_template("owner/products.html", form=form, items=items)
-
 
 @bp.route("/products/<int:product_id>/edit", methods=["GET", "POST"])
 @roles_required("OWNER")
 def edit_product(product_id):
     product = Product.query.filter_by(id=product_id, business_id=current_user.business_id).first_or_404()
     form = ProductForm(obj=product)
-    _product_form_choices(form)
+    if request.method == "GET":
+        form.sizes.data = ", ".join(dict.fromkeys(v.size for v in product.variants))
+        form.colours.data = ", ".join(dict.fromkeys(v.colour for v in product.variants))
     if form.validate_on_submit():
-        slug = slugify(form.slug.data)
-        collision = Product.query.filter(
-            Product.business_id == current_user.business_id,
-            Product.slug == slug,
-            Product.id != product.id,
-        ).first()
-        if form.discounted_price.data is not None and form.discounted_price.data > form.regular_price.data:
-            flash("Discounted price cannot exceed regular price.", "danger")
-        elif collision:
-            flash("A product with that slug already exists.", "danger")
-        else:
-            product.name = form.name.data.strip()
-            product.slug = slug
-            product.description = form.description.data
-            product.regular_price = form.regular_price.data
-            product.discounted_price = form.discounted_price.data
-            product.category_id = form.category_id.data or None
-            product.gender = form.gender.data
-            product.fashion_type = form.fashion_type.data
-            product.sku = form.sku.data
-            product.featured = form.featured.data
-            product.new_arrival = form.new_arrival.data
-            product.is_published = form.is_published.data
-            try:
-                _save_product_images(product)
-            except ValueError as error:
-                db.session.rollback()
-                flash(str(error), "danger")
-                return redirect(url_for("owner.edit_product", product_id=product.id))
-            db.session.commit()
-            db.session.add(ActivityLog(business_id=current_user.business_id, user_id=current_user.id,
-                                       action="PRODUCT_UPDATED", details=product.name))
-            db.session.commit()
-            flash("Product updated.", "success")
-            return redirect(url_for("owner.products"))
+        product.name = form.name.data.strip()
+        product.description = form.description.data
+        product.regular_price = form.regular_price.data
+        try:
+            _save_product_images(product)
+            _sync_product_variants(
+                product,
+                _split_options(form.sizes.data),
+                _split_options(form.colours.data),
+            )
+        except ValueError as error:
+            db.session.rollback()
+            flash(str(error), "danger")
+            return redirect(url_for("owner.edit_product", product_id=product.id))
+        db.session.commit()
+        db.session.add(ActivityLog(business_id=current_user.business_id, user_id=current_user.id,
+                                   action="PRODUCT_UPDATED", details=product.name))
+        db.session.commit()
+        flash("Product updated.", "success")
+        return redirect(url_for("owner.products"))
     return render_template("owner/product_edit.html", form=form, product=product)
-
 
 @bp.route("/products/<int:product_id>/archive", methods=["POST"])
 @roles_required("OWNER")
