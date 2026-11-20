@@ -444,39 +444,3 @@ a { color: inherit; }
   text-transform:uppercase; transition:background .2s ease,color .2s ease;
 }
 .product-whatsapp-button:hover { background:#80694f; border-color:#80694f; color:#fff !important; }
-
-
-/* Final Sulex storefront: a simple, product-first catalogue */
-.fashion-store { background:#fbfaf7; color:#24251f; }
-.sulex-catalogue { width:min(1440px,100%); margin:0 auto; padding:34px clamp(14px,4vw,58px) 64px; }
-.fashion-store .luxury-nav { position:relative; min-height:76px; padding:12px clamp(18px,5vw,72px); background:#fbfaf7; border-bottom:1px solid #e8e2d9; }
-.fashion-store .luxury-brand { color:#24251f; font-family:var(--serif); font-size:clamp(24px,3vw,36px); letter-spacing:.04em; }
-.fashion-store .luxury-brand img { max-width:190px; max-height:52px; object-fit:contain; }
-.fashion-store .luxury-product-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:34px 22px; border:0; }
-.fashion-store .luxury-product-card { min-width:0; border:0; background:transparent; }
-.fashion-store .luxury-product-card .product-photo { width:100%; aspect-ratio:3/4; overflow:hidden; background:#eeeae2; }
-.fashion-store .luxury-product-card .product-photo img { display:block; width:100%; height:100%; object-fit:cover; transition:transform .35s ease; }
-.fashion-store .luxury-product-card:hover .product-photo img { transform:scale(1.025); }
-.fashion-store .luxury-product-info { padding:13px 0 0; }
-.fashion-store .luxury-product-info h3 { margin:0 0 6px; font-family:var(--serif); font-size:21px; font-weight:400; line-height:1.3; }
-.fashion-store .luxury-product-info h3 a { color:#24251f; text-decoration:none; }
-.fashion-store .luxury-price { margin:0 0 12px; color:#55534c; font-size:14px; }
-.fashion-store .product-whatsapp-button { width:100%; min-height:44px; padding:12px 10px; border:1px solid #25251f; background:#25251f; color:#fff !important; text-align:center; font-size:10px; letter-spacing:.09em; }
-.fashion-store .product-whatsapp-button:hover { border-color:#8e704d; background:#8e704d; }
-.fashion-store .fashion-placeholder { min-height:100%; background:#eeeae2; }
-.fashion-store .fashion-placeholder:before, .fashion-store .fashion-placeholder span { display:none; }
-.sulex-empty { grid-column:1/-1; padding:80px 20px; color:#77766f; text-align:center; }
-.fashion-store .pagination-nav { display:flex; justify-content:center; align-items:center; gap:24px; padding:36px 0 0; color:#55534c; font-size:12px; }
-.fashion-store .pagination-nav a { color:#806342; text-decoration:none; }
-@media(max-width:1000px) {
-  .fashion-store .luxury-product-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:28px 16px; }
-}
-@media(max-width:640px) {
-  .sulex-catalogue { padding:18px 12px 42px; }
-  .fashion-store .luxury-nav { min-height:64px; padding:10px 16px; }
-  .fashion-store .luxury-product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px 11px; }
-  .fashion-store .luxury-product-info { padding-top:10px; }
-  .fashion-store .luxury-product-info h3 { font-size:17px; }
-  .fashion-store .luxury-price { font-size:13px; margin-bottom:10px; }
-  .fashion-store .product-whatsapp-button { min-height:42px; padding:11px 6px; font-size:9px; letter-spacing:.055em; }
-}
