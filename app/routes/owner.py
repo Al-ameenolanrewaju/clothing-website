@@ -21,7 +21,7 @@ bp = Blueprint("owner", __name__, url_prefix="/dashboard")
 class CategoryForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired(), Length(max=120)])
     slug = StringField("Slug", validators=[DataRequired(), Length(max=140), Regexp(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")])
-    gender = SelectField("Gender", choices=[("Men", "Men"), ("Women", "Women"), ("Unisex", "Unisex")])
+    gender = SelectField("Gender", choices=[("Men", "Men"), ("Women", "Women"), ("Unisex", "Unisex")], default="Unisex", validate_choice=False)
     submit = SubmitField("Save category")
 
 
