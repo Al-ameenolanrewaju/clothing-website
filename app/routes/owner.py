@@ -39,7 +39,7 @@ class ProductForm(FlaskForm):
         validators=[Optional(), NumberRange(min=0, max=Decimal("9999999999.99"))],
     )
     category_id = StringField("Category")
-    gender = SelectField("Gender", choices=[("Men", "Men"), ("Women", "Women"), ("Unisex", "Unisex")])
+    gender = StringField("Gender", default="Unisex", validators=[Optional(), Length(max=20)])
     fashion_type = StringField("Fashion type", validators=[Optional(), Length(max=30)])
     sku = StringField("SKU", validators=[Optional(), Length(max=100)])
     description = TextAreaField("Description")
