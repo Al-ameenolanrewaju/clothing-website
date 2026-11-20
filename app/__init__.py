@@ -65,8 +65,6 @@ def create_app(config_object=None):
             return
         if not owner_email or not owner_password:
             raise RuntimeError("Set SULEX_OWNER_EMAIL and SULEX_OWNER_PASSWORD in the service environment.")
-        if len(owner_password) < 12:
-            raise RuntimeError("SULEX_OWNER_PASSWORD must be at least 12 characters.")
         if existing_owner:
             raise RuntimeError("SULEX_OWNER_EMAIL is already assigned to a different account.")
         if existing_business and existing_business.status != "ACTIVE":
