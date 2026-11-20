@@ -29,15 +29,10 @@ def home():
     products = Product.query.filter_by(
         business_id=business.id,
         is_published=True,
-    ).order_by(Product.created_at.desc()).limit(12).all()
-    featured = [product for product in products if product.featured][:8]
-    if not featured:
-        featured = products[:8]
-    new_arrivals = Product.query.filter_by(
-        business_id=business.id,
-        is_published=True,
-        new_arrival=True,
-    ).order_by(Product.created_at.desc()).limit(8).all()
+    ).order_by(Product.created_at.desc()).all()
+    # Render every published product together in one catalogue grid.
+    featured = products
+    new_arrivals = []
     best_sellers = Product.query.join(OrderItem, OrderItem.product_id == Product.id).join(
         Order, Order.id == OrderItem.order_id
     ).filter(
