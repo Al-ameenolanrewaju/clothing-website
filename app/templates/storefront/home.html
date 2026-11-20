@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ business.name }} | Luxury Wears{% endblock %}
+{% block title %}{{ business.name }} | Clothing Catalogue{% endblock %}
 {% block body_class %}fashion-store{% endblock %}
 {% block body %}
 {% include "storefront/_nav.html" %}
@@ -7,21 +7,21 @@
   <section class="luxury-hero">
     <div class="luxury-hero-copy">
       <span class="eyebrow">New collection</span>
-      <h1>Elevated style for <em>every moment.</em></h1>
-      <p>Discover beautifully tailored pieces that blend comfort, confidence, and premium detailing. Designed for modern customers who want refined fashion without the stress of complicated ordering.</p>
+      <h1>Discover your next favourite look.</h1>
+      <p>Explore the latest pieces, view available sizes and colours, and contact us directly to ask questions or place an order.</p>
       <div class="hero-actions">
-        <a class="luxury-button luxury-button-gold" href="{{ url_for('storefront.catalogue') }}">Shop collection</a>
+        <a class="luxury-button luxury-button-gold" href="{{ url_for('storefront.catalogue') }}">Explore catalogue</a>
         {% if business.whatsapp_number %}<a class="luxury-button luxury-button-outline" href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">WhatsApp us</a>{% endif %}
       </div>
     </div>
     <div class="luxury-hero-image">
       {% if business.banner_url %}<img src="{{ business.banner_url }}" alt="{{ business.name }} collection">
       {% elif featured and featured[0].images %}<img src="{{ featured[0].images[0].url }}" alt="{{ featured[0].name }}">
-      {% else %}<div class="fashion-placeholder fashion-placeholder-hero"><span>ANJTOM</span></div>{% endif %}
+      {% else %}<div class="fashion-placeholder fashion-placeholder-hero"><span>{{ business.name }}</span></div>{% endif %}
     </div>
   </section>
   <section class="luxury-collection" id="catalogue">
-    <div class="luxury-section-head"><div><span class="eyebrow">The collection</span><h2>Pieces made to be remembered.</h2></div><a class="text-link" href="{{ url_for('storefront.catalogue') }}">View all pieces ↗</a></div>
+    <div class="luxury-section-head"><div><span class="eyebrow">The collection</span><h2>Find a look you love.</h2></div><a class="text-link" href="{{ url_for('storefront.catalogue') }}">View all pieces ↗</a></div>
     <div class="luxury-category-tabs">
       <a class="active" href="{{ url_for('storefront.catalogue') }}">All</a>
       {% for category in categories %}<a href="{{ url_for('storefront.catalogue', category=category.id) }}">{{ category.name }}</a>{% endfor %}
@@ -37,7 +37,7 @@
   </section>
   {% endif %}
   <section class="luxury-order-banner" id="order">
-    <div><span class="eyebrow">Personal styling & orders</span><h2>Need a custom look for your event or brand?</h2><p>Send us a message on WhatsApp and we will guide you through sizing, colours, and styling options.</p></div>
+    <div><span class="eyebrow">Personal styling & orders</span><h2>Seen something you like?</h2><p>Message us directly on WhatsApp for product details, availability and ordering.</p></div>
     {% if business.whatsapp_number %}<a class="luxury-button luxury-button-gold" href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">Start your order ↗</a>{% endif %}
   </section>
 </main>
