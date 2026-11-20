@@ -7,7 +7,6 @@
   <div class="collapse navbar-collapse" id="ownerNav">
     <div class="navbar-nav ms-auto gap-lg-2">
       <a class="nav-link" href="{{ url_for('owner.products') }}">Products</a>
-      <a class="nav-link" href="{{ url_for('owner.categories') }}">Categories</a>
       <a class="nav-link fw-semibold" href="{{ url_for('owner.settings') }}">Store settings / WhatsApp</a>
       <a class="nav-link" href="{{ url_for('owner.change_password') }}">Change password</a>
       <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-dark">Sign out</button></form>
@@ -24,7 +23,7 @@
     <a class="btn btn-outline-dark btn-sm" href="{{ url_for('storefront.home') }}" target="_blank" rel="noopener">View public catalogue</a>
   </div>
   <div class="row g-3 mt-2">
-    {% for label,value in [('Products',stats.products),('Published',stats.published),('Categories',stats.categories),('Out of stock variants',stats.out_of_stock)] %}
+    {% for label,value in [('Products',stats.products),('Published',stats.published),('Out of stock variants',stats.out_of_stock)] %}
     <div class="col-6 col-md-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">{{ label }}</div><div class="fs-3 fw-bold">{{ value }}</div></div></div></div>
     {% endfor %}
   </div>
