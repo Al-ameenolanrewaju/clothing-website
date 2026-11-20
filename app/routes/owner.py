@@ -599,10 +599,18 @@ def settings():
         form.about_text.data = store_settings.about_text
     if form.validate_on_submit():
         logo = request.files.get("logo")
+        banner = request.files.get("banner")
         new_logo = None
+        new_banner = None
         if logo and logo.filename:
             try:
                 new_logo = read_image(logo)
+            except ValueError as error:
+                flash(str(error), "danger")
+                return render_template("owner/settings.html", form=form, business=business, domains=business.domains)
+        if banner and banner.filename:
+            try:
+                new_banner = read_image(banner)
             except ValueError as error:
                 flash(str(error), "danger")
                 return render_template("owner/settings.html", form=form, business=business, domains=business.domains)
@@ -621,6 +629,10 @@ def settings():
             business.logo_data, business.logo_mime_type, _filename = new_logo
             business.logo_url = url_for("business_logo", business_id=business.id)
             business.logo_public_id = None
+        if new_banner:
+            business.banner_data, business.banner_mime_type, _filename = new_banner
+            business.banner_url = url_for("business_banner", business_id=business.id)
+            business.banner_public_id = None
         db.session.add(ActivityLog(business_id=business.id, user_id=current_user.id,
                                    action="STORE_SETTINGS_UPDATED", details=business.name))
         db.session.commit()
