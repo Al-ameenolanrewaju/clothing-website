@@ -212,6 +212,10 @@ def products():
         db.session.commit()
         flash("Product created.", "success")
         return redirect(url_for("owner.products"))
+    if request.method == "POST":
+        for field_name, errors in form.errors.items():
+            for error in errors:
+                flash(f"{getattr(form, field_name).label.text}: {error}", "danger")
     items = Product.query.filter_by(business_id=current_user.business_id).order_by(Product.created_at.desc()).all()
     categories = Category.query.filter_by(business_id=current_user.business_id).order_by(Category.name).all()
     return render_template("owner/products.html", form=form, items=items, categories=categories)
