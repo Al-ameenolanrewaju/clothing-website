@@ -1,10 +1,11 @@
 import os
 
-from flask import Flask, g, request, session, Response
+from flask import Flask, g, request, session, Response, flash, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_wtf import CSRFProtect
+from flask_wtf.csrf import CSRFError
 from werkzeug.utils import safe_join
 
 
@@ -27,6 +28,7 @@ def create_app(config_object=None):
         SQLALCHEMY_DATABASE_URI=database_url,
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         WTF_CSRF_ENABLED=True,
+        WTF_CSRF_TIME_LIMIT=86400,
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=os.getenv("COOKIE_SECURE", "true").lower() == "true",
@@ -245,6 +247,11 @@ def create_app(config_object=None):
                 ).all()
                 cart_count = sum(int(cart.get(f"{variant.id}:", 0)) for variant in variants)
         return {"tenant": business, "cart_count": cart_count, "settings": store_settings}
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(error):
+        flash("Your form session expired. Please review the form and submit it again.", "warning")
+        return redirect(request.referrer or url_for("auth.login"))
 
     @app.errorhandler(404)
     def not_found(error):
