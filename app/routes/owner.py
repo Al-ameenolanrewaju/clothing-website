@@ -132,12 +132,15 @@ def _sync_product_variants(product, sizes, colours):
 
 def _save_product_images(product):
     images = [image for image in request.files.getlist("images") if image and image.filename]
-    if len(images) > 8:
-        raise ValueError("Upload no more than eight images at a time.")
+    if len(images) > 1:
+        raise ValueError("Upload only one product photo.")
     # Validate/read all files before adding rows so a bad later file cannot
     # leave a partially uploaded product gallery.
     uploaded = [read_image(image) for image in images]
-    for offset, (image_data, mime_type, filename) in enumerate(uploaded, start=len(product.images)):
+    if uploaded:
+        for existing_image in list(product.images):
+            db.session.delete(existing_image)
+    for offset, (image_data, mime_type, filename) in enumerate(uploaded):
         image = ProductImage(
             business_id=product.business_id,
             product_id=product.id,
