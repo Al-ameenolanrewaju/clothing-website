@@ -305,15 +305,13 @@ def test_product_create_edit_publish_and_archive(app, client):
         "gender": "Men",
         "fashion_type": "Ready-to-wear",
         "sku": "SHIRT-1",
-        "featured": "y",
-        "new_arrival": "y",
         "is_published": "y",
     }, base_url="http://store-a.test")
     assert create_response.status_code == 302
     with app.app_context():
         product = Product.query.filter_by(business_id=business_id, slug="linen-shirt").one()
         product_id = product.id
-        assert product.featured and product.new_arrival and product.is_published
+        assert product.is_published
     edit_response = client.post(f"/dashboard/products/{product_id}/edit", data={
         "name": "Linen shirt updated",
         "slug": "linen-shirt",
@@ -337,7 +335,7 @@ def test_product_create_edit_publish_and_archive(app, client):
         assert db.session.get(Product, product_id).is_published is False
 
 
-def test_multiple_product_images_are_saved_and_deleted(app, client):
+def test_single_product_image_is_saved_and_deleted(app, client):
     business_id, _ = make_tenant(app)
     login_owner(client)
     response = client.post("/dashboard/products", data={
@@ -348,15 +346,12 @@ def test_multiple_product_images_are_saved_and_deleted(app, client):
         "gender": "Women",
         "fashion_type": "Ready-to-wear",
         "is_published": "y",
-        "images": [
-            (BytesIO(b"\xff\xd8\xff" + b"\x00" * 20), "front.jpg"),
-            (BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 20), "back.png"),
-        ],
+        "images": (BytesIO(b"\xff\xd8\xff" + b"\x00" * 20), "front.jpg"),
     }, base_url="http://store-a.test", content_type="multipart/form-data")
     assert response.status_code == 302
     with app.app_context():
         product = Product.query.filter_by(business_id=business_id, slug="photo-coat").one()
-        assert ProductImage.query.filter_by(product_id=product.id).count() == 2
+        assert ProductImage.query.filter_by(product_id=product.id).count() == 1
         image_id = product.images[0].id
         assert all(image.image_data and image.mime_type for image in product.images)
     response = client.post(
@@ -366,8 +361,7 @@ def test_multiple_product_images_are_saved_and_deleted(app, client):
     assert response.status_code == 302
     with app.app_context():
         remaining = ProductImage.query.filter_by(product_id=product.id).all()
-        assert len(remaining) == 1
-        assert remaining[0].image_data
+        assert len(remaining) == 0
 
 
 def test_discount_cannot_exceed_regular_price(app, client):
@@ -751,7 +745,7 @@ def test_owner_crud_changes_persist_in_database_after_restart(tmp_path):
         "description": "Database-backed product", "regular_price": "25000.00",
         "discounted_price": "22000.00", "category_id": str(category_id),
         "gender": "Unisex", "fashion_type": "Ready-to-wear", "sku": "CLASSIC-001",
-        "featured": "y", "new_arrival": "y", "is_published": "y",
+        "is_published": "y",
     }, base_url="http://store-a.test")
     assert created_product.status_code == 302
     with first_app.app_context():
@@ -1106,3 +1100,106 @@ def test_owner_can_choose_product_cover_without_deleting_gallery_images(app, cli
             "linen-set-front.jpg", "wrong-screenshot.jpg"
         ]
         assert len(images) == 2
+
+
+
+def test_owner_dashboard_has_complete_store_navigation_and_recent_orders(app, client):
+    make_tenant(app)
+    login_owner(client)
+    response = client.get("/dashboard/", base_url="http://store-a.test")
+    assert response.status_code == 200
+    for label in [b"Products", b"Categories", b"Orders", b"Customers", b"Photo library", b"Domain", b"Store settings"]:
+        assert label in response.data
+    assert b"Recent orders" in response.data
+
+
+def test_storefront_footer_back_to_top_is_in_page_anchor(app, client):
+    make_tenant(app)
+    response = client.get("/", base_url="http://store-a.test")
+    assert response.status_code == 200
+    assert b'<body id="top"' in response.data
+    assert b'href="#top">Back to top' in response.data
+
+
+def test_add_product_page_exposes_all_supported_fields_and_saves_them(app, client):
+    business_id, _ = make_tenant(app)
+    with app.app_context():
+        category = Category(business_id=business_id, name="Abayas", slug="abayas", gender="Women")
+        db.session.add(category)
+        db.session.commit()
+        category_id = category.id
+    login_owner(client)
+    page = client.get("/dashboard/products", base_url="http://store-a.test")
+    assert page.status_code == 200
+    for label in [b"Category", b"Audience", b"Product type"]:
+        assert label in page.data
+    response = client.post("/dashboard/products", data={
+        "name": "Everyday Abaya", "slug": "everyday-abaya", "regular_price": "15000",
+        "discounted_price": "", "category_id": str(category_id), "gender": "Women",
+        "fashion_type": "Custom-made", "sku": "ABA-01", "is_published": "y", "sizes": "M, L", "colours": "Black, Navy",
+    }, base_url="http://store-a.test")
+    assert response.status_code == 302
+    with app.app_context():
+        product = Product.query.filter_by(business_id=business_id, slug="everyday-abaya").one()
+        assert product.category_id == category_id
+        assert product.gender == "Women"
+        assert product.fashion_type == "Custom-made"
+        assert product.is_published
+        assert ProductVariant.query.filter_by(product_id=product.id).count() == 4
+
+
+def test_edit_product_updates_category_audience_and_product_type(app, client):
+    business_id, _ = make_tenant(app)
+    with app.app_context():
+        category = Category(business_id=business_id, name="Dresses", slug="dresses", gender="Women")
+        db.session.add(category)
+        db.session.flush()
+        product = Product(business_id=business_id, name="Dress", slug="dress", regular_price=1000)
+        db.session.add(product)
+        db.session.commit()
+        product_id, category_id = product.id, category.id
+    login_owner(client)
+    response = client.post(f"/dashboard/products/{product_id}/edit", data={
+        "name": "Dress", "slug": "dress", "regular_price": "1000", "discounted_price": "",
+        "category_id": str(category_id), "gender": "Women", "fashion_type": "Custom-made",
+        "is_published": "y",
+    }, base_url="http://store-a.test")
+    assert response.status_code == 302
+    with app.app_context():
+        product = db.session.get(Product, product_id)
+        assert product.category_id == category_id
+        assert product.gender == "Women" and product.fashion_type == "Custom-made"
+
+
+def test_product_forms_do_not_show_featured_or_new_arrival_status(app, client):
+    make_tenant(app)
+    login_owner(client)
+    response = client.get("/dashboard/products", base_url="http://store-a.test")
+    assert response.status_code == 200
+    assert b"Featured product" not in response.data
+    assert b"New arrival" not in response.data
+    assert b"Published" in response.data
+
+
+def test_product_upload_accepts_only_one_image_and_replaces_existing_photo(app, client):
+    business_id, _ = make_tenant(app)
+    login_owner(client)
+    response = client.get("/dashboard/products", base_url="http://store-a.test")
+    assert b'Upload one clear product photo.' in response.data
+    assert b'multiple' not in response.data
+    assert b'up to 8' not in response.data.lower()
+
+
+def test_footer_social_links_only_render_when_owner_configures_them(app, client):
+    business_id, _ = make_tenant(app)
+    response = client.get("/", base_url="http://store-a.test")
+    assert response.status_code == 200
+    assert b'aria-label="Facebook"' not in response.data
+    assert b'aria-label="Instagram"' not in response.data
+    assert b'aria-label="TikTok"' not in response.data
+    assert b'aria-label="X"' not in response.data
+    assert b'Get in touch' not in response.data
+    html = response.data.decode()
+    footer = html.split('<footer class="store-footer luxury-footer">', 1)[1].split('</footer>', 1)[0]
+    assert 'WhatsApp' not in footer
+    assert b'>Email ' not in response.data

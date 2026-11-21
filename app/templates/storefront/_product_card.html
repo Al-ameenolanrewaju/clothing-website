@@ -6,7 +6,6 @@
       {% set cover_image = product.images|sort(attribute="sort_order")|first %}
       {% if cover_image %}<img src="{{ cover_image.url }}" alt="{{ cover_image.alt_text or product.name }}" loading="lazy">
       {% else %}<div class="fashion-placeholder"><span>Photo coming soon</span></div>{% endif %}
-      {% if product.new_arrival %}<span class="product-tag">New</span>{% endif %}
     </div>
   </a>
   <div class="luxury-product-info">

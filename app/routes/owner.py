@@ -45,8 +45,6 @@ class ProductForm(FlaskForm):
     description = TextAreaField("Description")
     sizes = StringField("Available sizes")
     colours = StringField("Available colours")
-    featured = BooleanField("Featured")
-    new_arrival = BooleanField("New arrival")
     is_published = BooleanField("Published")
     submit = SubmitField("Save product")
 
@@ -134,12 +132,15 @@ def _sync_product_variants(product, sizes, colours):
 
 def _save_product_images(product):
     images = [image for image in request.files.getlist("images") if image and image.filename]
-    if len(images) > 8:
-        raise ValueError("Upload no more than eight images at a time.")
+    if len(images) > 1:
+        raise ValueError("Upload only one product photo.")
     # Validate/read all files before adding rows so a bad later file cannot
     # leave a partially uploaded product gallery.
     uploaded = [read_image(image) for image in images]
-    for offset, (image_data, mime_type, filename) in enumerate(uploaded, start=len(product.images)):
+    if uploaded:
+        for existing_image in list(product.images):
+            db.session.delete(existing_image)
+    for offset, (image_data, mime_type, filename) in enumerate(uploaded):
         image = ProductImage(
             business_id=product.business_id,
             product_id=product.id,
@@ -168,15 +169,25 @@ def dashboard():
             ProductVariant.business_id == business_id,
             db.or_(ProductVariant.is_available.is_(False), ProductVariant.stock_quantity <= 0),
         ).count(),
+        "orders": Order.query.filter_by(business_id=business_id).count(),
+        "open_orders": Order.query.filter(
+            Order.business_id == business_id,
+            Order.status.in_(["WHATSAPP_CHECKOUT_INITIATED", "PENDING", "CONFIRMED", "PROCESSING", "READY_FOR_DELIVERY"]),
+        ).count(),
+        "customers": Customer.query.filter_by(business_id=business_id).count(),
     }
     recent_products = Product.query.filter_by(business_id=business_id).order_by(
         Product.updated_at.desc()
     ).limit(6).all()
+    recent_orders = Order.query.filter_by(business_id=business_id).order_by(
+        Order.created_at.desc()
+    ).limit(5).all()
     return render_template(
         "owner/dashboard.html",
         business=business,
         stats=stats,
         recent_products=recent_products,
+        recent_orders=recent_orders,
     )
 
 
@@ -200,11 +211,16 @@ def products():
         category_id = None
         try:
             parsed_category_id = int(form.category_id.data or 0)
-            if parsed_category_id > 0:
-                category = Category.query.filter_by(id=parsed_category_id, business_id=current_user.business_id).first()
-                category_id = category.id if category else None
         except (TypeError, ValueError):
-            category_id = None
+            parsed_category_id = 0
+        if parsed_category_id:
+            category = Category.query.filter_by(id=parsed_category_id, business_id=current_user.business_id).first()
+            if not category:
+                flash("Choose a valid category from your store.", "danger")
+                items = Product.query.filter_by(business_id=current_user.business_id).order_by(Product.created_at.desc()).all()
+                categories = Category.query.filter_by(business_id=current_user.business_id).order_by(Category.name).all()
+                return render_template("owner/products.html", form=form, items=items, categories=categories), 200
+            category_id = category.id
         product = Product(
             business_id=current_user.business_id,
             category_id=category_id,
@@ -217,8 +233,6 @@ def products():
             fashion_type=form.fashion_type.data or "Ready-to-wear",
             sku=form.sku.data or None,
             is_published=True if "is_published" not in request.form or form.is_published.data else False,
-            featured=form.featured.data,
-            new_arrival=form.new_arrival.data if form.new_arrival.data is not None else True,
         )
         db.session.add(product)
         db.session.flush()
@@ -255,15 +269,14 @@ def edit_product(product_id):
     if request.method == "GET":
         form.category_id.data = str(product.category_id or "")
         form.slug.data = product.slug
-        form.featured.data = bool(product.featured)
-        form.new_arrival.data = bool(product.new_arrival)
         form.is_published.data = bool(product.is_published)
         form.sizes.data = ", ".join(dict.fromkeys(v.size for v in product.variants))
         form.colours.data = ", ".join(dict.fromkeys(v.colour for v in product.variants))
     if form.validate_on_submit():
         if form.discounted_price.data is not None and form.discounted_price.data > form.regular_price.data:
             flash("Discounted price cannot exceed regular price.", "danger")
-            return render_template("owner/product_edit.html", form=form, product=product), 200
+            categories = Category.query.filter_by(business_id=current_user.business_id).order_by(Category.name).all()
+            return render_template("owner/product_edit.html", form=form, product=product, categories=categories), 200
         product.name = form.name.data.strip()
         new_slug = slugify(form.slug.data or product.name)
         if new_slug:
@@ -274,8 +287,24 @@ def edit_product(product_id):
             ).first()
             if collision:
                 flash("A product with that slug already exists.", "danger")
-                return render_template("owner/product_edit.html", form=form, product=product), 200
+                categories = Category.query.filter_by(business_id=current_user.business_id).order_by(Category.name).all()
+                return render_template("owner/product_edit.html", form=form, product=product, categories=categories), 200
             product.slug = new_slug
+        category_id = None
+        try:
+            parsed_category_id = int(form.category_id.data or 0)
+        except (TypeError, ValueError):
+            parsed_category_id = 0
+        if parsed_category_id:
+            category = Category.query.filter_by(id=parsed_category_id, business_id=current_user.business_id).first()
+            if not category:
+                flash("Choose a valid category from your store.", "danger")
+                categories = Category.query.filter_by(business_id=current_user.business_id).order_by(Category.name).all()
+                return render_template("owner/product_edit.html", form=form, product=product, categories=categories), 200
+            category_id = category.id
+        product.category_id = category_id
+        product.gender = form.gender.data or "Unisex"
+        product.fashion_type = form.fashion_type.data or "Ready-to-wear"
         product.description = form.description.data
         product.regular_price = form.regular_price.data
         product.discounted_price = form.discounted_price.data

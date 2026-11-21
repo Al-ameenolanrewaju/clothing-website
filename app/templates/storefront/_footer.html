@@ -1,31 +1,20 @@
 <footer class="store-footer luxury-footer">
   <div class="luxury-footer-inner">
-    <div class="footer-brand-column">
-      <a class="footer-brand luxury-brand" href="{{ url_for('storefront.home') }}"><strong>{{ business.name }}</strong></a>
-      <p>{{ (settings.footer_text if settings and settings.footer_text else business.description) or 'Thoughtfully selected pieces, made to be worn and loved.' }}</p>
-      <a class="footer-shop-link" href="{{ url_for('storefront.collection') }}">Explore the collection <span aria-hidden="true">↗</span></a>
-    </div>
-    <div class="footer-column">
-      <h2>Explore</h2>
-      <a href="{{ url_for('storefront.home') }}">Home</a>
-      <a href="{{ url_for('storefront.home') }}#featured">Featured pieces</a>
-      <a href="{{ url_for('storefront.collection') }}">All products</a>
-    </div>
-    <div class="footer-column footer-contact-column">
-      <h2>Get in touch</h2>
-      {% if business.whatsapp_number %}<a href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">WhatsApp <span aria-hidden="true">↗</span></a>{% endif %}
-      {% if business.contact_email %}<a href="mailto:{{ business.contact_email }}">Email <span aria-hidden="true">↗</span></a>{% endif %}
-      {% if business.address %}<p class="footer-address">{{ business.address }}</p>{% endif %}
-      <div class="footer-socials" aria-label="Social media">
-        {% if settings and settings.instagram_url %}<a href="{{ settings.instagram_url }}" target="_blank" rel="noopener">Instagram</a>{% endif %}
-        {% if settings and settings.facebook_url %}<a href="{{ settings.facebook_url }}" target="_blank" rel="noopener">Facebook</a>{% endif %}
-        {% if settings and settings.tiktok_url %}<a href="{{ settings.tiktok_url }}" target="_blank" rel="noopener">TikTok</a>{% endif %}
-        {% if settings and settings.x_url %}<a href="{{ settings.x_url }}" target="_blank" rel="noopener">X</a>{% endif %}
+    {% if business.logo_url %}<div class="footer-brand-column"><a class="footer-brand luxury-brand" href="{{ url_for('storefront.home') }}" aria-label="{{ business.name }}"><img src="{{ business.logo_url }}" alt="{{ business.name }}" class="footer-logo"></a></div>{% endif %}
+    {% if business.contact_email or (settings and (settings.facebook_url or settings.instagram_url or settings.tiktok_url or settings.x_url)) %}
+    <div class="footer-column footer-contact-column" aria-label="Social links">
+      <div class="footer-socials" aria-label="Contact and social links">
+        {% if business.contact_email %}<a href="mailto:{{ business.contact_email }}" aria-label="Email" title="Email"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg></a>{% endif %}
+        {% if settings.facebook_url %}<a href="{{ settings.facebook_url }}" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V3.9c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3V10H7.3v3h2.8v8z"/></svg></a>{% endif %}
+        {% if settings.instagram_url %}<a href="{{ settings.instagram_url }}" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" class="icon-fill"/></svg></a>{% endif %}
+        {% if settings.tiktok_url %}<a href="{{ settings.tiktok_url }}" target="_blank" rel="noopener noreferrer" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3c.3 2.2 1.6 3.5 3.5 3.7v3.1a8 8 0 0 1-3.5-1.1v6.1a5.8 5.8 0 1 1-5.8-5.8c.4 0 .8 0 1.2.1v3.2a2.7 2.7 0 1 0 1.5 2.4V3z"/></svg></a>{% endif %}
+        {% if settings.x_url %}<a href="{{ settings.x_url }}" target="_blank" rel="noopener noreferrer" aria-label="X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h4.8l4.2 5.6L17.8 3H21l-6.5 7.5L22 21h-4.8l-4.7-6.2L7 21H3.8l6.9-8zM7.5 5.5l11 13h1.2l-11-13z"/></svg></a>{% endif %}
       </div>
     </div>
+    {% endif %}
   </div>
   <div class="luxury-footer-bottom">
     <span>{{ settings.copyright_text if settings and settings.copyright_text else '© ' ~ business.name ~ ' · All rights reserved' }}</span>
-    <a href="{{ url_for('storefront.home') }}">Back to top ↑</a>
+    <a href="#top">Back to top ↑</a>
   </div>
 </footer>
