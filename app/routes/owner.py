@@ -85,6 +85,10 @@ class StoreSettingsForm(FlaskForm):
     nav_contact = StringField("Contact navigation label", validators=[Optional(), Length(max=50)])
     footer_text = StringField("Footer description", validators=[Optional(), Length(max=500)])
     copyright_text = StringField("Copyright line", validators=[Optional(), Length(max=180)])
+    instagram_url = StringField("Instagram URL", validators=[Optional(), Length(max=500)])
+    facebook_url = StringField("Facebook URL", validators=[Optional(), Length(max=500)])
+    tiktok_url = StringField("TikTok URL", validators=[Optional(), Length(max=500)])
+    x_url = StringField("X URL", validators=[Optional(), Length(max=500)])
     seo_title = StringField("Browser / SEO title", validators=[Optional(), Length(max=180)])
     seo_description = StringField("SEO description", validators=[Optional(), Length(max=320)])
     submit = SubmitField("Save store information")
@@ -633,6 +637,10 @@ def settings():
         form.nav_contact.data = store_settings.nav_contact
         form.footer_text.data = store_settings.footer_text
         form.copyright_text.data = store_settings.copyright_text
+        form.instagram_url.data = store_settings.instagram_url
+        form.facebook_url.data = store_settings.facebook_url
+        form.tiktok_url.data = store_settings.tiktok_url
+        form.x_url.data = store_settings.x_url
         form.seo_title.data = store_settings.seo_title
         form.seo_description.data = store_settings.seo_description
     if form.validate_on_submit():
@@ -684,6 +692,10 @@ def settings():
         store_settings.nav_contact = (form.nav_contact.data or "").strip() or None
         store_settings.footer_text = (form.footer_text.data or "").strip() or None
         store_settings.copyright_text = (form.copyright_text.data or "").strip() or None
+        store_settings.instagram_url = (form.instagram_url.data or "").strip() or None
+        store_settings.facebook_url = (form.facebook_url.data or "").strip() or None
+        store_settings.tiktok_url = (form.tiktok_url.data or "").strip() or None
+        store_settings.x_url = (form.x_url.data or "").strip() or None
         store_settings.seo_title = (form.seo_title.data or "").strip() or None
         store_settings.seo_description = (form.seo_description.data or "").strip() or None
         if new_logo:
