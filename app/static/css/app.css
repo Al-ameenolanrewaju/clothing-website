@@ -1288,3 +1288,10 @@ body.cart-is-open { overflow:hidden; }
   .cart-row>img,.cart-row>.cart-image-placeholder { width:82px; height:108px; }
   .cart-drawer-footer { padding:18px 20px 24px; }
 }
+
+
+/* Icon-only cart control in the storefront navigation */
+.fashion-store .cart-nav-link { gap:8px; padding:0 4px 0 12px; }
+.fashion-store .cart-nav-icon { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+.fashion-store .cart-nav-link .bag-count { font-size:10px; letter-spacing:0; text-transform:none; }
+.cart-quantity button:disabled { opacity:.38; cursor:not-allowed; background:#f1eee8; }
