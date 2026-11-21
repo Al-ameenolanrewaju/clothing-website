@@ -970,3 +970,38 @@ def test_generic_store_bootstrap_rejects_missing_or_weak_configuration(app, monk
     assert weak.exit_code != 0
     assert isinstance(weak.exception, RuntimeError)
     assert "at least 12 characters" in str(weak.exception)
+
+
+def test_storefront_home_shows_four_products_with_description_and_collection_link(app, client):
+    business_id, _ = make_tenant(app)
+    with app.app_context():
+        category = Category(business_id=business_id, name="Shirts", slug="shirts", gender="Men")
+        db.session.add(category)
+        db.session.flush()
+        for number in range(6):
+            make_product(app, business_id, name=f"Shirt {number}", slug=f"shirt-{number}",
+                         category_id=category.id, description="Soft cotton fabric")
+    response = client.get("/", base_url="http://store-a.test")
+    assert response.status_code == 200
+    assert response.data.count(b"data-product-card") == 4
+    assert b"Soft cotton fabric" in response.data
+    assert b"/collection" in response.data
+
+
+def test_collection_filters_by_tenant_category_and_cart_page_loads(app, client):
+    business_id, _ = make_tenant(app)
+    with app.app_context():
+        shirts = Category(business_id=business_id, name="Shirts", slug="shirts", gender="Men")
+        trousers = Category(business_id=business_id, name="Trousers", slug="trousers", gender="Men")
+        db.session.add_all([shirts, trousers])
+        db.session.flush()
+        make_product(app, business_id, name="Oxford Shirt", slug="oxford-shirt", category_id=shirts.id)
+        make_product(app, business_id, name="Chino Trousers", slug="chino-trousers", category_id=trousers.id)
+        shirts_id = shirts.id
+    response = client.get(f"/collection?category={shirts_id}", base_url="http://store-a.test")
+    assert response.status_code == 200
+    assert b"Oxford Shirt" in response.data
+    assert b"Chino Trousers" not in response.data
+    cart_response = client.get("/cart", base_url="http://store-a.test")
+    assert cart_response.status_code == 200
+    assert b"Your bag" in cart_response.data
