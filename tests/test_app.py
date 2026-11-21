@@ -745,7 +745,7 @@ def test_owner_crud_changes_persist_in_database_after_restart(tmp_path):
         "description": "Database-backed product", "regular_price": "25000.00",
         "discounted_price": "22000.00", "category_id": str(category_id),
         "gender": "Unisex", "fashion_type": "Ready-to-wear", "sku": "CLASSIC-001",
-        "featured": "y", "new_arrival": "y", "is_published": "y",
+        "is_published": "y",
     }, base_url="http://store-a.test")
     assert created_product.status_code == 302
     with first_app.app_context():
@@ -1136,8 +1136,7 @@ def test_add_product_page_exposes_all_supported_fields_and_saves_them(app, clien
     response = client.post("/dashboard/products", data={
         "name": "Everyday Abaya", "slug": "everyday-abaya", "regular_price": "15000",
         "discounted_price": "", "category_id": str(category_id), "gender": "Women",
-        "fashion_type": "Custom-made", "sku": "ABA-01", "featured": "y",
-        "new_arrival": "y", "is_published": "y", "sizes": "M, L", "colours": "Black, Navy",
+        "fashion_type": "Custom-made", "sku": "ABA-01", "is_published": "y", "sizes": "M, L", "colours": "Black, Navy",
     }, base_url="http://store-a.test")
     assert response.status_code == 302
     with app.app_context():
@@ -1163,7 +1162,7 @@ def test_edit_product_updates_category_audience_and_product_type(app, client):
     response = client.post(f"/dashboard/products/{product_id}/edit", data={
         "name": "Dress", "slug": "dress", "regular_price": "1000", "discounted_price": "",
         "category_id": str(category_id), "gender": "Women", "fashion_type": "Custom-made",
-        "featured": "y", "new_arrival": "y", "is_published": "y",
+        "is_published": "y",
     }, base_url="http://store-a.test")
     assert response.status_code == 302
     with app.app_context():
