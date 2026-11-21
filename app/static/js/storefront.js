@@ -16,7 +16,7 @@
     renderProductButtons(cart);
   };
   function updateCount(cart) {
-    const count = cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    const count = cart.length;
     document.querySelectorAll("[data-cart-count]").forEach(el => { el.textContent = count; });
     document.querySelectorAll("[data-cart-drawer-count]").forEach(el => { el.textContent = "(" + count + ")"; });
   }
