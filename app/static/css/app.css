@@ -1043,3 +1043,5 @@ a { color: inherit; }
  .cart-summary .luxury-button { width:100%; }
 }
 @media(prefers-reduced-motion:reduce) { .fashion-store * { scroll-behavior:auto !important; transition:none !important; } }
+
+.footer-socials { display:flex; flex-wrap:wrap; gap:12px; margin-top:8px; }
