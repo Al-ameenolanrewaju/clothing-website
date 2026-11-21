@@ -1,21 +1,19 @@
-<article class="product-card luxury-product-card">
-  <div class="product-card-image-link">
+<article class="product-card luxury-product-card" data-product-card
+  data-product-id="{{ product.id }}" data-product-name="{{ product.name }}" data-product-price="{{ product.price }}"
+  data-product-description="{{ product.description or '' }}"
+  data-product-images='{{ product.images|map(attribute="url")|list|tojson }}'>
+  <a class="product-card-image-link" href="{{ url_for('storefront.collection') }}">
     <div class="product-photo">
-      {% if product.images %}<img src="{{ product.images[0].url }}" alt="{{ product.images[0].alt_text or product.name }}" loading="lazy">
+      {% if product.images %}<img src="{{ product.images[0].url }}" alt="{{ product.images[0].alt_text or product.name }}" loading="lazy" data-random-product-image>
       {% else %}<div class="fashion-placeholder"><span>Photo coming soon</span></div>{% endif %}
-      {% if product.new_arrival %}<span class="product-tag">New collection</span>{% endif %}
+      {% if product.new_arrival %}<span class="product-tag">New</span>{% endif %}
     </div>
-  </div>
+  </a>
   <div class="luxury-product-info">
     {% if product.category %}<p class="product-category">{{ product.category.name }}</p>{% endif %}
     <h3>{{ product.name }}</h3>
+    {% if product.description %}<p class="product-description-card">{{ product.description }}</p>{% endif %}
     <p class="luxury-price">₦{{ "{:,.0f}".format(product.price) }}</p>
-    <div class="product-card-actions">
-      {% if business.whatsapp_number %}
-        {% set whatsapp_phone = business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') %}
-        {% set whatsapp_message = "Hello " ~ business.name ~ ", I would like to enquire about " ~ product.name ~ ". Price: ₦" ~ "{:,.0f}".format(product.price) ~ ". Please confirm available sizes and colours." %}
-        <a class="product-whatsapp-button" href="https://wa.me/{{ whatsapp_phone }}?text={{ whatsapp_message|urlencode }}" target="_blank" rel="noopener">Order on WhatsApp ↗</a>
-      {% endif %}
-    </div>
+    <button class="product-whatsapp-button add-to-cart-button" type="button" data-add-to-cart>Add to bag</button>
   </div>
 </article>
