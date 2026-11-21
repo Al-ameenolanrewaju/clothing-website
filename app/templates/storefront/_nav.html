@@ -6,7 +6,7 @@
     {% if business.logo_url %}<img src="{{ business.logo_url }}" alt="{{ business.name }}">{% else %}<strong>{{ business.name }}</strong>{% endif %}
   </a>
   <div class="store-menu luxury-menu" id="store-menu">
-    <a href="{{ url_for('storefront.home') }}">Home</a>
-    <a href="{{ url_for('storefront.home') }}#order">Contact</a>
+    <a href="{{ url_for('storefront.home') }}">{{ settings.nav_home if settings and settings.nav_home else 'Home' }}</a>
+    <a href="{{ url_for('storefront.home') }}#order">{{ settings.nav_contact if settings and settings.nav_contact else 'Contact' }}</a>
   </div>
 </nav>
