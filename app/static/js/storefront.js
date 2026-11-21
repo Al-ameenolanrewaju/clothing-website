@@ -13,19 +13,32 @@
     localStorage.setItem(KEY, JSON.stringify(cart));
     updateCount(cart);
     renderCart();
+    renderProductButtons(cart);
   };
   function updateCount(cart) {
     const count = cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
     document.querySelectorAll("[data-cart-count]").forEach(el => { el.textContent = count; });
     document.querySelectorAll("[data-cart-drawer-count]").forEach(el => { el.textContent = "(" + count + ")"; });
   }
+  function renderProductButtons(cart) {
+    const ids = new Set(cart.map(item => String(item.id)));
+    document.querySelectorAll("[data-product-card]").forEach(card => {
+      const button = card.querySelector("[data-add-to-cart]");
+      if (!button) return;
+      const added = ids.has(String(card.dataset.productId));
+      button.textContent = added ? "Remove from cart" : "Add to cart";
+      button.classList.toggle("is-added", added);
+      button.setAttribute("aria-pressed", added ? "true" : "false");
+    });
+  }
   function openCart() {
     const panel = drawer();
     if (!panel) return;
     const trigger = document.querySelector("[data-cart-open]");
+    const overlay = document.querySelector("[data-cart-overlay]");
     panel.hidden = false;
     panel.setAttribute("aria-hidden", "false");
-    document.querySelector("[data-cart-overlay]").hidden = false;
+    if (overlay) overlay.hidden = false;
     document.body.classList.add("cart-is-open");
     if (trigger) trigger.setAttribute("aria-expanded", "true");
     renderCart();
@@ -43,32 +56,25 @@
     const trigger = document.querySelector("[data-cart-open]");
     if (trigger) { trigger.setAttribute("aria-expanded", "false"); trigger.focus(); }
   }
-  function addToCart(button) {
+  function toggleCart(button) {
     const card = button.closest("[data-product-card]");
     if (!card) return;
     const id = String(card.dataset.productId);
     const cart = readCart();
-    const found = cart.find(item => item.id === id);
-    if (found) found.quantity += 1;
-    else {
-      const image = card.querySelector(".product-photo img");
-      cart.push({
-        id,
-        name: card.dataset.productName,
-        price: Number(card.dataset.productPrice),
-        description: card.dataset.productDescription || "",
-        image: image ? image.src : "",
-        quantity: 1
-      });
+    if (cart.some(item => String(item.id) === id)) {
+      saveCart(cart.filter(item => String(item.id) !== id));
+      return;
     }
+    const image = card.querySelector(".product-photo img");
+    cart.push({
+      id,
+      name: card.dataset.productName,
+      price: Number(card.dataset.productPrice),
+      description: card.dataset.productDescription || "",
+      image: image ? image.src : "",
+      quantity: 1
+    });
     saveCart(cart);
-    const original = button.textContent;
-    button.textContent = "Added to cart ✓";
-    button.classList.add("is-added");
-    window.setTimeout(() => {
-      button.textContent = original;
-      button.classList.remove("is-added");
-    }, 1100);
   }
   function renderCart() {
     const root = document.getElementById("cart-items");
@@ -78,12 +84,12 @@
     const summary = document.getElementById("cart-summary");
     root.replaceChildren();
     if (!cart.length) {
-      empty.hidden = false;
-      summary.hidden = true;
+      if (empty) empty.hidden = false;
+      if (summary) summary.hidden = true;
       return;
     }
-    empty.hidden = true;
-    summary.hidden = false;
+    if (empty) empty.hidden = true;
+    if (summary) summary.hidden = false;
     cart.forEach(item => {
       const row = document.createElement("article");
       row.className = "cart-row";
@@ -118,16 +124,17 @@
       row.append(image, info, total);
       root.appendChild(row);
     });
-    document.getElementById("cart-subtotal").textContent = money(cart.reduce((sum, item) => sum + item.price * item.quantity, 0));
+    const subtotal = document.getElementById("cart-subtotal");
+    if (subtotal) subtotal.textContent = money(cart.reduce((sum, item) => sum + item.price * item.quantity, 0));
   }
   function changeQuantity(id, delta) {
     const cart = readCart();
-    const item = cart.find(entry => entry.id === id);
+    const item = cart.find(entry => String(entry.id) === String(id));
     if (!item) return;
-    item.quantity += delta;
-    saveCart(item.quantity <= 0 ? cart.filter(entry => entry.id !== id) : cart);
+    item.quantity = (Number(item.quantity) || 1) + delta;
+    saveCart(item.quantity <= 0 ? cart.filter(entry => String(entry.id) !== String(id)) : cart);
   }
-  function removeItem(id) { saveCart(readCart().filter(item => item.id !== id)); }
+  function removeItem(id) { saveCart(readCart().filter(item => String(item.id) !== String(id))); }
   function checkout() {
     const cart = readCart();
     const phone = (window.STORE_WHATSAPP || "").replace(/[^0-9]/g, "");
@@ -142,7 +149,11 @@
     const cart = readCart();
     updateCount(cart);
     renderCart();
-    document.querySelectorAll("[data-add-to-cart]").forEach(button => button.addEventListener("click", () => addToCart(button)));
+    renderProductButtons(cart);
+    document.addEventListener("click", event => {
+      const button = event.target.closest("[data-add-to-cart]");
+      if (button) { event.preventDefault(); toggleCart(button); }
+    });
     document.querySelectorAll("[data-cart-open]").forEach(button => button.addEventListener("click", openCart));
     document.querySelectorAll("[data-cart-close]").forEach(button => button.addEventListener("click", closeCart));
     const overlay = document.querySelector("[data-cart-overlay]");
@@ -150,5 +161,8 @@
     document.addEventListener("keydown", event => { if (event.key === "Escape" && drawer() && !drawer().hidden) closeCart(); });
     const checkoutButton = document.getElementById("whatsapp-checkout");
     if (checkoutButton) checkoutButton.addEventListener("click", checkout);
+    window.addEventListener("storage", event => {
+      if (event.key === KEY) { const latest = readCart(); updateCount(latest); renderCart(); renderProductButtons(latest); }
+    });
   });
 })();

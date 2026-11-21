@@ -441,7 +441,7 @@ def test_storefront_filters_and_product_pages(app, client):
         db.session.commit()
     home = client.get("/", base_url="http://store-a.test")
     assert home.status_code == 200
-    assert b"Add to bag" in home.data
+    assert b"Add to cart" in home.data
     collection = client.get("/collection", base_url="http://store-a.test")
     assert collection.status_code == 200
     assert b"Blue Coat" in collection.data and b"Black Trousers" in collection.data
