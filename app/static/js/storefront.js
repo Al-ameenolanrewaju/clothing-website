@@ -107,6 +107,8 @@
       controls.className = "cart-quantity";
       const decrease = document.createElement("button");
       decrease.type = "button"; decrease.textContent = "−"; decrease.setAttribute("aria-label", "Decrease " + item.name + " quantity");
+      decrease.disabled = Number(item.quantity) <= 1;
+      decrease.setAttribute("aria-disabled", decrease.disabled ? "true" : "false");
       decrease.addEventListener("click", () => changeQuantity(item.id, -1));
       const quantity = document.createElement("span");
       quantity.textContent = item.quantity;
@@ -131,8 +133,9 @@
     const cart = readCart();
     const item = cart.find(entry => String(entry.id) === String(id));
     if (!item) return;
-    item.quantity = (Number(item.quantity) || 1) + delta;
-    saveCart(item.quantity <= 0 ? cart.filter(entry => String(entry.id) !== String(id)) : cart);
+    const currentQuantity = Math.max(1, Number(item.quantity) || 1);
+    item.quantity = Math.max(1, currentQuantity + delta);
+    saveCart(cart);
   }
   function removeItem(id) { saveCart(readCart().filter(item => String(item.id) !== String(id))); }
   function checkout() {
