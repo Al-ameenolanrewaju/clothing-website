@@ -1407,3 +1407,65 @@ body.cart-is-open { overflow:hidden; }
   .fashion-store .luxury-hero { padding-top:22px; padding-bottom:24px; }
   .fashion-store .luxury-hero-copy { transform:translateY(-6px); }
 }
+
+
+/* Storefront refinements: top-aligned hero, usable filters and an About footer */
+.fashion-store .luxury-hero {
+  align-items:start;
+  padding-top:clamp(8px,1.2vw,18px);
+  padding-bottom:clamp(22px,2.6vw,36px);
+}
+.fashion-store .luxury-hero-copy { transform:none; align-self:start; padding-top:clamp(8px,1.4vw,18px); }
+.fashion-store .luxury-hero h1 { margin-top:4px; margin-bottom:10px; }
+.fashion-store .luxury-hero .eyebrow { margin-bottom:6px; }
+@media(max-width:900px) {
+  .fashion-store .luxury-hero { padding-top:10px; padding-bottom:24px; }
+  .fashion-store .luxury-hero-copy { padding-top:4px; }
+}
+@media(max-width:600px) {
+  .fashion-store .luxury-hero { padding-top:8px; padding-bottom:20px; }
+  .fashion-store .luxury-hero-copy { padding-top:2px; }
+}
+.collection-filters {
+  display:flex; flex-wrap:wrap; align-items:end; gap:12px;
+  padding:14px 0 20px; margin:0 0 16px; border-bottom:1px solid #e8e2d8;
+}
+.collection-filters label {
+  display:grid; gap:7px; color:#77736b; font-size:10px;
+  letter-spacing:.1em; text-transform:uppercase;
+}
+.collection-filters select {
+  min-width:155px; min-height:42px; padding:0 34px 0 12px;
+  border:1px solid #ded8ce; border-radius:2px; background:#fffefa;
+  color:#292820; font:inherit; font-size:12px; letter-spacing:normal;
+  text-transform:none;
+}
+.collection-filters .clear-filters {
+  padding:12px 2px; color:#806746; font-size:11px; text-decoration:underline;
+  text-underline-offset:4px;
+}
+.luxury-footer-inner:has(.footer-about-column) {
+  display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,.7fr);
+  align-items:center; justify-content:stretch; gap:40px;
+  text-align:left; padding-top:34px; padding-bottom:34px;
+}
+.footer-about-column h2 {
+  margin:0 0 10px; color:#fff; font:400 27px/1.15 var(--serif);
+}
+.footer-about-column p {
+  max-width:650px; margin:0; color:#c4c0b6; font-size:13px; line-height:1.8;
+}
+.luxury-footer .footer-contact-column { justify-self:end; align-items:flex-end; }
+.luxury-footer .footer-contact-column .footer-socials { justify-content:flex-end; }
+@media(max-width:700px) {
+  .collection-filters { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .collection-filters label:first-child { grid-column:1 / -1; }
+  .collection-filters select { width:100%; min-width:0; }
+  .luxury-footer-inner:has(.footer-about-column) {
+    grid-template-columns:1fr; gap:22px; padding:28px 18px;
+    text-align:left;
+  }
+  .footer-about-column h2 { font-size:24px; }
+  .luxury-footer .footer-contact-column { justify-self:start; align-items:flex-start; }
+  .luxury-footer .footer-contact-column .footer-socials { justify-content:flex-start; }
+}
