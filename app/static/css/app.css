@@ -955,3 +955,91 @@ a { color: inherit; }
     grid-template-columns:repeat(4,minmax(0,1fr));
   }
 }
+
+
+/* Compact editorial storefront and collection/cart experience */
+.fashion-store .luxury-nav { min-height:68px; padding:10px clamp(16px,4vw,52px); gap:18px; }
+.fashion-store .luxury-brand img { max-height:40px; }
+.fashion-store .luxury-menu { margin-left:auto !important; margin-right:0 !important; }
+.fashion-store .cart-nav-link { display:inline-flex; align-items:center; gap:8px; text-decoration:none; font-size:10px; letter-spacing:.1em; text-transform:uppercase; white-space:nowrap; }
+.fashion-store .bag-count { background:#24251f; color:#fff; min-width:21px; height:21px; }
+.fashion-store .luxury-hero { min-height:0; padding:clamp(34px,4vw,58px) clamp(18px,7vw,100px); grid-template-columns:1.05fr .95fr; gap:clamp(24px,4vw,64px); }
+.fashion-store .luxury-hero h1 { margin-bottom:14px; font-size:clamp(40px,4.8vw,66px); line-height:1.02; }
+.fashion-store .luxury-hero .eyebrow { margin-bottom:12px; }
+.fashion-store .luxury-hero-copy p { margin-bottom:20px; font-size:14px; line-height:1.65; }
+.fashion-store .luxury-hero-image { height:clamp(300px,34vw,450px); min-height:0; }
+.fashion-store .luxury-hero-image img { width:100%; height:100%; object-fit:cover; }
+.fashion-store .luxury-collection { padding:clamp(40px,5vw,64px) clamp(18px,7vw,100px) 64px; }
+.fashion-store .luxury-section-head { margin-bottom:24px; }
+.fashion-store .luxury-product-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:30px 18px; }
+.fashion-store .luxury-product-card .product-photo { aspect-ratio:3/4; background:#eeeae2; }
+.fashion-store .luxury-product-card .product-photo img { width:100%; height:100%; object-fit:cover; }
+.product-description-card { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin:0 0 8px; color:#77736b; font-size:12px; line-height:1.5; }
+.collection-next { display:flex; justify-content:center; margin-top:38px; }
+.collection-next .luxury-button { min-width:240px; }
+.add-to-cart-button { width:100%; cursor:pointer; }
+.add-to-cart-button.is-added { background:#78684f; border-color:#78684f; }
+.luxury-footer-inner { display:grid; grid-template-columns:1.3fr .7fr; gap:48px; max-width:1100px; padding:32px clamp(20px,6vw,72px); }
+.luxury-footer .footer-main p { max-width:440px; margin:12px 0 18px; line-height:1.6; }
+.luxury-footer .footer-main small { display:block; border:0; padding:0; }
+.footer-links { display:flex; flex-direction:column; align-items:flex-start; gap:10px; }
+.footer-links h2 { margin:0 0 4px; color:#fff; font-family:var(--serif); font-size:23px; font-weight:400; }
+.footer-links a { color:#d7bd98; text-decoration:none; font-size:13px; }
+.footer-links span { color:#d1ccc2; font-size:12px; }
+.collection-page,.cart-page { min-height:55vh; padding:clamp(42px,6vw,78px) clamp(18px,7vw,100px) 80px; }
+.collection-page-heading { margin-bottom:30px; }
+.collection-page-heading h1 { margin:0 0 10px; font-family:var(--serif); font-size:clamp(38px,5vw,60px); font-weight:400; }
+.collection-page-heading p { color:#77736b; }
+.collection-categories { display:flex; flex-wrap:wrap; gap:8px; padding:14px 0 22px; margin-bottom:14px; border-bottom:1px solid #e8e2d8; }
+.collection-categories a { padding:9px 14px; border:1px solid #e4ded4; color:#5e5a52; text-decoration:none; font-size:11px; }
+.collection-categories a.active,.collection-categories a:hover { color:#fff; background:#24251f; border-color:#24251f; }
+.collection-result-count { margin:0 0 22px; color:#77736b; font-size:12px; }
+.collection-product-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.cart-items { display:flex; flex-direction:column; border-top:1px solid #e8e2d8; }
+.cart-row { display:grid; grid-template-columns:112px minmax(0,1fr) auto; align-items:center; gap:22px; padding:20px 0; border-bottom:1px solid #e8e2d8; }
+.cart-row>img,.cart-image-placeholder { width:112px; height:136px; object-fit:cover; background:#eeeae2; }
+.cart-item-info h2 { margin:0 0 7px; font-family:var(--serif); font-size:21px; font-weight:400; }
+.cart-item-price { margin:0 0 14px; color:#77736b; font-size:13px; }
+.cart-quantity { display:flex; align-items:center; gap:12px; }
+.cart-quantity button { min-width:30px; height:30px; border:1px solid #ded8ce; background:transparent; }
+.cart-quantity span { min-width:14px; text-align:center; font-size:13px; }
+.cart-quantity .cart-remove { width:auto; padding:0 10px; border:0; color:#8a5c4e; font-size:11px; }
+.cart-line-total { font-size:14px; white-space:nowrap; }
+.cart-summary { display:flex; flex-direction:column; align-items:flex-end; gap:20px; padding:24px 0; }
+.cart-summary>div { display:flex; gap:36px; align-items:center; }
+.cart-summary>div span { color:#77736b; font-size:13px; }
+.cart-summary>div strong { font-size:19px; }
+.cart-empty { padding:48px 20px; text-align:center; background:#f2eee6; }
+.cart-empty h2 { font-family:var(--serif); font-size:32px; font-weight:400; }
+.cart-empty p { color:#77736b; }
+.cart-empty[hidden],.cart-summary[hidden] { display:none !important; }
+@media(max-width:900px) {
+ .fashion-store .luxury-product-grid,.collection-product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .fashion-store .luxury-hero { padding:40px 24px; }
+}
+@media(max-width:600px) {
+ .fashion-store .luxury-nav { min-height:62px; padding:9px 14px; gap:10px; }
+ .fashion-store .luxury-menu { gap:12px; }
+ .fashion-store .luxury-menu a { font-size:9px; }
+ .fashion-store .cart-nav-link { font-size:9px; }
+ .fashion-store .luxury-hero { padding:30px 18px 28px; gap:20px; }
+ .fashion-store .luxury-hero h1 { font-size:clamp(38px,10vw,48px); }
+ .fashion-store .luxury-hero-image { height:260px; }
+ .fashion-store .luxury-collection { padding:38px 14px 48px; }
+ .fashion-store .luxury-product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px 12px; }
+ .fashion-store .luxury-product-card .product-photo { aspect-ratio:3/4.2; }
+ .fashion-store .luxury-product-info h3 { font-size:16px; }
+ .product-description-card { font-size:11px; }
+ .luxury-footer-inner { grid-template-columns:1fr 1fr; gap:24px; padding:28px 18px; }
+ .collection-page,.cart-page { padding:38px 16px 54px; }
+ .collection-categories { flex-wrap:nowrap; overflow-x:auto; padding-bottom:14px; }
+ .collection-categories a { flex:0 0 auto; }
+ .cart-row { grid-template-columns:82px minmax(0,1fr); gap:14px; }
+ .cart-row>img,.cart-image-placeholder { width:82px; height:106px; }
+ .cart-line-total { grid-column:2; }
+ .cart-item-info h2 { font-size:18px; }
+ .cart-quantity { gap:8px; }
+ .cart-summary { align-items:stretch; }
+ .cart-summary .luxury-button { width:100%; }
+}
+@media(prefers-reduced-motion:reduce) { .fashion-store * { scroll-behavior:auto !important; transition:none !important; } }
