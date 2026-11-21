@@ -1125,3 +1125,55 @@ def test_storefront_footer_back_to_top_is_in_page_anchor(app, client):
     assert response.status_code == 200
     assert b'<body id="top"' in response.data
     assert b'href="#top">Back to top' in response.data
+
+
+def test_add_product_page_exposes_all_supported_fields_and_saves_them(app, client):
+    business_id, _ = make_tenant(app)
+    with app.app_context():
+        category = Category(business_id=business_id, name="Abayas", slug="abayas", gender="Women")
+        db.session.add(category)
+        db.session.commit()
+        category_id = category.id
+    login_owner(client)
+    page = client.get("/dashboard/products", base_url="http://store-a.test")
+    assert page.status_code == 200
+    for label in [b"Category", b"Audience", b"Product type", b"Featured product", b"New arrival"]:
+        assert label in page.data
+    response = client.post("/dashboard/products", data={
+        "name": "Everyday Abaya", "slug": "everyday-abaya", "regular_price": "15000",
+        "discounted_price": "", "category_id": str(category_id), "gender": "Women",
+        "fashion_type": "Custom-made", "sku": "ABA-01", "featured": "y",
+        "new_arrival": "y", "is_published": "y", "sizes": "M, L", "colours": "Black, Navy",
+    }, base_url="http://store-a.test")
+    assert response.status_code == 302
+    with app.app_context():
+        product = Product.query.filter_by(business_id=business_id, slug="everyday-abaya").one()
+        assert product.category_id == category_id
+        assert product.gender == "Women"
+        assert product.fashion_type == "Custom-made"
+        assert product.featured and product.new_arrival and product.is_published
+        assert ProductVariant.query.filter_by(product_id=product.id).count() == 4
+
+
+def test_edit_product_updates_category_audience_and_product_type(app, client):
+    business_id, _ = make_tenant(app)
+    with app.app_context():
+        category = Category(business_id=business_id, name="Dresses", slug="dresses", gender="Women")
+        db.session.add(category)
+        db.session.flush()
+        product = Product(business_id=business_id, name="Dress", slug="dress", regular_price=1000)
+        db.session.add(product)
+        db.session.commit()
+        product_id, category_id = product.id, category.id
+    login_owner(client)
+    response = client.post(f"/dashboard/products/{product_id}/edit", data={
+        "name": "Dress", "slug": "dress", "regular_price": "1000", "discounted_price": "",
+        "category_id": str(category_id), "gender": "Women", "fashion_type": "Custom-made",
+        "featured": "y", "new_arrival": "y", "is_published": "y",
+    }, base_url="http://store-a.test")
+    assert response.status_code == 302
+    with app.app_context():
+        product = db.session.get(Product, product_id)
+        assert product.category_id == category_id
+        assert product.gender == "Women" and product.fashion_type == "Custom-made"
+        assert product.featured and product.new_arrival
