@@ -1306,3 +1306,79 @@ body.cart-is-open { overflow:hidden; }
 .luxury-footer .footer-socials svg { width:18px; height:18px; fill:currentColor; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
 .luxury-footer .footer-socials svg rect,.luxury-footer .footer-socials svg circle { fill:none; }
 .luxury-footer .footer-socials svg .icon-fill { fill:currentColor; stroke:none; }
+
+
+/* Final compact sizing for the storefront header and footer */
+.fashion-store .luxury-nav {
+  min-height:60px;
+  height:auto;
+  padding:7px clamp(18px,4vw,56px);
+  gap:16px;
+}
+.fashion-store .luxury-brand {
+  font-size:clamp(18px,1.8vw,25px);
+  line-height:1;
+}
+.fashion-store .luxury-brand img {
+  display:block;
+  max-width:160px;
+  max-height:30px;
+}
+.fashion-store .luxury-menu a {
+  font-size:12px;
+}
+.fashion-store .cart-nav-link {
+  min-height:34px;
+}
+.fashion-store .luxury-footer-inner {
+  display:flex;
+  min-height:0;
+  align-items:center;
+  justify-content:center;
+  gap:0;
+  padding:20px 24px;
+  text-align:center;
+}
+.fashion-store .luxury-footer .footer-contact-column {
+  align-items:center;
+}
+.fashion-store .luxury-footer .footer-socials {
+  justify-content:center;
+  gap:12px;
+  margin:0;
+}
+.fashion-store .luxury-footer .footer-socials a {
+  width:32px;
+  height:32px;
+}
+.fashion-store .luxury-footer .footer-socials svg {
+  width:15px;
+  height:15px;
+}
+.fashion-store .luxury-footer-bottom {
+  min-height:0;
+  padding:10px clamp(18px,4vw,56px);
+  font-size:10px;
+}
+.fashion-store .luxury-footer-bottom span,
+.fashion-store .luxury-footer-bottom a {
+  margin:0;
+  line-height:1.4;
+}
+@media(max-width:700px) {
+  .fashion-store .luxury-nav {
+    min-height:54px;
+    padding:6px 14px;
+    gap:10px;
+  }
+  .fashion-store .luxury-brand img {
+    max-width:120px;
+    max-height:28px;
+  }
+  .fashion-store .luxury-footer-inner {
+    padding:16px 16px;
+  }
+  .fashion-store .luxury-footer-bottom {
+    padding:9px 16px;
+  }
+}
