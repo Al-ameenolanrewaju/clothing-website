@@ -20,7 +20,7 @@
 
       </div>
       <div class="mb-3"><label class="form-label" for="{{ form.description.id }}">Description</label>{{ form.description(class="form-control", rows=4, placeholder="Describe the product") }}</div>
-      <div class="mb-3"><label class="form-label">Product photos</label><input type="file" name="images" class="form-control" accept="image/jpeg,image/png,image/webp" multiple><div class="form-text">You can select up to 8 photos.</div></div>
+      <div class="mb-3"><label class="form-label">Product photos</label><input type="file" name="images" class="form-control" accept="image/jpeg,image/png,image/webp"><div class="form-text">Upload one clear product photo.</div></div>
       <div class="mb-3"><label class="form-label">Available sizes</label>{{ form.sizes(class="form-control", placeholder="S, M, L, XL or Free Size") }}<div class="form-text">Separate each size with a comma.</div></div>
       <div class="mb-4"><label class="form-label">Available colours</label>{{ form.colours(class="form-control", placeholder="Black, Wine, Navy Blue") }}<div class="form-text">Separate each colour with a comma.</div></div>
       <div class="mb-4 d-flex flex-wrap gap-4"><label class="form-check">{{ form.is_published(class="form-check-input", checked=True) }} <span class="form-check-label">Published</span></label></div>
