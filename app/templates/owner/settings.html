@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Store information{% endblock %}
+{% block title %}Storefront brand editor{% endblock %}
 {% block body %}
 <nav class="navbar bg-white border-bottom px-3">
   <a class="navbar-brand fw-bold" href="{{ url_for('owner.dashboard') }}">Store Dashboard</a>
@@ -7,22 +7,42 @@
 </nav>
 <main class="container py-4">
   {% for category,message in get_flashed_messages(with_categories=true) %}<div class="alert alert-{{ category }}">{{ message }}</div>{% endfor %}
-  <h1 class="h3 mb-2">Store information</h1>
-  <p class="text-secondary mb-4">These details appear on your public clothing catalogue and WhatsApp orders.</p>
+  <h1 class="h3 mb-2">Storefront brand editor</h1>
+  <p class="text-secondary mb-4">Change the brand identity and every visible storefront message here. Product listings, product photos, orders and WhatsApp checkout are not affected.</p>
   {% if business.logo_url %}<img class="brand-preview mb-3" src="{{ business.logo_url }}" alt="{{ business.name }} logo">{% endif %}
-  <div class="card"><div class="card-body"><form method="post" enctype="multipart/form-data">{{ form.hidden_tag() }}<div class="row g-3">
-    {% for field in [form.name,form.phone,form.contact_email,form.whatsapp_number,form.brand_color,form.announcement,form.hero_title] %}
-    <div class="col-md-6"><label class="form-label">{{ field.label.text }}</label>{{ field(class="form-control") }}{% if field.name == 'whatsapp_number' %}<div class="form-text">Use your full international number, e.g. 2348012345678. Do not include spaces.</div>{% endif %}</div>
-    {% endfor %}
-    <div class="col-12"><label class="form-label">Business description</label>{{ form.description(class="form-control", rows=3) }}</div>
-    <div class="col-12"><label class="form-label">About the brand</label>{{ form.about_text(class="form-control", rows=3) }}</div>
-    <div class="col-12"><label class="form-label">Business address</label>{{ form.address(class="form-control", rows=2) }}</div>
-    <div class="col-12"><label class="form-label">Replace logo</label><input type="file" name="logo" class="form-control" accept="image/jpeg,image/png,image/webp"></div>
-    <div class="col-12"><hr class="my-2"><h2 class="h5 mb-1">Homepage hero image</h2><p class="text-secondary small mb-3">Choose the large banner image shown beside your homepage headline. This is separate from your product photos, so a product image will never be used as the hero automatically.</p>
-      {% if business.banner_url %}<img src="{{ business.banner_url }}" alt="Current homepage hero image" class="img-fluid mb-3" style="max-height:240px;object-fit:contain;background:#f5f2ec">{% else %}<p class="small text-secondary">No hero image uploaded yet. The storefront will show a neutral brand panel.</p>{% endif %}
-      <label class="form-label" for="banner">Upload or replace homepage hero image</label><input id="banner" type="file" name="banner" class="form-control" accept="image/jpeg,image/png,image/webp"><div class="form-text">JPEG, PNG or WebP. Maximum 5 MB.</div>
-    </div>
-    <div class="col-12">{{ form.submit(class="btn btn-dark") }}</div>
-  </div></form></div></div>
+  <form method="post" enctype="multipart/form-data">{{ form.hidden_tag() }}
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">Brand identity</h2><div class="row g-3">
+      {% for field in [form.name,form.description,form.phone,form.contact_email,form.whatsapp_number,form.address,form.brand_color] %}
+      <div class="col-md-6"><label class="form-label">{{ field.label.text }}</label>{{ field(class="form-control", rows=3) if field.name in ['description','address'] else field(class="form-control") }}{% if field.name == 'whatsapp_number' %}<div class="form-text">Use your full international number, e.g. 2348012345678.</div>{% endif %}</div>{% endfor %}
+      <div class="col-md-6"><label class="form-label">Replace logo</label><input type="file" name="logo" class="form-control" accept="image/jpeg,image/png,image/webp"></div>
+    </div></div></section>
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">Homepage hero</h2><div class="row g-3">
+      {% for field in [form.tagline,form.hero_title,form.about_text,form.hero_cta,form.hero_whatsapp_cta] %}
+      <div class="col-md-6"><label class="form-label">{{ field.label.text }}</label>{{ field(class="form-control", rows=3) if field.name == 'about_text' else field(class="form-control") }}</div>{% endfor %}
+      <div class="col-12"><label class="form-label">Homepage hero image</label>{% if business.banner_url %}<img src="{{ business.banner_url }}" alt="Current homepage hero image" class="img-fluid d-block mb-2" style="max-height:220px;object-fit:contain;background:#f5f2ec">{% endif %}<input type="file" name="banner" class="form-control" accept="image/jpeg,image/png,image/webp"><div class="form-text">JPEG, PNG or WebP. Maximum 5 MB. Product photos are kept separate.</div></div>
+    </div></div></section>
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">Shopping benefits</h2><div class="row g-3">
+      {% for field in [form.proof1_title,form.proof1_text,form.proof2_title,form.proof2_text,form.proof3_title,form.proof3_text] %}<div class="col-md-6"><label class="form-label">{{ field.label.text }}</label>{{ field(class="form-control") }}</div>{% endfor %}
+    </div></div></section>
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">Catalogue section</h2><div class="row g-3">
+      {% for field in [form.catalogue_eyebrow,form.catalogue_title,form.empty_title,form.empty_text] %}<div class="col-md-6"><label class="form-label">{{ field.label.text }}</label>{{ field(class="form-control", rows=3) if field.name == 'empty_text' else field(class="form-control") }}</div>{% endfor %}
+    </div></div></section>
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">Order banner and navigation</h2><div class="row g-3">
+      {% for field in [form.order_eyebrow,form.order_title,form.order_text,form.order_button,form.nav_home,form.nav_contact,form.announcement] %}<div class="col-md-6"><label class="form-label">{{ field.label.text }}</label>{{ field(class="form-control", rows=3) if field.name == 'order_text' else field(class="form-control") }}</div>{% endfor %}
+    </div></div></section>
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">Footer and search appearance</h2><div class="row g-3">
+      {% for field in [form.footer_text,form.copyright_text,form.seo_title,form.seo_description] %}<div class="col-md-6"><label class="form-label">{{ field.label.text }}</label>{{ field(class="form-control", rows=3) if field.name in ['footer_text','seo_description'] else field(class="form-control") }}</div>{% endfor %}
+    </div></div></section>
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">Quick preview</h2><p class="text-secondary small">Preview updates as you type. Save changes to publish them to your storefront.</p><div class="p-4 rounded" style="background:#f5f2ec;color:#24251f"><div class="small text-uppercase" id="preview-tagline">{{ form.tagline.data or 'Your brand tagline' }}</div><h3 class="mt-2" id="preview-title">{{ form.hero_title.data or 'Your homepage headline' }}</h3><p id="preview-about">{{ form.about_text.data or 'Your brand description will appear here.' }}</p><strong id="preview-button">{{ form.hero_cta.data or 'Explore the collection' }}</strong></div></div></section>
+    <div class="d-flex gap-2 flex-wrap"><button type="submit" class="btn btn-dark px-4">Save storefront changes</button><a class="btn btn-outline-dark" href="{{ url_for('storefront.home') }}" target="_blank" rel="noopener">View live storefront</a></div>
+  </form>
 </main>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+ const pairs=[['tagline','preview-tagline','Your brand tagline'],['hero_title','preview-title','Your homepage headline'],['about_text','preview-about','Your brand description will appear here.'],['hero_cta','preview-button','Explore the collection']];
+ pairs.forEach(function(pair){const field=document.getElementById(pair[0]);const target=document.getElementById(pair[1]);if(field&&target){field.addEventListener('input',function(){target.textContent=field.value.trim()||pair[2];});}});
+});
+</script>
 {% endblock %}
