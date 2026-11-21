@@ -1,8 +1,7 @@
 from flask import Blueprint, g, render_template, request, abort
 
 from .. import db
-from ..models import Category, OrderItem, Product, StoreVisit, StoreSettings, Order
-
+from ..models import Category, Product, StoreVisit, StoreSettings
 
 bp = Blueprint("storefront", __name__)
 
@@ -23,33 +22,51 @@ def track_store_visit():
             db.session.commit()
 
 
+def storefront_context(business):
+    settings = StoreSettings.query.filter_by(business_id=business.id).first()
+    categories = Category.query.filter_by(business_id=business.id).order_by(Category.name).all()
+    return settings, categories
+
+
 @bp.route("/")
 def home():
     business = public_business()
     products = Product.query.filter_by(
-        business_id=business.id,
-        is_published=True,
-    ).order_by(Product.created_at.desc()).all()
-    # Render every published product together in one catalogue grid.
-    featured = products
-    new_arrivals = []
-    best_sellers = Product.query.join(OrderItem, OrderItem.product_id == Product.id).join(
-        Order, Order.id == OrderItem.order_id
-    ).filter(
-        Product.business_id == business.id,
-        Product.is_published.is_(True),
-        Order.business_id == business.id,
-        Order.status.in_(["CONFIRMED", "PROCESSING", "READY_FOR_DELIVERY", "COMPLETED"]),
-    ).group_by(Product.id).order_by(db.func.sum(OrderItem.quantity).desc()).limit(4).all()
-    settings = StoreSettings.query.filter_by(business_id=business.id).first()
-    categories = Category.query.filter_by(business_id=business.id).order_by(Category.name).all()
+        business_id=business.id, is_published=True
+    ).order_by(Product.created_at.desc()).limit(4).all()
+    settings, categories = storefront_context(business)
     return render_template(
-        "storefront/home.html",
-        business=business,
-        products=products,
-        categories=categories,
-        featured=featured,
-        new_arrivals=new_arrivals,
-        best_sellers=best_sellers,
-        settings=settings,
+        "storefront/home.html", business=business, featured=products,
+        settings=settings, categories=categories,
+    )
+
+
+@bp.route("/collection")
+def collection():
+    business = public_business()
+    query = Product.query.filter_by(business_id=business.id, is_published=True)
+    category_id = request.args.get("category", type=int)
+    selected_category = None
+    if category_id:
+        selected_category = Category.query.filter_by(
+            id=category_id, business_id=business.id
+        ).first()
+        if selected_category:
+            query = query.filter_by(category_id=selected_category.id)
+        else:
+            abort(404)
+    products = query.order_by(Product.created_at.desc()).all()
+    settings, categories = storefront_context(business)
+    return render_template(
+        "storefront/collection.html", business=business, products=products,
+        categories=categories, selected_category=selected_category, settings=settings,
+    )
+
+
+@bp.route("/cart")
+def cart():
+    business = public_business()
+    settings, categories = storefront_context(business)
+    return render_template(
+        "storefront/cart.html", business=business, settings=settings, categories=categories,
     )
