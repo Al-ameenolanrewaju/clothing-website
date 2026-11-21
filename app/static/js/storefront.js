@@ -4,21 +4,12 @@
   const readCart = () => { try { const value=JSON.parse(localStorage.getItem(KEY)||"[]"); return Array.isArray(value)?value:[]; } catch (_) { return []; } };
   const saveCart = cart => { localStorage.setItem(KEY,JSON.stringify(cart)); updateCount(cart); };
   const updateCount = cart => { const count=cart.reduce((sum,item)=>sum+(Number(item.quantity)||0),0); document.querySelectorAll("[data-cart-count]").forEach(el=>el.textContent=count); };
-  function randomizeImages() {
-    document.querySelectorAll("[data-product-card]").forEach(card=>{
-      const img=card.querySelector("[data-random-product-image]");
-      if(!img) return;
-      let urls=[]; try { urls=JSON.parse(card.dataset.productImages||"[]"); } catch (_) {}
-      if(urls.length>1) img.src=urls[Math.floor(Math.random()*urls.length)];
-    });
-  }
   function addToCart(button) {
     const card=button.closest("[data-product-card]"); if(!card) return;
     const id=String(card.dataset.productId);
-    const img=card.querySelector("[data-random-product-image]");
     const cart=readCart(); const found=cart.find(item=>item.id===id);
     if(found) found.quantity+=1;
-    else cart.push({id,name:card.dataset.productName,price:Number(card.dataset.productPrice),description:card.dataset.productDescription||"",image:img?img.src:"",quantity:1});
+    else cart.push({id,name:card.dataset.productName,price:Number(card.dataset.productPrice),description:card.dataset.productDescription||"",image:(card.querySelector(".product-photo img")||{}).src||"",quantity:1});
     saveCart(cart);
     const original=button.textContent; button.textContent="Added to bag ✓"; button.classList.add("is-added");
     window.setTimeout(()=>{button.textContent=original;button.classList.remove("is-added");},1100);
@@ -54,7 +45,7 @@
     window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(message),"_blank","noopener");
   }
   document.addEventListener("DOMContentLoaded",()=>{
-    randomizeImages(); const cart=readCart(); updateCount(cart); renderCart();
+    const cart=readCart(); updateCount(cart); renderCart();
     document.querySelectorAll("[data-add-to-cart]").forEach(button=>button.addEventListener("click",()=>addToCart(button)));
     const checkoutButton=document.getElementById("whatsapp-checkout"); if(checkoutButton)checkoutButton.addEventListener("click",checkout);
   });
