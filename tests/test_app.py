@@ -1049,7 +1049,9 @@ def test_collection_filters_by_tenant_category_and_cart_page_loads(app, client):
     assert b"Chino Trousers" not in response.data
     cart_response = client.get("/cart", base_url="http://store-a.test")
     assert cart_response.status_code == 200
-    assert b"Your bag" in cart_response.data
+    assert b"store-cart-drawer" in cart_response.data
+    assert b"Your cart" in cart_response.data
+    assert b"Your bag" not in cart_response.data
 
 
 def test_collection_deduplicates_category_labels_and_filters_all_same_name_categories(app, client):
