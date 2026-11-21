@@ -877,6 +877,48 @@ def test_database_image_upload_validation_rejects_oversized_or_invalid_files():
         read_image(oversized)
 
 
+def test_owner_can_reassign_existing_product_photo_without_deleting_it(app):
+    business_id, _ = make_tenant(app)
+    original_product_id = make_product(app, business_id, name="Daviva", slug="daviva")
+    target_product_id = make_product(app, business_id, name="Ankara", slug="ankara")
+    image_bytes = b"\x89PNG\r\n\x1a\n" + b"\x00" * 12
+    with app.app_context():
+        image = ProductImage(
+            business_id=business_id,
+            product_id=original_product_id,
+            url="/media/products/placeholder",
+            image_data=image_bytes,
+            mime_type="image/png",
+            original_filename="ankara-fabric.png",
+            alt_text="Daviva",
+            sort_order=0,
+        )
+        db.session.add(image)
+        db.session.commit()
+        image_id = image.id
+
+    client = app.test_client()
+    login_owner(client)
+    library = client.get("/dashboard/product-images", base_url="http://store-a.test")
+    assert library.status_code == 200
+    assert b"ankara-fabric.png" in library.data
+    moved = client.post(
+        f"/dashboard/product-images/{image_id}/assign",
+        data={"product_id": str(target_product_id)},
+        base_url="http://store-a.test",
+    )
+    assert moved.status_code == 302
+
+    with app.app_context():
+        stored = db.session.get(ProductImage, image_id)
+        assert stored is not None
+        assert stored.product_id == target_product_id
+        assert stored.business_id == business_id
+        assert stored.image_data == image_bytes
+        assert stored.original_filename == "ankara-fabric.png"
+        assert ProductImage.query.filter_by(id=image_id).count() == 1
+
+
 def test_generic_store_bootstrap_creates_isolated_store_owner_and_defaults(app, monkeypatch):
     monkeypatch.setenv("STORE_NAME", "Northside Fashion")
     monkeypatch.setenv("STORE_SLUG", "northside-fashion")
