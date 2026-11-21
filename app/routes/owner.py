@@ -360,6 +360,56 @@ def delete_product(product_id):
     return redirect(url_for("owner.products"))
 
 
+@bp.route("/product-images")
+@roles_required("OWNER")
+def product_image_library():
+    """Show every stored image beside the product it is currently assigned to."""
+    products = Product.query.filter_by(
+        business_id=current_user.business_id
+    ).order_by(Product.name, Product.id).all()
+    images = ProductImage.query.filter_by(
+        business_id=current_user.business_id
+    ).order_by(ProductImage.product_id, ProductImage.sort_order, ProductImage.id).all()
+    return render_template(
+        "owner/product_image_library.html",
+        products=products,
+        images=images,
+    )
+
+
+@bp.route("/product-images/<int:image_id>/assign", methods=["POST"])
+@roles_required("OWNER")
+def assign_product_image(image_id):
+    """Reassign an existing image record without deleting or replacing its bytes."""
+    image = ProductImage.query.filter_by(
+        id=image_id, business_id=current_user.business_id
+    ).first_or_404()
+    target_id = request.form.get("product_id", type=int)
+    target = Product.query.filter_by(
+        id=target_id, business_id=current_user.business_id
+    ).first_or_404()
+    if image.product_id == target.id:
+        flash("This photo is already assigned to that product.", "info")
+        return redirect(url_for("owner.product_image_library"))
+    previous_product = db.session.get(Product, image.product_id)
+    previous_name = previous_product.name if previous_product else "Unknown product"
+    next_order = db.session.query(db.func.max(ProductImage.sort_order)).filter_by(
+        product_id=target.id, business_id=current_user.business_id
+    ).scalar()
+    image.product_id = target.id
+    image.sort_order = (next_order if next_order is not None else -1) + 1
+    image.alt_text = target.name
+    db.session.add(ActivityLog(
+        business_id=current_user.business_id,
+        user_id=current_user.id,
+        action="PRODUCT_IMAGE_REASSIGNED",
+        details=f"Image {image.id}: {previous_name} -> {target.name}",
+    ))
+    db.session.commit()
+    flash(f"Photo moved to {target.name}. The image record and original file were preserved.", "success")
+    return redirect(url_for("owner.product_image_library"))
+
+
 @bp.route("/products/<int:product_id>/images/<int:image_id>/cover", methods=["POST"])
 @roles_required("OWNER")
 def set_product_cover_image(product_id, image_id):
