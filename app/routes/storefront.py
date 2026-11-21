@@ -24,7 +24,16 @@ def track_store_visit():
 
 def storefront_context(business):
     settings = StoreSettings.query.filter_by(business_id=business.id).first()
-    categories = Category.query.filter_by(business_id=business.id).order_by(Category.name).all()
+    all_categories = Category.query.filter_by(business_id=business.id).order_by(Category.name, Category.id).all()
+    # Old stores may contain categories with the same display name but different slugs.
+    # Keep one visible filter per name without deleting or rewriting any stored records.
+    categories = []
+    seen_names = set()
+    for category in all_categories:
+        key = " ".join((category.name or "").split()).casefold()
+        if key and key not in seen_names:
+            categories.append(category)
+            seen_names.add(key)
     return settings, categories
 
 
@@ -52,7 +61,13 @@ def collection():
             id=category_id, business_id=business.id
         ).first()
         if selected_category:
-            query = query.filter_by(category_id=selected_category.id)
+            all_categories = Category.query.filter_by(business_id=business.id).all()
+            matching_ids = [
+                category.id for category in all_categories
+                if " ".join((category.name or "").split()).casefold()
+                == " ".join((selected_category.name or "").split()).casefold()
+            ]
+            query = query.filter(Product.category_id.in_(matching_ids))
         else:
             abort(404)
     products = query.order_by(Product.created_at.desc()).all()
@@ -65,8 +80,14 @@ def collection():
 
 @bp.route("/cart")
 def cart():
+    # Backwards-compatible URL: render the storefront with its cart drawer,
+    # rather than rendering a dedicated cart page.
     business = public_business()
+    products = Product.query.filter_by(
+        business_id=business.id, is_published=True
+    ).order_by(Product.created_at.desc()).limit(4).all()
     settings, categories = storefront_context(business)
     return render_template(
-        "storefront/cart.html", business=business, settings=settings, categories=categories,
+        "storefront/home.html", business=business, featured=products,
+        settings=settings, categories=categories,
     )

@@ -140,7 +140,7 @@ class Product(db.Model, TimestampMixin):
     sku = db.Column(db.String(100))
     business = db.relationship("Business")
     category = db.relationship("Category")
-    images = db.relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
+    images = db.relationship("ProductImage", back_populates="product", cascade="all, delete-orphan", order_by="(ProductImage.sort_order, ProductImage.id)")
     variants = db.relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
     __table_args__ = (db.UniqueConstraint("business_id", "slug", name="uq_product_business_slug"),)
 

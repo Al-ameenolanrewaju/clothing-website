@@ -877,6 +877,48 @@ def test_database_image_upload_validation_rejects_oversized_or_invalid_files():
         read_image(oversized)
 
 
+def test_owner_can_reassign_existing_product_photo_without_deleting_it(app):
+    business_id, _ = make_tenant(app)
+    original_product_id = make_product(app, business_id, name="Daviva", slug="daviva")
+    target_product_id = make_product(app, business_id, name="Ankara", slug="ankara")
+    image_bytes = b"\x89PNG\r\n\x1a\n" + b"\x00" * 12
+    with app.app_context():
+        image = ProductImage(
+            business_id=business_id,
+            product_id=original_product_id,
+            url="/media/products/placeholder",
+            image_data=image_bytes,
+            mime_type="image/png",
+            original_filename="ankara-fabric.png",
+            alt_text="Daviva",
+            sort_order=0,
+        )
+        db.session.add(image)
+        db.session.commit()
+        image_id = image.id
+
+    client = app.test_client()
+    login_owner(client)
+    library = client.get("/dashboard/product-images", base_url="http://store-a.test")
+    assert library.status_code == 200
+    assert b"ankara-fabric.png" in library.data
+    moved = client.post(
+        f"/dashboard/product-images/{image_id}/assign",
+        data={"product_id": str(target_product_id)},
+        base_url="http://store-a.test",
+    )
+    assert moved.status_code == 302
+
+    with app.app_context():
+        stored = db.session.get(ProductImage, image_id)
+        assert stored is not None
+        assert stored.product_id == target_product_id
+        assert stored.business_id == business_id
+        assert stored.image_data == image_bytes
+        assert stored.original_filename == "ankara-fabric.png"
+        assert ProductImage.query.filter_by(id=image_id).count() == 1
+
+
 def test_generic_store_bootstrap_creates_isolated_store_owner_and_defaults(app, monkeypatch):
     monkeypatch.setenv("STORE_NAME", "Northside Fashion")
     monkeypatch.setenv("STORE_SLUG", "northside-fashion")
@@ -1007,4 +1049,58 @@ def test_collection_filters_by_tenant_category_and_cart_page_loads(app, client):
     assert b"Chino Trousers" not in response.data
     cart_response = client.get("/cart", base_url="http://store-a.test")
     assert cart_response.status_code == 200
-    assert b"Your bag" in cart_response.data
+    assert b"store-cart-drawer" in cart_response.data
+    assert b"Your cart" in cart_response.data
+    assert b"Your bag" not in cart_response.data
+
+
+def test_collection_deduplicates_category_labels_and_filters_all_same_name_categories(app, client):
+    business_id, _ = make_tenant(app)
+    with app.app_context():
+        first = Category(business_id=business_id, name="Accessories", slug="accessories", gender="Unisex")
+        duplicate = Category(business_id=business_id, name=" accessories ", slug="accessories-2", gender="Unisex")
+        db.session.add_all([first, duplicate])
+        db.session.flush()
+        make_product(app, business_id, name="Leather Bag", slug="leather-bag", category_id=first.id)
+        make_product(app, business_id, name="Silk Scarf", slug="silk-scarf", category_id=duplicate.id)
+        first_id = first.id
+    response = client.get("/collection", base_url="http://store-a.test")
+    assert response.status_code == 200
+    assert response.data.count(b"Accessories") == 1
+    filtered = client.get(f"/collection?category={first_id}", base_url="http://store-a.test")
+    assert filtered.status_code == 200
+    assert b"Leather Bag" in filtered.data
+    assert b"Silk Scarf" in filtered.data
+
+
+def test_owner_can_choose_product_cover_without_deleting_gallery_images(app, client):
+    business_id, _ = make_tenant(app)
+    product_id = make_product(app, business_id, name="Linen Set", slug="linen-set")
+    with app.app_context():
+        first = ProductImage(
+            business_id=business_id, product_id=product_id, url="/media/products/first",
+            image_data=b"first", mime_type="image/jpeg", original_filename="wrong-screenshot.jpg",
+            alt_text="Linen Set", sort_order=0,
+        )
+        second = ProductImage(
+            business_id=business_id, product_id=product_id, url="/media/products/second",
+            image_data=b"second", mime_type="image/jpeg", original_filename="linen-set-front.jpg",
+            alt_text="Linen Set", sort_order=1,
+        )
+        db.session.add_all([first, second])
+        db.session.commit()
+        second_id = second.id
+    login_owner(client)
+    response = client.post(
+        f"/dashboard/products/{product_id}/images/{second_id}/cover",
+        base_url="http://store-a.test",
+    )
+    assert response.status_code == 302
+    with app.app_context():
+        images = ProductImage.query.filter_by(product_id=product_id).order_by(
+            ProductImage.sort_order, ProductImage.id
+        ).all()
+        assert [image.original_filename for image in images] == [
+            "linen-set-front.jpg", "wrong-screenshot.jpg"
+        ]
+        assert len(images) == 2

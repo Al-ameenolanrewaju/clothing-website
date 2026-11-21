@@ -1,10 +1,10 @@
 <article class="product-card luxury-product-card" data-product-card
   data-product-id="{{ product.id }}" data-product-name="{{ product.name }}" data-product-price="{{ product.price }}"
-  data-product-description="{{ product.description or '' }}"
-  data-product-images='{{ product.images|map(attribute="url")|list|tojson }}'>
+  data-product-description="{{ product.description or '' }}">
   <a class="product-card-image-link" href="{{ url_for('storefront.collection') }}">
     <div class="product-photo">
-      {% if product.images %}<img src="{{ product.images[0].url }}" alt="{{ product.images[0].alt_text or product.name }}" loading="lazy" data-random-product-image>
+      {% set cover_image = product.images|sort(attribute="sort_order")|first %}
+      {% if cover_image %}<img src="{{ cover_image.url }}" alt="{{ cover_image.alt_text or product.name }}" loading="lazy">
       {% else %}<div class="fashion-placeholder"><span>Photo coming soon</span></div>{% endif %}
       {% if product.new_arrival %}<span class="product-tag">New</span>{% endif %}
     </div>
