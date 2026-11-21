@@ -66,25 +66,31 @@ def create_app(config_object=None):
         contact_email = os.getenv("STORE_CONTACT_EMAIL", "").strip().lower() or owner_email
         whatsapp_number = os.getenv("STORE_WHATSAPP_NUMBER", "").strip() or None
 
-        if not store_name or not store_slug or not owner_name or not owner_email:
+        if not store_name or not store_slug or len(store_slug) > 160 or not owner_name or not owner_email:
             raise RuntimeError(
                 "Set STORE_NAME, STORE_OWNER_NAME and STORE_OWNER_EMAIL; "
-                "STORE_SLUG is optional and defaults to a slug of STORE_NAME."
+                "STORE_SLUG is optional and defaults to a slug of STORE_NAME. "
+                "The store slug must be no longer than 160 characters."
             )
+        if len(owner_name) > 160 or len(owner_email) > 255:
+            raise RuntimeError("STORE_OWNER_NAME or STORE_OWNER_EMAIL exceeds the supported length.")
 
         business = models.Business.query.filter_by(slug=store_slug).first()
         existing_owner = models.User.query.filter_by(email=owner_email).first()
-
-        # Safe to rerun: never resets credentials or changes existing store data.
-        if business and existing_owner and existing_owner.business_id == business.id:
-            print(f"Store bootstrap already completed for {store_slug}.")
-            return
-        if not owner_password or len(owner_password) < 12:
-            raise RuntimeError("Set STORE_OWNER_PASSWORD to a unique password of at least 12 characters.")
-        if existing_owner:
+        if existing_owner and (not business or existing_owner.business_id != business.id):
             raise RuntimeError("STORE_OWNER_EMAIL is already assigned to another account.")
         if business and business.status != "ACTIVE":
             raise RuntimeError("The existing store is not active; refusing to change its status.")
+        if business:
+            another_owner = models.User.query.filter(
+                models.User.business_id == business.id,
+                models.User.role == "OWNER",
+                models.User.email != owner_email,
+            ).first()
+            if another_owner:
+                raise RuntimeError("This store already has a different owner account; refusing to add or replace an owner.")
+        if not existing_owner and (not owner_password or len(owner_password) < 12):
+            raise RuntimeError("Set STORE_OWNER_PASSWORD to a unique password of at least 12 characters.")
 
         try:
             if business is None:
@@ -99,15 +105,16 @@ def create_app(config_object=None):
                 db.session.add(business)
                 db.session.flush()
 
-            owner = models.User(
-                business_id=business.id,
-                name=owner_name,
-                email=owner_email,
-                role="OWNER",
-                active=True,
-            )
-            owner.set_password(owner_password)
-            db.session.add(owner)
+            if existing_owner is None:
+                owner = models.User(
+                    business_id=business.id,
+                    name=owner_name,
+                    email=owner_email,
+                    role="OWNER",
+                    active=True,
+                )
+                owner.set_password(owner_password)
+                db.session.add(owner)
 
             if not models.StoreSettings.query.filter_by(business_id=business.id).first():
                 db.session.add(models.StoreSettings(business_id=business.id))
