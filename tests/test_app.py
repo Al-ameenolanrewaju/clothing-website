@@ -305,15 +305,13 @@ def test_product_create_edit_publish_and_archive(app, client):
         "gender": "Men",
         "fashion_type": "Ready-to-wear",
         "sku": "SHIRT-1",
-        "featured": "y",
-        "new_arrival": "y",
         "is_published": "y",
     }, base_url="http://store-a.test")
     assert create_response.status_code == 302
     with app.app_context():
         product = Product.query.filter_by(business_id=business_id, slug="linen-shirt").one()
         product_id = product.id
-        assert product.featured and product.new_arrival and product.is_published
+        assert product.is_published
     edit_response = client.post(f"/dashboard/products/{product_id}/edit", data={
         "name": "Linen shirt updated",
         "slug": "linen-shirt",
@@ -337,7 +335,7 @@ def test_product_create_edit_publish_and_archive(app, client):
         assert db.session.get(Product, product_id).is_published is False
 
 
-def test_multiple_product_images_are_saved_and_deleted(app, client):
+def test_single_product_image_is_saved_and_deleted(app, client):
     business_id, _ = make_tenant(app)
     login_owner(client)
     response = client.post("/dashboard/products", data={
@@ -348,15 +346,12 @@ def test_multiple_product_images_are_saved_and_deleted(app, client):
         "gender": "Women",
         "fashion_type": "Ready-to-wear",
         "is_published": "y",
-        "images": [
-            (BytesIO(b"\xff\xd8\xff" + b"\x00" * 20), "front.jpg"),
-            (BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 20), "back.png"),
-        ],
+        "images": (BytesIO(b"\xff\xd8\xff" + b"\x00" * 20), "front.jpg"),
     }, base_url="http://store-a.test", content_type="multipart/form-data")
     assert response.status_code == 302
     with app.app_context():
         product = Product.query.filter_by(business_id=business_id, slug="photo-coat").one()
-        assert ProductImage.query.filter_by(product_id=product.id).count() == 2
+        assert ProductImage.query.filter_by(product_id=product.id).count() == 1
         image_id = product.images[0].id
         assert all(image.image_data and image.mime_type for image in product.images)
     response = client.post(
@@ -366,8 +361,7 @@ def test_multiple_product_images_are_saved_and_deleted(app, client):
     assert response.status_code == 302
     with app.app_context():
         remaining = ProductImage.query.filter_by(product_id=product.id).all()
-        assert len(remaining) == 1
-        assert remaining[0].image_data
+        assert len(remaining) == 0
 
 
 def test_discount_cannot_exceed_regular_price(app, client):
@@ -1137,7 +1131,7 @@ def test_add_product_page_exposes_all_supported_fields_and_saves_them(app, clien
     login_owner(client)
     page = client.get("/dashboard/products", base_url="http://store-a.test")
     assert page.status_code == 200
-    for label in [b"Category", b"Audience", b"Product type", b"Featured product", b"New arrival"]:
+    for label in [b"Category", b"Audience", b"Product type"]:
         assert label in page.data
     response = client.post("/dashboard/products", data={
         "name": "Everyday Abaya", "slug": "everyday-abaya", "regular_price": "15000",
@@ -1151,7 +1145,7 @@ def test_add_product_page_exposes_all_supported_fields_and_saves_them(app, clien
         assert product.category_id == category_id
         assert product.gender == "Women"
         assert product.fashion_type == "Custom-made"
-        assert product.featured and product.new_arrival and product.is_published
+        assert product.is_published
         assert ProductVariant.query.filter_by(product_id=product.id).count() == 4
 
 
@@ -1176,7 +1170,6 @@ def test_edit_product_updates_category_audience_and_product_type(app, client):
         product = db.session.get(Product, product_id)
         assert product.category_id == category_id
         assert product.gender == "Women" and product.fashion_type == "Custom-made"
-        assert product.featured and product.new_arrival
 
 
 def test_product_forms_do_not_show_featured_or_new_arrival_status(app, client):
