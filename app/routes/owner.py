@@ -278,7 +278,8 @@ def edit_product(product_id):
     if form.validate_on_submit():
         if form.discounted_price.data is not None and form.discounted_price.data > form.regular_price.data:
             flash("Discounted price cannot exceed regular price.", "danger")
-            return render_template("owner/product_edit.html", form=form, product=product), 200
+            categories = Category.query.filter_by(business_id=current_user.business_id).order_by(Category.name).all()
+            return render_template("owner/product_edit.html", form=form, product=product, categories=categories), 200
         product.name = form.name.data.strip()
         new_slug = slugify(form.slug.data or product.name)
         if new_slug:
@@ -289,7 +290,8 @@ def edit_product(product_id):
             ).first()
             if collision:
                 flash("A product with that slug already exists.", "danger")
-                return render_template("owner/product_edit.html", form=form, product=product), 200
+                categories = Category.query.filter_by(business_id=current_user.business_id).order_by(Category.name).all()
+                return render_template("owner/product_edit.html", form=form, product=product, categories=categories), 200
             product.slug = new_slug
         category_id = None
         try:
