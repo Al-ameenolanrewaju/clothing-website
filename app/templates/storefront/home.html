@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}{{ (settings.seo_title if settings and settings.seo_title else business.name ~ ' | Clothing Catalogue') }}{% endblock %}
-{% block meta_description %}{{ settings.seo_description if settings and settings.seo_description else (business.description or 'Explore the latest collection and order directly.') }}{% endblock %}
+{% block title %}{{ settings.seo_title if settings and settings.seo_title else business.name ~ ' | Collection' }}{% endblock %}
+{% block meta_description %}{{ settings.seo_description if settings and settings.seo_description else (business.description or 'Explore the latest collection.') }}{% endblock %}
 {% block body_class %}fashion-store{% endblock %}
 {% block body %}
 {% include "storefront/_nav.html" %}
@@ -8,35 +8,24 @@
   <section class="luxury-hero">
     <div class="luxury-hero-copy">
       <span class="eyebrow">{{ settings.tagline if settings and settings.tagline else 'The ' ~ business.name ~ ' collection' }}</span>
-      <h1>{% if settings and settings.hero_title %}{{ settings.hero_title }}{% else %}Style that feels like <em>you.</em>{% endif %}</h1>
-      <p>{% if settings and settings.about_text %}{{ settings.about_text }}{% else %}Pieces made to be remembered. Discover pieces selected with care, check available sizes and colours, and speak with us directly on WhatsApp.{% endif %}</p>
-      <div class="hero-actions">
-        <a class="luxury-button luxury-button-gold" href="#featured">{{ settings.hero_cta if settings and settings.hero_cta else 'Explore the collection' }}</a>
-        {% if business.whatsapp_number %}<a class="luxury-button luxury-button-outline" href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">{{ settings.hero_whatsapp_cta if settings and settings.hero_whatsapp_cta else 'Chat with us' }}</a>{% endif %}
-      </div>
+      <h1>{% if settings and settings.hero_title %}{{ settings.hero_title }}{% else %}Pieces to wear,<br><em>and wear again.</em>{% endif %}</h1>
+      <p>{{ (settings.about_text if settings and settings.about_text else business.description) or 'Discover pieces selected with care. Find your fit and explore the collection.' }}</p>
+      <div class="hero-actions"><a class="luxury-button luxury-button-gold" href="{{ url_for('storefront.collection') }}">{{ settings.hero_cta if settings and settings.hero_cta else 'Explore collection' }}</a></div>
     </div>
     <div class="luxury-hero-image">
-      {% if business.banner_url %}<img src="{{ business.banner_url }}" alt="{{ business.name }} collection">
-      {% else %}<div class="editorial-brand-panel"><span class="editorial-brand-name">{{ business.name }}</span><span class="editorial-brand-caption">{{ settings.tagline if settings and settings.tagline else 'A considered collection' }}</span></div>{% endif %}
+      {% if business.banner_url %}<img src="{{ business.banner_url }}" alt="{{ business.name }} collection">{% else %}<div class="editorial-brand-panel"><span class="editorial-brand-name">{{ business.name }}</span><span class="editorial-brand-caption">{{ settings.tagline if settings and settings.tagline else 'A considered collection' }}</span></div>{% endif %}
     </div>
   </section>
-  <div class="luxury-proof-bar" aria-label="Shopping benefits">
-    <div><span>01</span><p><strong>{{ settings.proof1_title if settings and settings.proof1_title else 'Curated collection' }}</strong><small>{{ settings.proof1_text if settings and settings.proof1_text else 'Thoughtfully selected pieces' }}</small></p></div>
-    <div><span>02</span><p><strong>{{ settings.proof2_title if settings and settings.proof2_title else 'Sizes & colours' }}</strong><small>{{ settings.proof2_text if settings and settings.proof2_text else 'Available options confirmed' }}</small></p></div>
-    <div><span>03</span><p><strong>{{ settings.proof3_title if settings and settings.proof3_title else 'Personal ordering' }}</strong><small>{{ settings.proof3_text if settings and settings.proof3_text else 'Complete your order on WhatsApp' }}</small></p></div>
-  </div>
-  <section class="luxury-collection" id="catalogue">
+  <section class="luxury-collection" id="featured">
     <div class="luxury-section-head"><div><span class="eyebrow">{{ settings.catalogue_eyebrow if settings and settings.catalogue_eyebrow else 'Explore our pieces' }}</span><h2>{{ settings.catalogue_title if settings and settings.catalogue_title else 'Find your next favourite.' }}</h2></div></div>
-    <div class="product-grid luxury-product-grid" id="featured">
+    <div class="product-grid luxury-product-grid">
       {% for product in featured %}{% include "storefront/_product_card.html" %}{% else %}
-      <div class="catalogue-empty-state"><span class="eyebrow">A new collection is on its way</span><h3>{{ settings.empty_title if settings and settings.empty_title else 'Something lovely is being prepared.' }}</h3><p>{{ settings.empty_text if settings and settings.empty_text else 'Our pieces will appear here as soon as they are added. In the meantime, get in touch and we’ll be happy to help.' }}</p>{% if business.whatsapp_number %}<a href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">Chat with us on WhatsApp ↗</a>{% endif %}</div>
+      <div class="catalogue-empty-state"><h3>{{ settings.empty_title if settings and settings.empty_title else 'A new collection is on its way.' }}</h3><p>{{ settings.empty_text if settings and settings.empty_text else 'Our pieces will appear here as soon as they are added.' }}</p></div>
       {% endfor %}
     </div>
-  </section>
-  <section class="luxury-order-banner" id="order">
-    <div><span class="eyebrow">{{ settings.order_eyebrow if settings and settings.order_eyebrow else 'Personal service' }}</span><h2>{{ settings.order_title if settings and settings.order_title else 'Need a little more information?' }}</h2><p>{{ settings.order_text if settings and settings.order_text else 'Ask us about a piece, confirm available sizes and colours, or place your order directly through WhatsApp.' }}</p></div>
-    {% if business.whatsapp_number %}<a class="luxury-button luxury-button-gold" href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">{{ settings.order_button if settings and settings.order_button else 'Message ' ~ business.name }} ↗</a>{% endif %}
+    {% if featured %}<div class="collection-next"><a class="luxury-button luxury-button-gold" href="{{ url_for('storefront.collection') }}">View the full collection <span aria-hidden="true">→</span></a></div>{% endif %}
   </section>
 </main>
 {% include "storefront/_footer.html" %}
 {% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/storefront.js') }}" defer></script>{% endblock %}

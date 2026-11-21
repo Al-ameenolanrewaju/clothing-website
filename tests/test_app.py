@@ -440,11 +440,14 @@ def test_storefront_filters_and_product_pages(app, client):
         ])
         db.session.commit()
     home = client.get("/", base_url="http://store-a.test")
-    assert b"Blue Coat" in home.data and b"Order on WhatsApp" in home.data
-    assert home.status_code == 200 and b"Pieces made to be remembered." in home.data
+    assert home.status_code == 200
+    assert b"Add to bag" in home.data
+    collection = client.get("/collection", base_url="http://store-a.test")
+    assert collection.status_code == 200
+    assert b"Blue Coat" in collection.data and b"Black Trousers" in collection.data
     assert client.get("/catalogue", base_url="http://store-a.test").status_code == 404
     assert client.get("/product/blue-coat", base_url="http://store-a.test").status_code == 404
-    assert client.get("/cart", base_url="http://store-a.test").status_code == 404
+    assert client.get("/cart", base_url="http://store-a.test").status_code == 200
     login_owner(client)
     dashboard = client.get("/dashboard/", base_url="http://store-a.test")
     assert dashboard.status_code == 200 and b"Manage products" in dashboard.data
@@ -466,7 +469,7 @@ def test_owner_can_change_profile_and_password(app, client):
     business_id, owner_id = make_tenant(app)
     login_owner(client)
     settings_page = client.get("/dashboard/settings", base_url="http://store-a.test")
-    assert settings_page.status_code == 200 and b"Store information" in settings_page.data
+    assert settings_page.status_code == 200 and b"Storefront brand editor" in settings_page.data
     settings_response = client.post("/dashboard/settings", data={
         "name": "My Updated Store",
         "description": "New description",
@@ -814,7 +817,8 @@ def test_owner_crud_changes_persist_in_database_after_restart(tmp_path):
 def test_csrf_is_required_outside_disabled_test_configuration():
     app = create_app(CsrfConfig)
     response = app.test_client().post("/login", data={"email": "admin@example.com", "password": "secret123"})
-    assert response.status_code == 400
+    assert response.status_code == 302
+    assert response.location.endswith("/login")
 
 
 def test_database_image_storage_and_public_serving(app):
@@ -871,3 +875,136 @@ def test_database_image_upload_validation_rejects_oversized_or_invalid_files():
     )
     with pytest.raises(ValueError, match="5 MB"):
         read_image(oversized)
+
+
+def test_generic_store_bootstrap_creates_isolated_store_owner_and_defaults(app, monkeypatch):
+    monkeypatch.setenv("STORE_NAME", "Northside Fashion")
+    monkeypatch.setenv("STORE_SLUG", "northside-fashion")
+    monkeypatch.setenv("STORE_DESCRIPTION", "Independent client catalogue")
+    monkeypatch.setenv("STORE_OWNER_NAME", "Northside Owner")
+    monkeypatch.setenv("STORE_OWNER_EMAIL", "owner@northside.example")
+    monkeypatch.setenv("STORE_OWNER_PASSWORD", "a-unique-client-password")
+    monkeypatch.setenv("STORE_CONTACT_EMAIL", "hello@northside.example")
+    monkeypatch.setenv("STORE_WHATSAPP_NUMBER", "2348012345678")
+
+    result = app.test_cli_runner().invoke(args=["bootstrap-store"])
+    assert result.exit_code == 0, result.output
+
+    with app.app_context():
+        business = Business.query.filter_by(slug="northside-fashion").one()
+        owner = User.query.filter_by(email="owner@northside.example").one()
+        assert business.name == "Northside Fashion"
+        assert business.description == "Independent client catalogue"
+        assert business.contact_email == "hello@northside.example"
+        assert business.whatsapp_number == "2348012345678"
+        assert owner.business_id == business.id
+        assert owner.role == "OWNER"
+        assert owner.check_password("a-unique-client-password")
+        assert StoreSettings.query.filter_by(business_id=business.id).one()
+        assert Category.query.filter_by(business_id=business.id).count() == 18
+
+
+def test_generic_store_bootstrap_is_idempotent_and_never_resets_password(app, monkeypatch):
+    monkeypatch.setenv("STORE_NAME", "Repeat Store")
+    monkeypatch.setenv("STORE_SLUG", "repeat-store")
+    monkeypatch.setenv("STORE_OWNER_NAME", "Repeat Owner")
+    monkeypatch.setenv("STORE_OWNER_EMAIL", "repeat@example.com")
+    monkeypatch.setenv("STORE_OWNER_PASSWORD", "first-password-is-unique")
+
+    runner = app.test_cli_runner()
+    first = runner.invoke(args=["bootstrap-store"])
+    assert first.exit_code == 0, first.output
+
+    with app.app_context():
+        owner = User.query.filter_by(email="repeat@example.com").one()
+        original_hash = owner.password_hash
+
+    monkeypatch.setenv("STORE_OWNER_PASSWORD", "second-password-is-different")
+    second = runner.invoke(args=["bootstrap-store"])
+    assert second.exit_code == 0, second.output
+
+    with app.app_context():
+        assert Business.query.filter_by(slug="repeat-store").count() == 1
+        assert User.query.filter_by(email="repeat@example.com").count() == 1
+        owner = User.query.filter_by(email="repeat@example.com").one()
+        assert owner.password_hash == original_hash
+        assert owner.check_password("first-password-is-unique")
+        assert not owner.check_password("second-password-is-different")
+        assert StoreSettings.query.filter_by(business_id=owner.business_id).count() == 1
+        assert Category.query.filter_by(business_id=owner.business_id).count() == 18
+
+
+def test_generic_store_bootstrap_rejects_owner_email_used_by_another_store(app, monkeypatch):
+    make_tenant(app, "Existing Store", "existing-store", "existing-store.test")
+    monkeypatch.setenv("STORE_NAME", "New Store")
+    monkeypatch.setenv("STORE_SLUG", "new-store")
+    monkeypatch.setenv("STORE_OWNER_NAME", "New Owner")
+    monkeypatch.setenv("STORE_OWNER_EMAIL", "existing-store@example.com")
+    monkeypatch.setenv("STORE_OWNER_PASSWORD", "a-new-unique-password")
+
+    result = app.test_cli_runner().invoke(args=["bootstrap-store"])
+    assert result.exit_code != 0
+    assert isinstance(result.exception, RuntimeError)
+    assert "already assigned to another account" in str(result.exception)
+
+    with app.app_context():
+        assert Business.query.filter_by(slug="new-store").count() == 0
+        assert User.query.filter_by(email="existing-store@example.com").count() == 1
+
+
+def test_generic_store_bootstrap_rejects_missing_or_weak_configuration(app, monkeypatch):
+    for key in (
+        "STORE_NAME", "STORE_SLUG", "STORE_OWNER_NAME", "STORE_OWNER_EMAIL",
+        "STORE_OWNER_PASSWORD",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+    missing = app.test_cli_runner().invoke(args=["bootstrap-store"])
+    assert missing.exit_code != 0
+    assert isinstance(missing.exception, RuntimeError)
+    assert "STORE_NAME" in str(missing.exception)
+
+    monkeypatch.setenv("STORE_NAME", "Weak Password Store")
+    monkeypatch.setenv("STORE_SLUG", "weak-password-store")
+    monkeypatch.setenv("STORE_OWNER_NAME", "Owner")
+    monkeypatch.setenv("STORE_OWNER_EMAIL", "weak@example.com")
+    monkeypatch.setenv("STORE_OWNER_PASSWORD", "short")
+    weak = app.test_cli_runner().invoke(args=["bootstrap-store"])
+    assert weak.exit_code != 0
+    assert isinstance(weak.exception, RuntimeError)
+    assert "at least 12 characters" in str(weak.exception)
+
+
+def test_storefront_home_shows_four_products_with_description_and_collection_link(app, client):
+    business_id, _ = make_tenant(app)
+    with app.app_context():
+        category = Category(business_id=business_id, name="Shirts", slug="shirts", gender="Men")
+        db.session.add(category)
+        db.session.flush()
+        for number in range(6):
+            make_product(app, business_id, name=f"Shirt {number}", slug=f"shirt-{number}",
+                         category_id=category.id, description="Soft cotton fabric")
+    response = client.get("/", base_url="http://store-a.test")
+    assert response.status_code == 200
+    assert response.data.count(b"data-product-card") == 4
+    assert b"Soft cotton fabric" in response.data
+    assert b"/collection" in response.data
+
+
+def test_collection_filters_by_tenant_category_and_cart_page_loads(app, client):
+    business_id, _ = make_tenant(app)
+    with app.app_context():
+        shirts = Category(business_id=business_id, name="Shirts", slug="shirts", gender="Men")
+        trousers = Category(business_id=business_id, name="Trousers", slug="trousers", gender="Men")
+        db.session.add_all([shirts, trousers])
+        db.session.flush()
+        make_product(app, business_id, name="Oxford Shirt", slug="oxford-shirt", category_id=shirts.id)
+        make_product(app, business_id, name="Chino Trousers", slug="chino-trousers", category_id=trousers.id)
+        shirts_id = shirts.id
+    response = client.get(f"/collection?category={shirts_id}", base_url="http://store-a.test")
+    assert response.status_code == 200
+    assert b"Oxford Shirt" in response.data
+    assert b"Chino Trousers" not in response.data
+    cart_response = client.get("/cart", base_url="http://store-a.test")
+    assert cart_response.status_code == 200
+    assert b"Your bag" in cart_response.data

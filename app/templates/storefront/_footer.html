@@ -1,9 +1,21 @@
 <footer class="store-footer luxury-footer">
   <div class="luxury-footer-inner">
-    <a class="footer-brand luxury-brand" href="{{ url_for('storefront.home') }}"><strong>{{ business.name.split(' ')[0] }}</strong>{% if business.name.split(' ', 1)|length > 1 %}<em>{{ business.name.split(' ', 1)[1] }}</em>{% endif %}</a>
-    <p>{{ (settings.footer_text if settings and settings.footer_text else (settings.about_text if settings and settings.about_text else business.description)) or 'Browse the catalogue and contact us directly for product enquiries and orders.' }}</p>
-    <span>{{ business.address or 'Orders taken directly on WhatsApp' }}</span>
-    {% if business.whatsapp_number %}<a class="footer-whatsapp" href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">Chat with us on WhatsApp</a>{% endif %}
-    <small>{{ settings.copyright_text if settings and settings.copyright_text else '© ' ~ business.name ~ ' · All rights reserved' }}</small>
+    <div class="footer-main">
+      <a class="footer-brand luxury-brand" href="{{ url_for('storefront.home') }}"><strong>{{ business.name }}</strong></a>
+      <p>{{ (settings.footer_text if settings and settings.footer_text else business.description) or 'A considered collection, selected with care.' }}</p>
+      <small>{{ settings.copyright_text if settings and settings.copyright_text else '© ' ~ business.name ~ ' · All rights reserved' }}</small>
+    </div>
+    <div class="footer-links">
+      <h2>Connect</h2>
+      {% if business.whatsapp_number %}<a href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">WhatsApp ↗</a>{% endif %}
+      {% if business.contact_email %}<a href="mailto:{{ business.contact_email }}">Email ↗</a>{% endif %}
+      {% if business.address %}<span>{{ business.address }}</span>{% endif %}
+      <div class="footer-socials" aria-label="Social media">
+        {% if settings and settings.instagram_url %}<a href="{{ settings.instagram_url }}" target="_blank" rel="noopener">Instagram ↗</a>{% endif %}
+        {% if settings and settings.facebook_url %}<a href="{{ settings.facebook_url }}" target="_blank" rel="noopener">Facebook ↗</a>{% endif %}
+        {% if settings and settings.tiktok_url %}<a href="{{ settings.tiktok_url }}" target="_blank" rel="noopener">TikTok ↗</a>{% endif %}
+        {% if settings and settings.x_url %}<a href="{{ settings.x_url }}" target="_blank" rel="noopener">X ↗</a>{% endif %}
+      </div>
+    </div>
   </div>
 </footer>

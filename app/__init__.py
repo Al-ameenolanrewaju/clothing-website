@@ -52,9 +52,96 @@ def create_app(config_object=None):
 
     from . import models
 
+    @app.cli.command("bootstrap-store")
+    def bootstrap_store():
+        """Create one independent client store from STORE_* environment variables."""
+        from sqlalchemy.exc import IntegrityError
+        from .utils import slugify
+
+        store_name = os.getenv("STORE_NAME", "").strip()
+        store_slug = slugify(os.getenv("STORE_SLUG", "") or store_name)
+        owner_name = os.getenv("STORE_OWNER_NAME", "").strip()
+        owner_email = os.getenv("STORE_OWNER_EMAIL", "").strip().lower()
+        owner_password = os.getenv("STORE_OWNER_PASSWORD", "")
+        contact_email = os.getenv("STORE_CONTACT_EMAIL", "").strip().lower() or owner_email
+        whatsapp_number = os.getenv("STORE_WHATSAPP_NUMBER", "").strip() or None
+
+        if not store_name or not store_slug or len(store_slug) > 160 or not owner_name or not owner_email:
+            raise RuntimeError(
+                "Set STORE_NAME, STORE_OWNER_NAME and STORE_OWNER_EMAIL; "
+                "STORE_SLUG is optional and defaults to a slug of STORE_NAME. "
+                "The store slug must be no longer than 160 characters."
+            )
+        if len(owner_name) > 160 or len(owner_email) > 255:
+            raise RuntimeError("STORE_OWNER_NAME or STORE_OWNER_EMAIL exceeds the supported length.")
+
+        business = models.Business.query.filter_by(slug=store_slug).first()
+        existing_owner = models.User.query.filter_by(email=owner_email).first()
+        if existing_owner and (not business or existing_owner.business_id != business.id):
+            raise RuntimeError("STORE_OWNER_EMAIL is already assigned to another account.")
+        if business and business.status != "ACTIVE":
+            raise RuntimeError("The existing store is not active; refusing to change its status.")
+        if business:
+            another_owner = models.User.query.filter(
+                models.User.business_id == business.id,
+                models.User.role == "OWNER",
+                models.User.email != owner_email,
+            ).first()
+            if another_owner:
+                raise RuntimeError("This store already has a different owner account; refusing to add or replace an owner.")
+        if not existing_owner and (not owner_password or len(owner_password) < 12):
+            raise RuntimeError("Set STORE_OWNER_PASSWORD to a unique password of at least 12 characters.")
+
+        try:
+            if business is None:
+                business = models.Business(
+                    name=store_name,
+                    slug=store_slug,
+                    description=os.getenv("STORE_DESCRIPTION", "").strip() or None,
+                    contact_email=contact_email,
+                    whatsapp_number=whatsapp_number,
+                    status="ACTIVE",
+                )
+                db.session.add(business)
+                db.session.flush()
+
+            if existing_owner is None:
+                owner = models.User(
+                    business_id=business.id,
+                    name=owner_name,
+                    email=owner_email,
+                    role="OWNER",
+                    active=True,
+                )
+                owner.set_password(owner_password)
+                db.session.add(owner)
+
+            if not models.StoreSettings.query.filter_by(business_id=business.id).first():
+                db.session.add(models.StoreSettings(business_id=business.id))
+
+            if not models.Category.query.filter_by(business_id=business.id).first():
+                defaults = {
+                    "Men": ["Shirts", "Trousers", "Native Wear", "Senator Outfits", "Agbada", "Kaftans", "Jackets", "Shoes", "Accessories"],
+                    "Women": ["Dresses", "Abayas", "Hijabs", "Jilbabs", "Two-Piece Outfits", "Skirts", "Blouses", "Trousers", "Accessories"],
+                }
+                for gender, names in defaults.items():
+                    for category_name in names:
+                        category_slug = slugify(f"{gender}-{category_name}")
+                        db.session.add(models.Category(
+                            business_id=business.id,
+                            name=category_name,
+                            slug=category_slug,
+                            gender=gender,
+                        ))
+            db.session.commit()
+            print(f"Store {store_name} and owner account created successfully.")
+        except IntegrityError:
+            db.session.rollback()
+            raise RuntimeError("Store bootstrap encountered an existing database record; no partial setup was saved.")
+
     @app.cli.command("bootstrap-sulex")
     def bootstrap_sulex():
-        """Create the initial Sulex store and owner from private environment variables."""
+        """Create the original Sulex store and owner from private environment variables."""
         from sqlalchemy.exc import IntegrityError
 
         owner_email = os.getenv("SULEX_OWNER_EMAIL", "").strip().lower()
