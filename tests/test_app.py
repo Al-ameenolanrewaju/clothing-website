@@ -1112,7 +1112,7 @@ def test_owner_can_choose_product_cover_without_deleting_gallery_images(app, cli
 def test_owner_dashboard_has_complete_store_navigation_and_recent_orders(app, client):
     make_tenant(app)
     login_owner(client)
-    response = client.get("/dashboard", base_url="http://store-a.test")
+    response = client.get("/dashboard/", base_url="http://store-a.test")
     assert response.status_code == 200
     for label in [b"Products", b"Categories", b"Orders", b"Customers", b"Photo library", b"Domain", b"Store settings"]:
         assert label in response.data
