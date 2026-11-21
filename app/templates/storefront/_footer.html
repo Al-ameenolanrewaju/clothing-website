@@ -1,21 +1,31 @@
 <footer class="store-footer luxury-footer">
   <div class="luxury-footer-inner">
-    <div class="footer-main">
+    <div class="footer-brand-column">
       <a class="footer-brand luxury-brand" href="{{ url_for('storefront.home') }}"><strong>{{ business.name }}</strong></a>
-      <p>{{ (settings.footer_text if settings and settings.footer_text else business.description) or 'A considered collection, selected with care.' }}</p>
-      <small>{{ settings.copyright_text if settings and settings.copyright_text else '© ' ~ business.name ~ ' · All rights reserved' }}</small>
+      <p>{{ (settings.footer_text if settings and settings.footer_text else business.description) or 'Thoughtfully selected pieces, made to be worn and loved.' }}</p>
+      <a class="footer-shop-link" href="{{ url_for('storefront.collection') }}">Explore the collection <span aria-hidden="true">↗</span></a>
     </div>
-    <div class="footer-links">
-      <h2>Connect</h2>
-      {% if business.whatsapp_number %}<a href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">WhatsApp ↗</a>{% endif %}
-      {% if business.contact_email %}<a href="mailto:{{ business.contact_email }}">Email ↗</a>{% endif %}
-      {% if business.address %}<span>{{ business.address }}</span>{% endif %}
+    <div class="footer-column">
+      <h2>Explore</h2>
+      <a href="{{ url_for('storefront.home') }}">Home</a>
+      <a href="{{ url_for('storefront.home') }}#featured">Featured pieces</a>
+      <a href="{{ url_for('storefront.collection') }}">All products</a>
+    </div>
+    <div class="footer-column footer-contact-column">
+      <h2>Get in touch</h2>
+      {% if business.whatsapp_number %}<a href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">WhatsApp <span aria-hidden="true">↗</span></a>{% endif %}
+      {% if business.contact_email %}<a href="mailto:{{ business.contact_email }}">Email <span aria-hidden="true">↗</span></a>{% endif %}
+      {% if business.address %}<p class="footer-address">{{ business.address }}</p>{% endif %}
       <div class="footer-socials" aria-label="Social media">
-        {% if settings and settings.instagram_url %}<a href="{{ settings.instagram_url }}" target="_blank" rel="noopener">Instagram ↗</a>{% endif %}
-        {% if settings and settings.facebook_url %}<a href="{{ settings.facebook_url }}" target="_blank" rel="noopener">Facebook ↗</a>{% endif %}
-        {% if settings and settings.tiktok_url %}<a href="{{ settings.tiktok_url }}" target="_blank" rel="noopener">TikTok ↗</a>{% endif %}
-        {% if settings and settings.x_url %}<a href="{{ settings.x_url }}" target="_blank" rel="noopener">X ↗</a>{% endif %}
+        {% if settings and settings.instagram_url %}<a href="{{ settings.instagram_url }}" target="_blank" rel="noopener">Instagram</a>{% endif %}
+        {% if settings and settings.facebook_url %}<a href="{{ settings.facebook_url }}" target="_blank" rel="noopener">Facebook</a>{% endif %}
+        {% if settings and settings.tiktok_url %}<a href="{{ settings.tiktok_url }}" target="_blank" rel="noopener">TikTok</a>{% endif %}
+        {% if settings and settings.x_url %}<a href="{{ settings.x_url }}" target="_blank" rel="noopener">X</a>{% endif %}
       </div>
     </div>
+  </div>
+  <div class="luxury-footer-bottom">
+    <span>{{ settings.copyright_text if settings and settings.copyright_text else '© ' ~ business.name ~ ' · All rights reserved' }}</span>
+    <a href="{{ url_for('storefront.home') }}">Back to top ↑</a>
   </div>
 </footer>
