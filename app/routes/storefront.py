@@ -1,7 +1,9 @@
+import random
+
 from flask import Blueprint, g, render_template, request, abort
 
 from .. import db
-from ..models import Category, Product, StoreVisit, StoreSettings
+from ..models import Category, Product, ProductVariant, StoreVisit, StoreSettings
 
 bp = Blueprint("storefront", __name__)
 
@@ -43,6 +45,7 @@ def home():
     products = Product.query.filter_by(
         business_id=business.id, is_published=True
     ).order_by(Product.created_at.desc()).limit(4).all()
+    random.shuffle(products)
     settings, categories = storefront_context(business)
     return render_template(
         "storefront/home.html", business=business, featured=products,
@@ -56,6 +59,8 @@ def collection():
     query = Product.query.filter_by(business_id=business.id, is_published=True)
     category_id = request.args.get("category", type=int)
     selected_category = None
+    selected_size = (request.args.get("size") or "").strip()
+    selected_colour = (request.args.get("colour") or "").strip()
     if category_id:
         selected_category = Category.query.filter_by(
             id=category_id, business_id=business.id
@@ -70,11 +75,33 @@ def collection():
             query = query.filter(Product.category_id.in_(matching_ids))
         else:
             abort(404)
+    if selected_size:
+        matching_products = db.session.query(ProductVariant.product_id).filter(
+            ProductVariant.business_id == business.id,
+            ProductVariant.size.ilike(selected_size),
+            ProductVariant.is_available.is_(True),
+        ).subquery()
+        query = query.filter(Product.id.in_(matching_products))
+    if selected_colour:
+        matching_products = db.session.query(ProductVariant.product_id).filter(
+            ProductVariant.business_id == business.id,
+            ProductVariant.colour.ilike(selected_colour),
+            ProductVariant.is_available.is_(True),
+        ).subquery()
+        query = query.filter(Product.id.in_(matching_products))
     products = query.order_by(Product.created_at.desc()).all()
+    random.shuffle(products)
+    variant_rows = ProductVariant.query.filter_by(
+        business_id=business.id, is_available=True
+    ).order_by(ProductVariant.size, ProductVariant.colour).all()
+    sizes = sorted({variant.size.strip() for variant in variant_rows if variant.size and variant.size.strip()}, key=str.casefold)
+    colours = sorted({variant.colour.strip() for variant in variant_rows if variant.colour and variant.colour.strip()}, key=str.casefold)
     settings, categories = storefront_context(business)
     return render_template(
         "storefront/collection.html", business=business, products=products,
         categories=categories, selected_category=selected_category, settings=settings,
+        sizes=sizes, colours=colours, selected_size=selected_size,
+        selected_colour=selected_colour,
     )
 
 
