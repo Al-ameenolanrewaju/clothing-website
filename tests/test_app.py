@@ -466,7 +466,7 @@ def test_owner_can_change_profile_and_password(app, client):
     business_id, owner_id = make_tenant(app)
     login_owner(client)
     settings_page = client.get("/dashboard/settings", base_url="http://store-a.test")
-    assert settings_page.status_code == 200 and b"Store profile" in settings_page.data
+    assert settings_page.status_code == 200 and b"Storefront brand editor" in settings_page.data
     settings_response = client.post("/dashboard/settings", data={
         "name": "My Updated Store",
         "description": "New description",
@@ -946,7 +946,7 @@ def test_generic_store_bootstrap_rejects_owner_email_used_by_another_store(app, 
 
     with app.app_context():
         assert Business.query.filter_by(slug="new-store").count() == 0
-        assert User.query.filter_by(email="store-a@example.com").count() == 1
+        assert User.query.filter_by(email="existing-store@example.com").count() == 1
 
 
 def test_generic_store_bootstrap_rejects_missing_or_weak_configuration(app, monkeypatch):
