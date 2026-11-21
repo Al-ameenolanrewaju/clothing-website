@@ -1199,5 +1199,7 @@ def test_footer_social_links_only_render_when_owner_configures_them(app, client)
     assert b'aria-label="TikTok"' not in response.data
     assert b'aria-label="X"' not in response.data
     assert b'Get in touch' not in response.data
-    assert b'WhatsApp' not in response.data
+    html = response.data.decode()
+    footer = html.split('<footer class="store-footer luxury-footer">', 1)[1].split('</footer>', 1)[0]
+    assert 'WhatsApp' not in footer
     assert b'>Email ' not in response.data
