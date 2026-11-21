@@ -1022,7 +1022,7 @@ def test_collection_deduplicates_category_labels_and_filters_all_same_name_categ
         first_id = first.id
     response = client.get("/collection", base_url="http://store-a.test")
     assert response.status_code == 200
-    assert response.data.count(b">Accessories</a>") == 1
+    assert response.data.count(b"Accessories") == 1
     filtered = client.get(f"/collection?category={first_id}", base_url="http://store-a.test")
     assert filtered.status_code == 200
     assert b"Leather Bag" in filtered.data
