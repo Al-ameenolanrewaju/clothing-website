@@ -1106,3 +1106,22 @@ def test_owner_can_choose_product_cover_without_deleting_gallery_images(app, cli
             "linen-set-front.jpg", "wrong-screenshot.jpg"
         ]
         assert len(images) == 2
+
+
+
+def test_owner_dashboard_has_complete_store_navigation_and_recent_orders(app, client):
+    make_tenant(app)
+    login_owner(client)
+    response = client.get("/dashboard", base_url="http://store-a.test")
+    assert response.status_code == 200
+    for label in [b"Products", b"Categories", b"Orders", b"Customers", b"Photo library", b"Domain", b"Store settings"]:
+        assert label in response.data
+    assert b"Recent orders" in response.data
+
+
+def test_storefront_footer_back_to_top_is_in_page_anchor(app, client):
+    make_tenant(app)
+    response = client.get("/", base_url="http://store-a.test")
+    assert response.status_code == 200
+    assert b'<body id="top"' in response.data
+    assert b'href="#top">Back to top' in response.data
