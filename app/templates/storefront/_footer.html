@@ -10,6 +10,12 @@
       {% if business.whatsapp_number %}<a href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','')|replace('(','')|replace(')','')|replace('.','') }}" target="_blank" rel="noopener">WhatsApp ↗</a>{% endif %}
       {% if business.contact_email %}<a href="mailto:{{ business.contact_email }}">Email ↗</a>{% endif %}
       {% if business.address %}<span>{{ business.address }}</span>{% endif %}
+      <div class="footer-socials" aria-label="Social media">
+        {% if settings and settings.instagram_url %}<a href="{{ settings.instagram_url }}" target="_blank" rel="noopener">Instagram ↗</a>{% endif %}
+        {% if settings and settings.facebook_url %}<a href="{{ settings.facebook_url }}" target="_blank" rel="noopener">Facebook ↗</a>{% endif %}
+        {% if settings and settings.tiktok_url %}<a href="{{ settings.tiktok_url }}" target="_blank" rel="noopener">TikTok ↗</a>{% endif %}
+        {% if settings and settings.x_url %}<a href="{{ settings.x_url }}" target="_blank" rel="noopener">X ↗</a>{% endif %}
+      </div>
     </div>
   </div>
 </footer>
