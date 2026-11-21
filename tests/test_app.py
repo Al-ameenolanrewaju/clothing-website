@@ -1177,3 +1177,13 @@ def test_edit_product_updates_category_audience_and_product_type(app, client):
         assert product.category_id == category_id
         assert product.gender == "Women" and product.fashion_type == "Custom-made"
         assert product.featured and product.new_arrival
+
+
+def test_product_forms_do_not_show_featured_or_new_arrival_status(app, client):
+    make_tenant(app)
+    login_owner(client)
+    response = client.get("/dashboard/products", base_url="http://store-a.test")
+    assert response.status_code == 200
+    assert b"Featured product" not in response.data
+    assert b"New arrival" not in response.data
+    assert b"Published" in response.data
