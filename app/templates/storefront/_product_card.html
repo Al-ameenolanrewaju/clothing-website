@@ -14,6 +14,6 @@
     <h3>{{ product.name }}</h3>
     {% if product.description %}<p class="product-description-card">{{ product.description }}</p>{% endif %}
     <p class="luxury-price">₦{{ "{:,.0f}".format(product.price) }}</p>
-    <button class="product-whatsapp-button add-to-cart-button" type="button" data-add-to-cart>Add to bag</button>
+    <button class="product-whatsapp-button add-to-cart-button" type="button" data-add-to-cart aria-pressed="false">Add to cart</button>
   </div>
 </article>
