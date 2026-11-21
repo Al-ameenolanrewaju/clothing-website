@@ -210,11 +210,16 @@ def products():
         category_id = None
         try:
             parsed_category_id = int(form.category_id.data or 0)
-            if parsed_category_id > 0:
-                category = Category.query.filter_by(id=parsed_category_id, business_id=current_user.business_id).first()
-                category_id = category.id if category else None
         except (TypeError, ValueError):
-            category_id = None
+            parsed_category_id = 0
+        if parsed_category_id:
+            category = Category.query.filter_by(id=parsed_category_id, business_id=current_user.business_id).first()
+            if not category:
+                flash("Choose a valid category from your store.", "danger")
+                items = Product.query.filter_by(business_id=current_user.business_id).order_by(Product.created_at.desc()).all()
+                categories = Category.query.filter_by(business_id=current_user.business_id).order_by(Category.name).all()
+                return render_template("owner/products.html", form=form, items=items, categories=categories), 200
+            category_id = category.id
         product = Product(
             business_id=current_user.business_id,
             category_id=category_id,
@@ -286,6 +291,23 @@ def edit_product(product_id):
                 flash("A product with that slug already exists.", "danger")
                 return render_template("owner/product_edit.html", form=form, product=product), 200
             product.slug = new_slug
+        category_id = None
+        try:
+            parsed_category_id = int(form.category_id.data or 0)
+        except (TypeError, ValueError):
+            parsed_category_id = 0
+        if parsed_category_id:
+            category = Category.query.filter_by(id=parsed_category_id, business_id=current_user.business_id).first()
+            if not category:
+                flash("Choose a valid category from your store.", "danger")
+                categories = Category.query.filter_by(business_id=current_user.business_id).order_by(Category.name).all()
+                return render_template("owner/product_edit.html", form=form, product=product, categories=categories), 200
+            category_id = category.id
+        product.category_id = category_id
+        product.gender = form.gender.data or "Unisex"
+        product.fashion_type = form.fashion_type.data or "Ready-to-wear"
+        product.featured = form.featured.data
+        product.new_arrival = form.new_arrival.data
         product.description = form.description.data
         product.regular_price = form.regular_price.data
         product.discounted_price = form.discounted_price.data
