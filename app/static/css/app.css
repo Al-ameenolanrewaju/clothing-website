@@ -1045,3 +1045,5 @@ a { color: inherit; }
 @media(prefers-reduced-motion:reduce) { .fashion-store * { scroll-behavior:auto !important; transition:none !important; } }
 
 .footer-socials { display:flex; flex-wrap:wrap; gap:12px; margin-top:8px; }
+
+.add-to-cart-button:focus-visible,.cart-quantity button:focus-visible { outline:2px solid #a9875d; outline-offset:3px; }
