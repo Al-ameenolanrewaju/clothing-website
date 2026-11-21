@@ -1,4 +1,4 @@
-from flask import Blueprint, g, render_template, request, abort
+from flask import Blueprint, g, render_template, request, abort, redirect, url_for
 
 from .. import db
 from ..models import Category, Product, StoreVisit, StoreSettings
@@ -80,8 +80,6 @@ def collection():
 
 @bp.route("/cart")
 def cart():
-    business = public_business()
-    settings, categories = storefront_context(business)
-    return render_template(
-        "storefront/cart.html", business=business, settings=settings, categories=categories,
-    )
+    # The cart is a JavaScript drawer on the storefront, never a separate page.
+    public_business()
+    return redirect(url_for("storefront.home"))
