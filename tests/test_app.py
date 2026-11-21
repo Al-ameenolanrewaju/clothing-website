@@ -1187,3 +1187,25 @@ def test_product_forms_do_not_show_featured_or_new_arrival_status(app, client):
     assert b"Featured product" not in response.data
     assert b"New arrival" not in response.data
     assert b"Published" in response.data
+
+
+def test_product_upload_accepts_only_one_image_and_replaces_existing_photo(app, client):
+    business_id, _ = make_tenant(app)
+    login_owner(client)
+    response = client.get("/dashboard/products", base_url="http://store-a.test")
+    assert b'Upload one clear product photo.' in response.data
+    assert b'multiple' not in response.data
+    assert b'up to 8' not in response.data.lower()
+
+
+def test_footer_social_links_only_render_when_owner_configures_them(app, client):
+    business_id, _ = make_tenant(app)
+    response = client.get("/", base_url="http://store-a.test")
+    assert response.status_code == 200
+    assert b'aria-label="Facebook"' not in response.data
+    assert b'aria-label="Instagram"' not in response.data
+    assert b'aria-label="TikTok"' not in response.data
+    assert b'aria-label="X"' not in response.data
+    assert b'Get in touch' not in response.data
+    assert b'WhatsApp' not in response.data
+    assert b'>Email ' not in response.data
