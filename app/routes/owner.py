@@ -168,15 +168,25 @@ def dashboard():
             ProductVariant.business_id == business_id,
             db.or_(ProductVariant.is_available.is_(False), ProductVariant.stock_quantity <= 0),
         ).count(),
+        "orders": Order.query.filter_by(business_id=business_id).count(),
+        "open_orders": Order.query.filter(
+            Order.business_id == business_id,
+            Order.status.in_(["WHATSAPP_CHECKOUT_INITIATED", "PENDING", "CONFIRMED", "PROCESSING", "READY_FOR_DELIVERY"]),
+        ).count(),
+        "customers": Customer.query.filter_by(business_id=business_id).count(),
     }
     recent_products = Product.query.filter_by(business_id=business_id).order_by(
         Product.updated_at.desc()
     ).limit(6).all()
+    recent_orders = Order.query.filter_by(business_id=business_id).order_by(
+        Order.created_at.desc()
+    ).limit(5).all()
     return render_template(
         "owner/dashboard.html",
         business=business,
         stats=stats,
         recent_products=recent_products,
+        recent_orders=recent_orders,
     )
 
 
