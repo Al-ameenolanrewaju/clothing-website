@@ -64,6 +64,29 @@ class StoreSettingsForm(FlaskForm):
     announcement = StringField("Announcement bar", validators=[Length(max=255)])
     hero_title = StringField("Hero headline", validators=[Length(max=180)])
     about_text = TextAreaField("About the brand")
+    tagline = StringField("Tagline", validators=[Optional(), Length(max=160)])
+    hero_cta = StringField("Hero primary button", validators=[Optional(), Length(max=80)])
+    hero_whatsapp_cta = StringField("Hero WhatsApp button", validators=[Optional(), Length(max=80)])
+    proof1_title = StringField("Proof point 1 title", validators=[Optional(), Length(max=100)])
+    proof1_text = StringField("Proof point 1 description", validators=[Optional(), Length(max=180)])
+    proof2_title = StringField("Proof point 2 title", validators=[Optional(), Length(max=100)])
+    proof2_text = StringField("Proof point 2 description", validators=[Optional(), Length(max=180)])
+    proof3_title = StringField("Proof point 3 title", validators=[Optional(), Length(max=100)])
+    proof3_text = StringField("Proof point 3 description", validators=[Optional(), Length(max=180)])
+    catalogue_eyebrow = StringField("Catalogue small heading", validators=[Optional(), Length(max=100)])
+    catalogue_title = StringField("Catalogue heading", validators=[Optional(), Length(max=180)])
+    empty_title = StringField("Empty catalogue heading", validators=[Optional(), Length(max=180)])
+    empty_text = StringField("Empty catalogue description", validators=[Optional(), Length(max=500)])
+    order_eyebrow = StringField("Order section small heading", validators=[Optional(), Length(max=100)])
+    order_title = StringField("Order section heading", validators=[Optional(), Length(max=180)])
+    order_text = StringField("Order section description", validators=[Optional(), Length(max=500)])
+    order_button = StringField("Order section button", validators=[Optional(), Length(max=100)])
+    nav_home = StringField("Home navigation label", validators=[Optional(), Length(max=50)])
+    nav_contact = StringField("Contact navigation label", validators=[Optional(), Length(max=50)])
+    footer_text = StringField("Footer description", validators=[Optional(), Length(max=500)])
+    copyright_text = StringField("Copyright line", validators=[Optional(), Length(max=180)])
+    seo_title = StringField("Browser / SEO title", validators=[Optional(), Length(max=180)])
+    seo_description = StringField("SEO description", validators=[Optional(), Length(max=320)])
     submit = SubmitField("Save store information")
 
 
@@ -589,6 +612,29 @@ def settings():
         form.announcement.data = store_settings.announcement
         form.hero_title.data = store_settings.hero_title
         form.about_text.data = store_settings.about_text
+        form.tagline.data = store_settings.tagline
+        form.hero_cta.data = store_settings.hero_cta
+        form.hero_whatsapp_cta.data = store_settings.hero_whatsapp_cta
+        form.proof1_title.data = store_settings.proof1_title
+        form.proof1_text.data = store_settings.proof1_text
+        form.proof2_title.data = store_settings.proof2_title
+        form.proof2_text.data = store_settings.proof2_text
+        form.proof3_title.data = store_settings.proof3_title
+        form.proof3_text.data = store_settings.proof3_text
+        form.catalogue_eyebrow.data = store_settings.catalogue_eyebrow
+        form.catalogue_title.data = store_settings.catalogue_title
+        form.empty_title.data = store_settings.empty_title
+        form.empty_text.data = store_settings.empty_text
+        form.order_eyebrow.data = store_settings.order_eyebrow
+        form.order_title.data = store_settings.order_title
+        form.order_text.data = store_settings.order_text
+        form.order_button.data = store_settings.order_button
+        form.nav_home.data = store_settings.nav_home
+        form.nav_contact.data = store_settings.nav_contact
+        form.footer_text.data = store_settings.footer_text
+        form.copyright_text.data = store_settings.copyright_text
+        form.seo_title.data = store_settings.seo_title
+        form.seo_description.data = store_settings.seo_description
     if form.validate_on_submit():
         logo = request.files.get("logo")
         banner = request.files.get("banner")
@@ -617,6 +663,29 @@ def settings():
         store_settings.announcement = form.announcement.data.strip() or None
         store_settings.hero_title = form.hero_title.data.strip() or None
         store_settings.about_text = form.about_text.data.strip() or None
+        store_settings.tagline = (form.tagline.data or "").strip() or None
+        store_settings.hero_cta = (form.hero_cta.data or "").strip() or None
+        store_settings.hero_whatsapp_cta = (form.hero_whatsapp_cta.data or "").strip() or None
+        store_settings.proof1_title = (form.proof1_title.data or "").strip() or None
+        store_settings.proof1_text = (form.proof1_text.data or "").strip() or None
+        store_settings.proof2_title = (form.proof2_title.data or "").strip() or None
+        store_settings.proof2_text = (form.proof2_text.data or "").strip() or None
+        store_settings.proof3_title = (form.proof3_title.data or "").strip() or None
+        store_settings.proof3_text = (form.proof3_text.data or "").strip() or None
+        store_settings.catalogue_eyebrow = (form.catalogue_eyebrow.data or "").strip() or None
+        store_settings.catalogue_title = (form.catalogue_title.data or "").strip() or None
+        store_settings.empty_title = (form.empty_title.data or "").strip() or None
+        store_settings.empty_text = (form.empty_text.data or "").strip() or None
+        store_settings.order_eyebrow = (form.order_eyebrow.data or "").strip() or None
+        store_settings.order_title = (form.order_title.data or "").strip() or None
+        store_settings.order_text = (form.order_text.data or "").strip() or None
+        store_settings.order_button = (form.order_button.data or "").strip() or None
+        store_settings.nav_home = (form.nav_home.data or "").strip() or None
+        store_settings.nav_contact = (form.nav_contact.data or "").strip() or None
+        store_settings.footer_text = (form.footer_text.data or "").strip() or None
+        store_settings.copyright_text = (form.copyright_text.data or "").strip() or None
+        store_settings.seo_title = (form.seo_title.data or "").strip() or None
+        store_settings.seo_description = (form.seo_description.data or "").strip() or None
         if new_logo:
             business.logo_data, business.logo_mime_type, _filename = new_logo
             business.logo_url = url_for("business_logo", business_id=business.id)
