@@ -1,5 +1,9 @@
 <footer class="store-footer luxury-footer">
   <div class="luxury-footer-inner">
+    <section class="footer-about-column" aria-labelledby="footer-about-title">
+      <h2 id="footer-about-title">About {{ business.name }}</h2>
+      <p>{{ (settings.footer_text if settings and settings.footer_text else (settings.about_text if settings and settings.about_text else business.description)) or ('Discover thoughtfully selected pieces from ' ~ business.name ~ '.') }}</p>
+    </section>
     {% if business.contact_email or (settings and (settings.facebook_url or settings.instagram_url or settings.tiktok_url or settings.x_url)) %}
     <div class="footer-column footer-contact-column" aria-label="Social links">
       <div class="footer-socials" aria-label="Contact and social links">
