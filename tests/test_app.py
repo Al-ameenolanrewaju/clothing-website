@@ -466,7 +466,7 @@ def test_owner_can_change_profile_and_password(app, client):
     business_id, owner_id = make_tenant(app)
     login_owner(client)
     settings_page = client.get("/dashboard/settings", base_url="http://store-a.test")
-    assert settings_page.status_code == 200 and b"Store information" in settings_page.data
+    assert settings_page.status_code == 200 and b"Store profile" in settings_page.data
     settings_response = client.post("/dashboard/settings", data={
         "name": "My Updated Store",
         "description": "New description",
@@ -814,7 +814,8 @@ def test_owner_crud_changes_persist_in_database_after_restart(tmp_path):
 def test_csrf_is_required_outside_disabled_test_configuration():
     app = create_app(CsrfConfig)
     response = app.test_client().post("/login", data={"email": "admin@example.com", "password": "secret123"})
-    assert response.status_code == 400
+    assert response.status_code == 302
+    assert response.location.endswith("/login")
 
 
 def test_database_image_storage_and_public_serving(app):
@@ -935,12 +936,13 @@ def test_generic_store_bootstrap_rejects_owner_email_used_by_another_store(app, 
     monkeypatch.setenv("STORE_NAME", "New Store")
     monkeypatch.setenv("STORE_SLUG", "new-store")
     monkeypatch.setenv("STORE_OWNER_NAME", "New Owner")
-    monkeypatch.setenv("STORE_OWNER_EMAIL", "store-a@example.com")
+    monkeypatch.setenv("STORE_OWNER_EMAIL", "existing-store@example.com")
     monkeypatch.setenv("STORE_OWNER_PASSWORD", "a-new-unique-password")
 
     result = app.test_cli_runner().invoke(args=["bootstrap-store"])
     assert result.exit_code != 0
-    assert "already assigned to another account" in result.output
+    assert isinstance(result.exception, RuntimeError)
+    assert "already assigned to another account" in str(result.exception)
 
     with app.app_context():
         assert Business.query.filter_by(slug="new-store").count() == 0
@@ -956,7 +958,8 @@ def test_generic_store_bootstrap_rejects_missing_or_weak_configuration(app, monk
 
     missing = app.test_cli_runner().invoke(args=["bootstrap-store"])
     assert missing.exit_code != 0
-    assert "STORE_NAME" in missing.output
+    assert isinstance(missing.exception, RuntimeError)
+    assert "STORE_NAME" in str(missing.exception)
 
     monkeypatch.setenv("STORE_NAME", "Weak Password Store")
     monkeypatch.setenv("STORE_SLUG", "weak-password-store")
@@ -965,4 +968,5 @@ def test_generic_store_bootstrap_rejects_missing_or_weak_configuration(app, monk
     monkeypatch.setenv("STORE_OWNER_PASSWORD", "short")
     weak = app.test_cli_runner().invoke(args=["bootstrap-store"])
     assert weak.exit_code != 0
-    assert "at least 12 characters" in weak.output
+    assert isinstance(weak.exception, RuntimeError)
+    assert "at least 12 characters" in str(weak.exception)
