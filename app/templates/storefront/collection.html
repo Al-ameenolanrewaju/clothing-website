@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Collection | {{ business.name }}{% endblock %}
+{% block body_class %}fashion-store{% endblock %}
+{% block body %}
+{% include "storefront/_nav.html" %}
+<main class="collection-page">
+  <header class="collection-page-heading"><span class="eyebrow">The collection</span><h1>{% if selected_category %}{{ selected_category.name }}{% else %}Discover every piece.{% endif %}</h1><p>Explore the complete collection and add your favourites to your bag.</p></header>
+  <nav class="collection-categories" aria-label="Product categories">
+    <a class="{% if not selected_category %}active{% endif %}" href="{{ url_for('storefront.collection') }}">All products</a>
+    {% for category in categories %}<a class="{% if selected_category and selected_category.id == category.id %}active{% endif %}" href="{{ url_for('storefront.collection', category=category.id) }}">{{ category.name }}</a>{% endfor %}
+  </nav>
+  <div class="collection-result-count">{{ products|length }} pieces</div>
+  <div class="product-grid luxury-product-grid collection-product-grid">
+    {% for product in products %}{% include "storefront/_product_card.html" %}{% else %}<div class="catalogue-empty-state"><h3>No products in this category yet.</h3><p>Choose another category to keep exploring.</p></div>{% endfor %}
+  </div>
+</main>
+{% include "storefront/_footer.html" %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/storefront.js') }}" defer></script>{% endblock %}
