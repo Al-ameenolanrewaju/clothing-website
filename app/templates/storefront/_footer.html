@@ -1,6 +1,5 @@
 <footer class="store-footer luxury-footer">
   <div class="luxury-footer-inner">
-    {% if business.logo_url %}<div class="footer-brand-column"><a class="footer-brand luxury-brand" href="{{ url_for('storefront.home') }}" aria-label="{{ business.name }}"><img src="{{ business.logo_url }}" alt="{{ business.name }}" class="footer-logo"></a></div>{% endif %}
     {% if business.contact_email or (settings and (settings.facebook_url or settings.instagram_url or settings.tiktok_url or settings.x_url)) %}
     <div class="footer-column footer-contact-column" aria-label="Social links">
       <div class="footer-socials" aria-label="Contact and social links">
