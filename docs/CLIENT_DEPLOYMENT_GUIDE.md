@@ -26,11 +26,11 @@ Each client receives an independent installation. Do not share a production data
 
 The current application is a Flask application backed by PostgreSQL in production. Its data model already associates businesses, users, products, categories, product images, customers, orders, settings, and custom domains with a business.
 
-The current production installation is Sulex. Its deployment currently uses a Sulex-specific bootstrap command and must be preserved while generic client provisioning is developed.
+The current production installation is Sulex. Its original `bootstrap-sulex` command remains available for backward compatibility. A separate generic `bootstrap-store` command now provisions a new independent installation from `STORE_*` environment variables.
 
 The current request-host resolver can select a business from a connected custom domain, but an installation without a matching custom domain falls back to the first active business. This is suitable only for a one-business-per-installation deployment. Do not put multiple clients in the same installation under this fallback behavior.
 
-## Per-client isolation checklist
+## Provision a new client installation\n\n1. Create a new web service and a new PostgreSQL database. Never point a new client's app at Sulex's database.\n2. Deploy the approved repository release to that service.\n3. Configure a unique `SECRET_KEY`, that client's `DATABASE_URL`, `APP_ENV=production`, and `COOKIE_SECURE=true`.\n4. Copy `deploy/client.env.example` into the hosting provider's private environment-variable settings and replace every placeholder. Do not commit a real `.env` file.\n5. Run the database migration command once: `flask --app \\\"app:create_app()\\\" db upgrade`.\n6. Run the one-time provisioning command: `flask --app \\\"app:create_app()\\\" bootstrap-store`. It creates the business, owner, store settings, and starter categories. It is safe to rerun after successful setup and does not reset an existing owner's password.\n7. Set the web start command to `gunicorn 'app:create_app()'` and deploy.\n8. Connect the client's domain and complete the isolation checklist below.\n\nThe generic bootstrap reads `STORE_NAME`, optional `STORE_SLUG` (otherwise derived from the name), `STORE_OWNER_NAME`, `STORE_OWNER_EMAIL`, and `STORE_OWNER_PASSWORD`. `STORE_DESCRIPTION`, `STORE_CONTACT_EMAIL`, and `STORE_WHATSAPP_NUMBER` are optional. The generic command is intended for a fresh, dedicated client database; it does not create a new tenant inside a shared production installation.\n\n## Per-client isolation checklist
 
 Before a new client goes live, verify all of the following:
 
