@@ -45,8 +45,6 @@ class ProductForm(FlaskForm):
     description = TextAreaField("Description")
     sizes = StringField("Available sizes")
     colours = StringField("Available colours")
-    featured = BooleanField("Featured")
-    new_arrival = BooleanField("New arrival")
     is_published = BooleanField("Published")
     submit = SubmitField("Save product")
 
@@ -232,8 +230,6 @@ def products():
             fashion_type=form.fashion_type.data or "Ready-to-wear",
             sku=form.sku.data or None,
             is_published=True if "is_published" not in request.form or form.is_published.data else False,
-            featured=form.featured.data,
-            new_arrival=form.new_arrival.data if form.new_arrival.data is not None else True,
         )
         db.session.add(product)
         db.session.flush()
@@ -270,8 +266,6 @@ def edit_product(product_id):
     if request.method == "GET":
         form.category_id.data = str(product.category_id or "")
         form.slug.data = product.slug
-        form.featured.data = bool(product.featured)
-        form.new_arrival.data = bool(product.new_arrival)
         form.is_published.data = bool(product.is_published)
         form.sizes.data = ", ".join(dict.fromkeys(v.size for v in product.variants))
         form.colours.data = ", ".join(dict.fromkeys(v.colour for v in product.variants))
@@ -308,8 +302,6 @@ def edit_product(product_id):
         product.category_id = category_id
         product.gender = form.gender.data or "Unisex"
         product.fashion_type = form.fashion_type.data or "Ready-to-wear"
-        product.featured = form.featured.data
-        product.new_arrival = form.new_arrival.data
         product.description = form.description.data
         product.regular_price = form.regular_price.data
         product.discounted_price = form.discounted_price.data
