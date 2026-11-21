@@ -871,3 +871,98 @@ def test_database_image_upload_validation_rejects_oversized_or_invalid_files():
     )
     with pytest.raises(ValueError, match="5 MB"):
         read_image(oversized)
+
+
+def test_generic_store_bootstrap_creates_isolated_store_owner_and_defaults(app, monkeypatch):
+    monkeypatch.setenv("STORE_NAME", "Northside Fashion")
+    monkeypatch.setenv("STORE_SLUG", "northside-fashion")
+    monkeypatch.setenv("STORE_DESCRIPTION", "Independent client catalogue")
+    monkeypatch.setenv("STORE_OWNER_NAME", "Northside Owner")
+    monkeypatch.setenv("STORE_OWNER_EMAIL", "owner@northside.example")
+    monkeypatch.setenv("STORE_OWNER_PASSWORD", "a-unique-client-password")
+    monkeypatch.setenv("STORE_CONTACT_EMAIL", "hello@northside.example")
+    monkeypatch.setenv("STORE_WHATSAPP_NUMBER", "2348012345678")
+
+    result = app.test_cli_runner().invoke(args=["bootstrap-store"])
+    assert result.exit_code == 0, result.output
+
+    with app.app_context():
+        business = Business.query.filter_by(slug="northside-fashion").one()
+        owner = User.query.filter_by(email="owner@northside.example").one()
+        assert business.name == "Northside Fashion"
+        assert business.description == "Independent client catalogue"
+        assert business.contact_email == "hello@northside.example"
+        assert business.whatsapp_number == "2348012345678"
+        assert owner.business_id == business.id
+        assert owner.role == "OWNER"
+        assert owner.check_password("a-unique-client-password")
+        assert StoreSettings.query.filter_by(business_id=business.id).one()
+        assert Category.query.filter_by(business_id=business.id).count() == 18
+
+
+def test_generic_store_bootstrap_is_idempotent_and_never_resets_password(app, monkeypatch):
+    monkeypatch.setenv("STORE_NAME", "Repeat Store")
+    monkeypatch.setenv("STORE_SLUG", "repeat-store")
+    monkeypatch.setenv("STORE_OWNER_NAME", "Repeat Owner")
+    monkeypatch.setenv("STORE_OWNER_EMAIL", "repeat@example.com")
+    monkeypatch.setenv("STORE_OWNER_PASSWORD", "first-password-is-unique")
+
+    runner = app.test_cli_runner()
+    first = runner.invoke(args=["bootstrap-store"])
+    assert first.exit_code == 0, first.output
+
+    with app.app_context():
+        owner = User.query.filter_by(email="repeat@example.com").one()
+        original_hash = owner.password_hash
+
+    monkeypatch.setenv("STORE_OWNER_PASSWORD", "second-password-is-different")
+    second = runner.invoke(args=["bootstrap-store"])
+    assert second.exit_code == 0, second.output
+
+    with app.app_context():
+        assert Business.query.filter_by(slug="repeat-store").count() == 1
+        assert User.query.filter_by(email="repeat@example.com").count() == 1
+        owner = User.query.filter_by(email="repeat@example.com").one()
+        assert owner.password_hash == original_hash
+        assert owner.check_password("first-password-is-unique")
+        assert not owner.check_password("second-password-is-different")
+        assert StoreSettings.query.filter_by(business_id=owner.business_id).count() == 1
+        assert Category.query.filter_by(business_id=owner.business_id).count() == 18
+
+
+def test_generic_store_bootstrap_rejects_owner_email_used_by_another_store(app, monkeypatch):
+    make_tenant(app, "Existing Store", "existing-store", "existing-store.test")
+    monkeypatch.setenv("STORE_NAME", "New Store")
+    monkeypatch.setenv("STORE_SLUG", "new-store")
+    monkeypatch.setenv("STORE_OWNER_NAME", "New Owner")
+    monkeypatch.setenv("STORE_OWNER_EMAIL", "store-a@example.com")
+    monkeypatch.setenv("STORE_OWNER_PASSWORD", "a-new-unique-password")
+
+    result = app.test_cli_runner().invoke(args=["bootstrap-store"])
+    assert result.exit_code != 0
+    assert "already assigned to another account" in result.output
+
+    with app.app_context():
+        assert Business.query.filter_by(slug="new-store").count() == 0
+        assert User.query.filter_by(email="store-a@example.com").count() == 1
+
+
+def test_generic_store_bootstrap_rejects_missing_or_weak_configuration(app, monkeypatch):
+    for key in (
+        "STORE_NAME", "STORE_SLUG", "STORE_OWNER_NAME", "STORE_OWNER_EMAIL",
+        "STORE_OWNER_PASSWORD",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+    missing = app.test_cli_runner().invoke(args=["bootstrap-store"])
+    assert missing.exit_code != 0
+    assert "STORE_NAME" in missing.output
+
+    monkeypatch.setenv("STORE_NAME", "Weak Password Store")
+    monkeypatch.setenv("STORE_SLUG", "weak-password-store")
+    monkeypatch.setenv("STORE_OWNER_NAME", "Owner")
+    monkeypatch.setenv("STORE_OWNER_EMAIL", "weak@example.com")
+    monkeypatch.setenv("STORE_OWNER_PASSWORD", "short")
+    weak = app.test_cli_runner().invoke(args=["bootstrap-store"])
+    assert weak.exit_code != 0
+    assert "at least 12 characters" in weak.output
