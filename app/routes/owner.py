@@ -360,6 +360,26 @@ def delete_product(product_id):
     return redirect(url_for("owner.products"))
 
 
+@bp.route("/products/<int:product_id>/images/<int:image_id>/cover", methods=["POST"])
+@roles_required("OWNER")
+def set_product_cover_image(product_id, image_id):
+    product = Product.query.filter_by(
+        id=product_id, business_id=current_user.business_id
+    ).first_or_404()
+    selected = ProductImage.query.filter_by(
+        id=image_id, product_id=product.id, business_id=current_user.business_id
+    ).first_or_404()
+    images = ProductImage.query.filter_by(
+        product_id=product.id, business_id=current_user.business_id
+    ).order_by(ProductImage.sort_order, ProductImage.id).all()
+    ordered = [selected] + [image for image in images if image.id != selected.id]
+    for position, image in enumerate(ordered):
+        image.sort_order = position
+    db.session.commit()
+    flash("Cover photo updated. This is the image customers will see first.", "success")
+    return redirect(url_for("owner.edit_product", product_id=product.id))
+
+
 @bp.route("/products/<int:product_id>/images/<int:image_id>/delete", methods=["POST"])
 @roles_required("OWNER")
 def delete_product_image(product_id, image_id):
