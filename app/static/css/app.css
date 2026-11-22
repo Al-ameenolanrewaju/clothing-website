@@ -1651,3 +1651,18 @@ body.cart-is-open { overflow:hidden; }
     padding:0;
   }
 }
+
+
+/* The SULEX logo is the home link; place the cart in the old Home position. */
+@media(max-width:760px) {
+  .fashion-store .luxury-nav {
+    grid-template-columns:minmax(0,1fr) auto;
+  }
+  .fashion-store .luxury-menu {
+    display:none !important;
+  }
+  .fashion-store .luxury-nav-actions {
+    grid-column:2;
+    justify-self:end;
+  }
+}
