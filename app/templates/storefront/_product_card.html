@@ -1,6 +1,9 @@
 <article class="product-card luxury-product-card" data-product-card
   data-product-id="{{ product.id }}" data-product-name="{{ product.name }}" data-product-price="{{ product.price }}"
-  data-product-description="{{ product.description or '' }}">
+  data-product-description="{{ product.description or '' }}"
+  data-category-name="{{ product.category.name|trim if product.category else '' }}"
+  data-product-sizes="{{ product.variants|selectattr('is_available')|map(attribute='size')|join('|') }}"
+  data-product-colours="{{ product.variants|selectattr('is_available')|map(attribute='colour')|join('|') }}">
   <a class="product-card-image-link" href="{{ url_for('storefront.collection') }}">
     <div class="product-photo">
       {% set cover_image = product.images|sort(attribute="sort_order")|first %}
