@@ -39,7 +39,7 @@
   }
 
   function normalizeFilterValue(value) {
-    return String(value || "").trim().toLocaleLowerCase().replace(/\\s+/g, " ");
+    return String(value || "").trim().toLocaleLowerCase().replace(/\s+/g, " ");
   }
   function applyCollectionFilters(form) {
     const grid = document.querySelector("[data-collection-products]");
