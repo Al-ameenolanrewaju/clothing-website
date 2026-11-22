@@ -290,7 +290,7 @@ def create_app(config_object=None):
             abort(404)
         response = Response(business.banner_data, mimetype=business.banner_mime_type)
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["Cache-Control"] = "public, max-age=86400"
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         return response
 
     @app.get("/media/<path:filename>")
