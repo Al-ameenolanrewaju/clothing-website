@@ -11,6 +11,12 @@
   const drawer = () => document.getElementById("store-cart-drawer");
   const saveCart = cart => {
     localStorage.setItem(KEY, JSON.stringify(cart));
+    const filterForm = document.querySelector("[data-collection-filters]");
+    if (filterForm) {
+      filterForm.addEventListener("change", () => applyCollectionFilters(filterForm));
+      filterForm.addEventListener("reset", () => window.requestAnimationFrame(() => applyCollectionFilters(filterForm)));
+      applyCollectionFilters(filterForm);
+    }
     updateCount(cart);
     renderCart();
     renderProductButtons(cart);
