@@ -1469,3 +1469,82 @@ body.cart-is-open { overflow:hidden; }
   .luxury-footer .footer-contact-column { justify-self:start; align-items:flex-start; }
   .luxury-footer .footer-contact-column .footer-socials { justify-content:flex-start; }
 }
+
+
+/* Approved storefront reference: warm editorial catalogue layout */
+.fashion-store { background:#fbf9f5; color:#24170f; }
+.fashion-store .luxury-nav { min-height:60px; padding:6px clamp(20px,5.2vw,64px); display:grid; grid-template-columns:1fr auto 1fr; background:#fbf9f5; border-bottom:1px solid #e8e0d7; }
+.fashion-store .luxury-brand { justify-self:start; font:600 30px/1 var(--serif); letter-spacing:-.03em; }
+.fashion-store .luxury-menu { justify-self:center; gap:48px; margin:0; }
+.fashion-store .luxury-menu a { font:500 14px/1 Inter,"Segoe UI",sans-serif; letter-spacing:0; text-transform:none; }
+.fashion-store .luxury-nav-actions { justify-self:end; display:flex; align-items:center; gap:20px; }
+.fashion-store .nav-search-link svg { width:25px; height:25px; fill:none; stroke:currentColor; stroke-width:1.8; }
+.fashion-store .cart-nav-link { position:relative; display:flex; align-items:center; border:0; padding:0; background:transparent; }
+.fashion-store .cart-nav-icon { width:26px; height:26px; fill:none; stroke:currentColor; stroke-width:1.7; }
+.fashion-store .bag-count { position:absolute; top:-8px; right:-9px; min-width:18px; height:18px; color:white; background:#2d1a10; font-size:10px; }
+.fashion-store .luxury-hero { min-height:330px; display:grid; grid-template-columns:1.05fr .95fr; align-items:stretch; gap:0; padding:0 clamp(28px,5.2vw,64px); background:#f2e9df; }
+.fashion-store .luxury-hero-copy { align-self:center; max-width:590px; padding:28px 24px 28px 0; transform:none; }
+.fashion-store .luxury-hero .eyebrow { color:#65584e; margin-bottom:10px; font-size:11px; letter-spacing:.15em; }
+.fashion-store .luxury-hero h1 { margin:0 0 12px; color:#24170f; font:400 clamp(36px,4.2vw,58px)/.98 var(--serif); letter-spacing:-.035em; }
+.fashion-store .luxury-hero h1 em { font-style:normal; }
+.fashion-store .luxury-hero-copy p { max-width:470px; margin:0 0 20px; color:#5d554e; font-size:15px; line-height:1.55; }
+.fashion-store .hero-actions { display:flex; flex-wrap:wrap; gap:12px; }
+.fashion-store .luxury-button { min-height:46px; display:inline-flex; align-items:center; justify-content:center; gap:9px; padding:0 22px; border-radius:11px; font-size:13px; font-weight:600; text-decoration:none; }
+.fashion-store .luxury-button-gold { color:#fff; background:#3b2113; border:1px solid #3b2113; }
+.fashion-store .luxury-button-outline { color:#2a1c13; background:#fbf9f5; border:1px solid #b8a99b; }
+.fashion-store .luxury-hero-image { min-height:330px; height:100%; overflow:hidden; background:#e6d7ca; }
+.fashion-store .luxury-hero-image img { width:100%; height:100%; min-height:330px; object-fit:cover; object-position:center 35%; }
+.fashion-store .luxury-collection { padding:22px clamp(22px,4.5vw,56px) 28px; }
+.fashion-store .luxury-section-head { display:none; }
+.fashion-store .luxury-product-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:26px 22px; }
+.fashion-store .luxury-product-card { min-width:0; }
+.fashion-store .luxury-product-card .product-card-image-link { display:block; text-decoration:none; }
+.fashion-store .luxury-product-card .product-photo { position:relative; aspect-ratio:1.5/1; border-radius:12px; overflow:hidden; background:#e9ddd2; }
+.fashion-store .luxury-product-card .product-photo img { width:100%; height:100%; object-fit:cover; }
+.fashion-store .product-favourite { position:absolute; top:9px; right:9px; width:29px; height:29px; display:grid; place-items:center; border-radius:50%; color:#21160f; background:#fffdf9; font-size:22px; line-height:1; }
+.fashion-store .luxury-product-info { padding:7px 5px 0; }
+.fashion-store .luxury-product-info h3 { margin:0 0 4px; color:#21170f; font:500 15px/1.3 Inter,"Segoe UI",sans-serif; }
+.fashion-store .luxury-price { margin:0 0 9px; color:#1f1712; font-size:15px; font-weight:700; }
+.fashion-store .add-to-cart-button { min-height:36px; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:0 17px; border:0; border-radius:9px; color:#fff; background:#3b2113; font-size:12px; font-weight:600; }
+.fashion-store .add-to-cart-button.is-added { color:#3b2113; background:#eadfd4; }
+.fashion-store .collection-next { display:none; }
+.fashion-store .luxury-footer { color:#fff; background:#2c1d15; }
+.fashion-store .luxury-footer-inner { display:grid; grid-template-columns:1.1fr 2fr .8fr 1fr; gap:32px; padding:28px clamp(22px,5.2vw,64px); align-items:center; text-align:left; }
+.fashion-store .footer-brand-mark { display:block; color:#fff; font:400 42px/1 var(--serif); text-decoration:none; }
+.fashion-store .footer-socials { display:flex; gap:12px; margin-top:18px; }
+.fashion-store .footer-socials a { width:34px; height:34px; display:grid; place-items:center; border:1px solid #b8a99b; border-radius:50%; color:#fff; text-decoration:none; }
+.fashion-store .footer-about-column { padding:0 28px; border-left:1px solid #8b796c; border-right:1px solid #8b796c; }
+.fashion-store .footer-about-column h2,.fashion-store .footer-links-column h2,.fashion-store .footer-contact-column h2 { margin:0 0 12px; color:#fff; font:600 15px/1.3 Inter,"Segoe UI",sans-serif; }
+.fashion-store .footer-about-column p { max-width:520px; margin:0; color:#e1d7cf; font-size:12px; line-height:1.55; }
+.fashion-store .footer-links-column a,.fashion-store .footer-contact-column a { display:block; margin:7px 0; color:#eee5dd; font-size:12px; text-decoration:none; }
+.fashion-store .luxury-footer-bottom { min-height:0; padding:10px clamp(22px,5.2vw,64px); border-top:1px solid #59463a; color:#cfc2b8; font-size:10px; }
+.fashion-store .luxury-footer-bottom span,.fashion-store .luxury-footer-bottom a { color:#cfc2b8; }
+.fashion-store .collection-filters { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; padding:14px 0 20px; }
+.fashion-store .collection-filters label { position:relative; display:flex; align-items:center; min-height:48px; padding:0 14px; border:1px solid #ddd4ca; border-radius:12px; color:#2b211a; font-size:13px; letter-spacing:0; text-transform:none; }
+.fashion-store .collection-filters select { width:100%; min-width:0; min-height:44px; padding:0 28px 0 6px; border:0; outline:0; background:transparent; color:#2b211a; font-size:13px; }
+@media(max-width:760px) {
+ .fashion-store .luxury-nav { min-height:56px; padding:6px 16px; }
+ .fashion-store .luxury-brand { font-size:25px; }
+ .fashion-store .luxury-menu { gap:18px; }
+ .fashion-store .luxury-menu a { font-size:12px; }
+ .fashion-store .luxury-nav-actions { gap:13px; }
+ .fashion-store .luxury-hero { grid-template-columns:1fr; padding:0 20px 18px; }
+ .fashion-store .luxury-hero-copy { padding:22px 0 18px; }
+ .fashion-store .luxury-hero h1 { font-size:clamp(35px,9vw,48px); }
+ .fashion-store .luxury-hero-copy p { font-size:13px; }
+ .fashion-store .luxury-hero-image { min-height:220px; max-height:300px; }
+ .fashion-store .luxury-hero-image img { min-height:220px; }
+ .fashion-store .luxury-collection { padding:18px 16px 24px; }
+ .fashion-store .luxury-product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px 12px; }
+ .fashion-store .luxury-product-card .product-photo { aspect-ratio:1.12/1; }
+ .fashion-store .luxury-product-info h3 { font-size:13px; }
+ .fashion-store .luxury-price { font-size:13px; }
+ .fashion-store .add-to-cart-button { min-height:34px; padding:0 12px; font-size:11px; }
+ .fashion-store .luxury-footer-inner { grid-template-columns:1fr 1fr; gap:24px 18px; padding:26px 18px; }
+ .fashion-store .footer-about-column { grid-column:1/-1; order:2; padding:18px 0 0; border:0; border-top:1px solid #8b796c; }
+ .fashion-store .footer-brand-column { order:1; }
+ .fashion-store .footer-links-column { order:3; }
+ .fashion-store .footer-contact-column { order:4; }
+ .fashion-store .footer-brand-mark { font-size:34px; }
+ .fashion-store .collection-filters { grid-template-columns:1fr; gap:10px; }
+}
