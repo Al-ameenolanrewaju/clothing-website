@@ -8,7 +8,6 @@
     {% if business.whatsapp_number %}<a href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','') }}" target="_blank" rel="noopener noreferrer">Contact</a>{% endif %}
   </div>
   <div class="luxury-nav-actions">
-    <a class="nav-search-link" href="{{ url_for('storefront.collection') }}" aria-label="Search collection"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="7.2"/><path d="m16.2 16.2 5 5"/></svg></a>
     <button class="cart-nav-link" type="button" data-cart-open aria-controls="store-cart-drawer" aria-expanded="false" aria-label="Open cart">
       <svg class="cart-nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 7H6"/><circle cx="10" cy="20" r="1.2"/><circle cx="18" cy="20" r="1.2"/></svg>
       <span class="bag-count" data-cart-count>0</span>
