@@ -107,6 +107,11 @@ def _split_options(value):
 
 
 def _sync_product_variants(product, sizes, colours):
+    # Size and colour are independent product attributes. Keep a blank
+    # counterpart when only one is supplied so that colour-only or
+    # size-only products still produce filterable variants.
+    sizes = list(dict.fromkeys(value.strip() for value in sizes if value.strip())) or [""]
+    colours = list(dict.fromkeys(value.strip() for value in colours if value.strip())) or [""]
     kept = set()
     for size in sizes:
         for colour in colours:
@@ -270,8 +275,8 @@ def edit_product(product_id):
         form.category_id.data = str(product.category_id or "")
         form.slug.data = product.slug
         form.is_published.data = bool(product.is_published)
-        form.sizes.data = ", ".join(dict.fromkeys(v.size for v in product.variants))
-        form.colours.data = ", ".join(dict.fromkeys(v.colour for v in product.variants))
+        form.sizes.data = ", ".join(dict.fromkeys(v.size for v in product.variants if v.size))
+        form.colours.data = ", ".join(dict.fromkeys(v.colour for v in product.variants if v.colour))
     if form.validate_on_submit():
         if form.discounted_price.data is not None and form.discounted_price.data > form.regular_price.data:
             flash("Discounted price cannot exceed regular price.", "danger")
