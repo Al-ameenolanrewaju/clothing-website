@@ -1589,3 +1589,24 @@ body.cart-is-open { overflow:hidden; }
     font-size:11px;
   }
 }
+
+
+/* Ensure the SULEX header wordmark has an explicit visible box. */
+.fashion-store .luxury-brand img {
+  display:block;
+  width:154px;
+  height:42px;
+  max-width:154px;
+  max-height:42px;
+  object-fit:contain;
+  object-position:left center;
+  flex:0 0 auto;
+}
+@media(max-width:700px) {
+  .fashion-store .luxury-brand img {
+    width:132px;
+    height:36px;
+    max-width:132px;
+    max-height:36px;
+  }
+}
