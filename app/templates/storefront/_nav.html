@@ -5,36 +5,23 @@
   </a>
   <div class="store-menu luxury-menu" id="store-menu">
     <a href="{{ url_for('storefront.home') }}" aria-current="page">Home</a>
+    {% if business.whatsapp_number %}<a href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','') }}" target="_blank" rel="noopener noreferrer">Contact</a>{% endif %}
   </div>
-  <button class="cart-nav-link" type="button" data-cart-open aria-controls="store-cart-drawer" aria-expanded="false" aria-label="Open cart">
-    <svg class="cart-nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 7H6"/><circle cx="10" cy="20" r="1.2"/><circle cx="18" cy="20" r="1.2"/></svg>
-    <span class="bag-count" data-cart-count>0</span>
-  </button>
+  <div class="luxury-nav-actions">
+    <a class="nav-search-link" href="{{ url_for('storefront.collection') }}" aria-label="Search collection"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="7.2"/><path d="m16.2 16.2 5 5"/></svg></a>
+    <button class="cart-nav-link" type="button" data-cart-open aria-controls="store-cart-drawer" aria-expanded="false" aria-label="Open cart">
+      <svg class="cart-nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 7H6"/><circle cx="10" cy="20" r="1.2"/><circle cx="18" cy="20" r="1.2"/></svg>
+      <span class="bag-count" data-cart-count>0</span>
+    </button>
+  </div>
 </nav>
-
 <script>
   window.STORE_WHATSAPP = {{ (business.whatsapp_number or '')|tojson }};
   window.STORE_NAME = {{ business.name|tojson }};
 </script>
-
 <div class="cart-overlay" data-cart-overlay hidden></div>
 <aside class="cart-drawer" id="store-cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-drawer-title" aria-hidden="true" hidden>
-  <div class="cart-drawer-header">
-    <div><span class="eyebrow">Your selection</span><h2 id="cart-drawer-title">Your cart <span data-cart-drawer-count>(0)</span></h2></div>
-    <button class="cart-close" type="button" data-cart-close aria-label="Close cart">×</button>
-  </div>
-  <div class="cart-drawer-body">
-    <div id="cart-items" class="cart-items" aria-live="polite"></div>
-    <div class="cart-empty" id="cart-empty">
-      <span class="cart-empty-mark" aria-hidden="true">✳</span>
-      <h3>Your cart is waiting.</h3>
-      <p>You haven’t added any pieces yet. Find something you love.</p>
-      <button class="text-link-button" type="button" data-cart-close>Continue shopping</button>
-    </div>
-  </div>
-  <div class="cart-drawer-footer" id="cart-summary" hidden>
-    <div class="cart-subtotal-line"><span>Subtotal</span><strong id="cart-subtotal">₦0</strong></div>
-    <p>Delivery and availability will be confirmed when you place your order.</p>
-    <button class="luxury-button luxury-button-gold cart-checkout-button" type="button" id="whatsapp-checkout">Continue on WhatsApp <span aria-hidden="true">↗</span></button>
-  </div>
+  <div class="cart-drawer-header"><div><span class="eyebrow">Your selection</span><h2 id="cart-drawer-title">Your cart <span data-cart-drawer-count>(0)</span></h2></div><button class="cart-close" type="button" data-cart-close aria-label="Close cart">×</button></div>
+  <div class="cart-drawer-body"><div id="cart-items" class="cart-items" aria-live="polite"></div><div class="cart-empty" id="cart-empty"><span class="cart-empty-mark" aria-hidden="true">✳</span><h3>Your cart is waiting.</h3><p>You haven’t added any pieces yet. Find something you love.</p><button class="text-link-button" type="button" data-cart-close>Continue shopping</button></div></div>
+  <div class="cart-drawer-footer" id="cart-summary" hidden><div class="cart-subtotal-line"><span>Subtotal</span><strong id="cart-subtotal">₦0</strong></div><p>Delivery and availability will be confirmed when you place your order.</p><button class="luxury-button luxury-button-gold cart-checkout-button" type="button" id="whatsapp-checkout">Continue on WhatsApp <span aria-hidden="true">↗</span></button></div>
 </aside>

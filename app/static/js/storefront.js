@@ -150,6 +150,15 @@
   }
   document.addEventListener("DOMContentLoaded", () => {
     const cart = readCart();
+    // Shuffle whole product cards, preserving each card's image and product data.
+    document.querySelectorAll(".luxury-product-grid").forEach(grid => {
+      const cards = Array.from(grid.children).filter(node => node.matches("[data-product-card]"));
+      for (let i = cards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cards[i], cards[j]] = [cards[j], cards[i]];
+      }
+      cards.forEach(card => grid.appendChild(card));
+    });
     updateCount(cart);
     renderCart();
     renderProductButtons(cart);

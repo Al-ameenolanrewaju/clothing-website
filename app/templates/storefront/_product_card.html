@@ -6,13 +6,12 @@
       {% set cover_image = product.images|sort(attribute="sort_order")|first %}
       {% if cover_image %}<img src="{{ cover_image.url }}" alt="{{ cover_image.alt_text or product.name }}" loading="lazy">
       {% else %}<div class="fashion-placeholder"><span>Photo coming soon</span></div>{% endif %}
+      <span class="product-favourite" aria-hidden="true">♡</span>
     </div>
   </a>
   <div class="luxury-product-info">
-    {% if product.category %}<p class="product-category">{{ product.category.name }}</p>{% endif %}
     <h3>{{ product.name }}</h3>
-    {% if product.description %}<p class="product-description-card">{{ product.description }}</p>{% endif %}
     <p class="luxury-price">₦{{ "{:,.0f}".format(product.price) }}</p>
-    <button class="product-whatsapp-button add-to-cart-button" type="button" data-add-to-cart aria-pressed="false">Add to cart</button>
+    <button class="product-whatsapp-button add-to-cart-button" type="button" data-add-to-cart aria-pressed="false"><span aria-hidden="true">🛒</span> Add to Cart</button>
   </div>
 </article>

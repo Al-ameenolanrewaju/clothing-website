@@ -5,10 +5,27 @@
 {% include "storefront/_nav.html" %}
 <main class="collection-page">
   <header class="collection-page-heading"><span class="eyebrow">The collection</span><h1>{% if selected_category %}{{ selected_category.name|trim }}{% else %}Discover every piece.{% endif %}</h1><p>Explore the complete collection and add your favourites to your bag.</p></header>
-  <nav class="collection-categories" aria-label="Product categories">
-    <a class="{% if not selected_category %}active{% endif %}" href="{{ url_for('storefront.collection') }}">All products</a>
-    {% for category in categories %}<a class="{% if selected_category and selected_category.id == category.id %}active{% endif %}" href="{{ url_for('storefront.collection', category=category.id) }}">{{ category.name|trim }}</a>{% endfor %}
-  </nav>
+  <form class="collection-filters" method="get" action="{{ url_for('storefront.collection') }}" aria-label="Filter products">
+    <label>Category
+      <select name="category" onchange="this.form.submit()">
+        <option value="">All categories</option>
+        {% for category in categories %}<option value="{{ category.id }}" {% if selected_category and selected_category.id == category.id %}selected{% endif %}>{{ category.name|trim }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Size
+      <select name="size" onchange="this.form.submit()">
+        <option value="">All sizes</option>
+        {% for size in sizes %}<option value="{{ size }}" {% if selected_size|lower == size|lower %}selected{% endif %}>{{ size }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Colour
+      <select name="colour" onchange="this.form.submit()">
+        <option value="">All colours</option>
+        {% for colour in colours %}<option value="{{ colour }}" {% if selected_colour|lower == colour|lower %}selected{% endif %}>{{ colour }}</option>{% endfor %}
+      </select>
+    </label>
+    {% if selected_category or selected_size or selected_colour %}<a class="clear-filters" href="{{ url_for('storefront.collection') }}">Clear filters</a>{% endif %}
+  </form>
   <div class="collection-result-count">{{ products|length }} pieces</div>
   <div class="product-grid luxury-product-grid collection-product-grid">
     {% for product in products %}{% include "storefront/_product_card.html" %}{% else %}<div class="catalogue-empty-state"><h3>No products in this category yet.</h3><p>Choose another category to keep exploring.</p></div>{% endfor %}
