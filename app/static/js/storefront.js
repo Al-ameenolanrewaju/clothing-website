@@ -198,6 +198,8 @@
     if (filterForm) {
       filterForm.addEventListener("change", () => applyCollectionFilters(filterForm));
       filterForm.addEventListener("reset", () => window.requestAnimationFrame(() => applyCollectionFilters(filterForm)));
+      // Filtering is display-only: never submit/reload the page or touch cart state.
+      filterForm.addEventListener("submit", event => event.preventDefault());
       applyCollectionFilters(filterForm);
     }
     document.addEventListener("click", event => {
