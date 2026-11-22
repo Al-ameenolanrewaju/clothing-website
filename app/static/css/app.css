@@ -1610,3 +1610,44 @@ body.cart-is-open { overflow:hidden; }
     max-height:36px;
   }
 }
+
+
+/* Mobile header: keep the cart beside Home at the far right. */
+@media(max-width:760px) {
+  .fashion-store .luxury-nav {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    align-items:center;
+    column-gap:clamp(12px,3vw,22px);
+  }
+  .fashion-store .luxury-brand {
+    grid-column:1;
+    justify-self:start;
+    min-width:0;
+  }
+  .fashion-store .luxury-menu {
+    grid-column:2;
+    justify-self:end;
+    margin:0 !important;
+    min-width:0;
+  }
+  .fashion-store .luxury-menu a:first-child {
+    display:inline-flex;
+    padding:8px 0;
+  }
+  .fashion-store .luxury-nav-actions {
+    grid-column:3;
+    justify-self:end;
+    display:flex;
+    align-items:center;
+    margin:0;
+  }
+  .fashion-store .cart-nav-link {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:34px;
+    min-height:38px;
+    padding:0;
+  }
+}
