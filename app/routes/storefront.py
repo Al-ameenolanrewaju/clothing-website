@@ -44,7 +44,7 @@ def home():
     business = public_business()
     products = Product.query.filter_by(
         business_id=business.id, is_published=True
-    ).order_by(Product.created_at.desc()).limit(4).all()
+    ).order_by(Product.created_at.desc()).limit(8).all()
     random.shuffle(products)
     settings, categories = storefront_context(business)
     return render_template(
