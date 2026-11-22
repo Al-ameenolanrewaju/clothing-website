@@ -31,6 +31,38 @@
       button.setAttribute("aria-pressed", added ? "true" : "false");
     });
   }
+
+  function normalizeFilterValue(value) {
+    return String(value || "").trim().toLocaleLowerCase().replace(/\\s+/g, " ");
+  }
+  function applyCollectionFilters(form) {
+    const grid = document.querySelector("[data-collection-products]");
+    if (!grid) return;
+    const categorySelect = form.querySelector("[data-filter-category]");
+    const sizeSelect = form.querySelector("[data-filter-size]");
+    const colourSelect = form.querySelector("[data-filter-colour]");
+    const selectedCategory = categorySelect && categorySelect.selectedOptions[0]
+      ? normalizeFilterValue(categorySelect.selectedOptions[0].dataset.categoryName)
+      : "";
+    const selectedSize = normalizeFilterValue(sizeSelect && sizeSelect.value);
+    const selectedColour = normalizeFilterValue(colourSelect && colourSelect.value);
+    const cards = Array.from(grid.querySelectorAll("[data-product-card]"));
+    let visible = 0;
+    cards.forEach(card => {
+      const categoryMatch = !selectedCategory || normalizeFilterValue(card.dataset.categoryName) === selectedCategory;
+      const sizes = String(card.dataset.productSizes || "").split("|").map(normalizeFilterValue);
+      const colours = String(card.dataset.productColours || "").split("|").map(normalizeFilterValue);
+      const sizeMatch = !selectedSize || sizes.includes(selectedSize);
+      const colourMatch = !selectedColour || colours.includes(selectedColour);
+      const show = categoryMatch && sizeMatch && colourMatch;
+      card.hidden = !show;
+      if (show) visible += 1;
+    });
+    const count = form.parentElement.querySelector("[data-filter-result-count]");
+    if (count) count.textContent = visible + (visible === 1 ? " piece" : " pieces");
+    const empty = grid.querySelector("[data-filter-empty]");
+    if (empty) empty.hidden = visible !== 0;
+  }
   function openCart() {
     const panel = drawer();
     if (!panel) return;
