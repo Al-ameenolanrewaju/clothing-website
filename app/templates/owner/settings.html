@@ -1,4 +1,11 @@
 {% extends "base.html" %}
+{% macro social_icon(name) %}
+  {% if name == 'instagram_url' %}<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg>
+  {% elif name == 'facebook_url' %}<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M13.5 21v-8h2.7l.4-3.1h-3.1v-2c0-.9.3-1.5 1.6-1.5h1.7V3.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.1H7.3V13h2.8v8z"/></svg>
+  {% elif name == 'tiktok_url' %}<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M14 3v11.1a4.1 4.1 0 1 1-3.5-4.05M14 3c.5 3 2.2 4.8 5 5.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  {% elif name == 'x_url' %}<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 3h4.8l11.2 18h-4.8L4 3zM20 3 4 21" fill="none" stroke="currentColor" stroke-width="2"/></svg>{% endif %}
+{% endmacro %}
+
 {% block title %}Storefront brand editor{% endblock %}
 {% block body %}
 <nav class="navbar bg-white border-bottom px-3">
@@ -31,7 +38,9 @@
       {% for field in [form.order_eyebrow,form.order_title,form.order_text,form.order_button,form.nav_home,form.nav_contact,form.announcement] %}<div class="col-md-6"><label class="form-label">{{ field.label.text }}</label>{{ field(class="form-control", rows=3) if field.name == 'order_text' else field(class="form-control") }}</div>{% endfor %}
     </div></div></section>
     <section class="card mb-3"><div class="card-body"><h2 class="h5">Footer and search appearance</h2><div class="row g-3">
-      {% for field in [form.footer_text,form.copyright_text,form.instagram_url,form.facebook_url,form.tiktok_url,form.x_url,form.seo_title,form.seo_description] %}<div class="col-md-6"><label class="form-label">{{ field.label.text }}</label>{{ field(class="form-control", rows=3) if field.name in ['footer_text','seo_description'] else field(class="form-control") }}</div>{% endfor %}
+      {% for field in [form.footer_text,form.copyright_text] %}<div class="col-md-6"><label class="form-label">{{ field.label.text }}</label>{{ field(class="form-control") }}</div>{% endfor %}
+      {% for field in [form.instagram_url,form.facebook_url,form.tiktok_url,form.x_url] %}<div class="col-md-6"><label class="form-label d-flex align-items-center gap-2">{{ social_icon(field.name) }}<span>{{ field.label.text }}</span></label>{{ field(class="form-control", placeholder="https://...") }}</div>{% endfor %}
+      {% for field in [form.seo_title,form.seo_description] %}<div class="col-md-6"><label class="form-label">{{ field.label.text }}</label>{{ field(class="form-control", rows=3) if field.name == 'seo_description' else field(class="form-control") }}</div>{% endfor %}
     </div></div></section>
     <section class="card mb-3"><div class="card-body"><h2 class="h5">Quick preview</h2><p class="text-secondary small">Preview updates as you type. Save changes to publish them to your storefront.</p><div class="p-4 rounded" style="background:#f5f2ec;color:#24251f"><div class="small text-uppercase" id="preview-tagline">{{ form.tagline.data or 'Your brand tagline' }}</div><h3 class="mt-2" id="preview-title">{{ form.hero_title.data or 'Your homepage headline' }}</h3><p id="preview-about">{{ form.about_text.data or 'Your brand description will appear here.' }}</p><strong id="preview-button">{{ form.hero_cta.data or 'Explore the collection' }}</strong></div></div></section>
     <div class="d-flex gap-2 flex-wrap"><button type="submit" class="btn btn-dark px-4">Save storefront changes</button><a class="btn btn-outline-dark" href="{{ url_for('storefront.home') }}" target="_blank" rel="noopener">View live storefront</a></div>
