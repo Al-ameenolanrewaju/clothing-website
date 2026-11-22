@@ -1,7 +1,7 @@
 {% if settings and settings.announcement %}<div class="luxury-announcement">{{ settings.announcement }}</div>{% endif %}
 <nav class="store-nav luxury-nav" aria-label="Main navigation">
   <a class="store-brand luxury-brand" href="{{ url_for('storefront.home') }}" aria-label="{{ business.name }} home">
-    <img src="{{ url_for('static', filename='images/sulex-logo.svg') }}?v=2 }}" alt="SULEX Fashion Store">
+    <img src="{{ url_for('static', filename='images/sulex-logo.svg') }}?v=2" alt="SULEX Fashion Store">
   </a>
   <div class="store-menu luxury-menu" id="store-menu">
     <a href="{{ url_for('storefront.home') }}" aria-current="page">Home</a>
