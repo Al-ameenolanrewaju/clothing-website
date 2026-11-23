@@ -1966,3 +1966,7 @@ body.wishlist-is-open { overflow:hidden; }
   .fashion-store .cart-drawer-footer { padding:14px 16px calc(17px + env(safe-area-inset-bottom)); }
   .fashion-store .drawer-cart-actions { grid-template-columns:.75fr 1.25fr; }
 }
+
+/* Lightweight feedback while a cached storefront page is being fetched. */
+html.page-is-loading::before { content: ""; position: fixed; z-index: 9999; inset: 0 auto auto 0; width: 34%; height: 2px; background: var(--accent); animation: storefront-load-progress .7s ease-in-out infinite alternate; pointer-events: none; }
+@keyframes storefront-load-progress { from { transform: translateX(0); } to { transform: translateX(195%); } }
