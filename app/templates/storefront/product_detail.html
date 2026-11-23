@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} | {{ business.name }}{% endblock %}
+{% block meta_description %}{{ product.description or product.name }}{% endblock %}
+{% block body_class %}fashion-store{% endblock %}
+{% block body %}
+{% include "storefront/_nav.html" %}
+<main class="product-detail-page">
+  <nav class="product-breadcrumb" aria-label="Breadcrumb"><a href="{{ url_for('storefront.home') }}">Home</a><span> / </span><a href="{{ url_for('storefront.category', slug=product.category.slug) if product.category else url_for('storefront.collection') }}">{{ product.category.name|trim if product.category else 'Collection' }}</a><span> / </span><span>{{ product.name }}</span></nav>
+  <section class="product-detail-layout" data-product-card data-product-id="{{ product.id }}" data-product-name="{{ product.name }}" data-product-price="{{ product.price }}" data-product-description="{{ product.description or '' }}" data-product-category="{{ product.category.name if product.category else '' }}" data-product-sizes="{{ variants|map(attribute='size')|unique|join('|') }}" data-product-colours="{{ variants|map(attribute='colour')|unique|join('|') }}">
+    <div class="product-detail-gallery">
+      <div class="product-detail-main-image" data-gallery-main>
+        {% if images %}<img src="{{ images[0].url }}" alt="{{ images[0].alt_text or product.name }}" fetchpriority="high">{% else %}<div class="fashion-placeholder"><span>Photo coming soon</span></div>{% endif %}
+      </div>
+      {% if images|length > 1 %}<div class="product-detail-thumbnails" aria-label="Product photos">{% for image in images[:3] %}<button type="button" class="product-detail-thumb{% if loop.first %} is-active{% endif %}" data-gallery-image="{{ image.url }}" data-gallery-alt="{{ image.alt_text or product.name }}" aria-label="View product photo {{ loop.index }}"><img src="{{ image.url }}" alt="" loading="lazy"></button>{% endfor %}</div>{% endif %}
+      {% if images|length < 3 %}<p class="product-image-note">Only {{ images|length }} product {{ 'photo' if images|length == 1 else 'photos' }} available. No unrelated images are substituted.</p>{% endif %}
+    </div>
+    <div class="product-detail-info">
+      <span class="eyebrow">{{ product.category.name|trim if product.category else 'Collection' }}</span>
+      <h1>{{ product.name }}</h1><p class="product-detail-price">₦{{ "{:,.0f}".format(product.price) }}</p>
+      <p class="product-stock-status">{% if variants %}Available{% else %}Availability confirmed on order{% endif %}</p>
+      {% if product.description %}<div class="product-detail-description">{{ product.description }}</div>{% endif %}
+      {% if variants %}<div class="product-variation-list"><strong>Available options</strong><div class="product-variation-chips">{% for variant in variants %}<span>{{ variant.size }} · {{ variant.colour }}</span>{% endfor %}</div></div>{% endif %}
+      <div class="product-detail-actions"><button class="luxury-button luxury-button-gold" type="button" data-add-to-cart>＋ Add to Cart</button><button class="wishlist-toggle wishlist-toggle-detail" type="button" data-wishlist-toggle aria-pressed="false"><span aria-hidden="true">♡</span> Save for later</button></div>
+      {% if product.category %}<a class="product-category-link" href="{{ url_for('storefront.category', slug=product.category.slug, product=product.id) }}">Explore more {{ product.category.name|trim }}</a>{% endif %}
+    </div>
+  </section>
+</main>
+{% include "storefront/_footer.html" %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/storefront.js') }}?v=4" defer></script>{% endblock %}
