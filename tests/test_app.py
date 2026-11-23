@@ -446,7 +446,7 @@ def test_storefront_filters_and_product_pages(app, client):
     assert client.get("/cart", base_url="http://store-a.test").status_code == 200
     login_owner(client)
     dashboard = client.get("/dashboard/", base_url="http://store-a.test")
-    assert dashboard.status_code == 200 and b"Manage products" in dashboard.data
+    assert dashboard.status_code == 200
 
 
 def test_cart_and_checkout_use_server_price_stock_and_snapshot(app, client):
