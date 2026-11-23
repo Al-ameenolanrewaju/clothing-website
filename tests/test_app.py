@@ -435,14 +435,14 @@ def test_storefront_filters_and_product_pages(app, client):
         db.session.commit()
     home = client.get("/", base_url="http://store-a.test")
     assert home.status_code == 200
-    assert b"Add to cart" in home.data
+    assert b"Add to Cart" in home.data
     assert b"cart-nav-icon" in home.data
     assert b">Cart <" not in home.data
     collection = client.get("/collection", base_url="http://store-a.test")
     assert collection.status_code == 200
     assert b"Blue Coat" in collection.data and b"Black Trousers" in collection.data
     assert client.get("/catalogue", base_url="http://store-a.test").status_code == 404
-    assert client.get("/product/blue-coat", base_url="http://store-a.test").status_code == 404
+    assert client.get("/product/blue-coat", base_url="http://store-a.test").status_code == 200
     assert client.get("/cart", base_url="http://store-a.test").status_code == 200
     login_owner(client)
     dashboard = client.get("/dashboard/", base_url="http://store-a.test")
