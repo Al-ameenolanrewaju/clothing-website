@@ -1277,7 +1277,8 @@ def test_storefront_visit_tracking_does_not_block_get_navigation(app, client):
     response = client.get("/", base_url="http://store-a.test")
     assert response.status_code == 200
     with app.app_context():
-        assert StoreEvent.query.filter_by(business_id=business_id).count() == 0
+        from app.models import StoreVisit
+        assert StoreVisit.query.filter_by(business_id=business_id).count() == 0
     tracked = client.post(
         "/track-visit",
         json={"path": "/collection"},
@@ -1285,6 +1286,5 @@ def test_storefront_visit_tracking_does_not_block_get_navigation(app, client):
     )
     assert tracked.status_code == 202
     with app.app_context():
-        from app.models import StoreVisit
         visit = StoreVisit.query.filter_by(business_id=business_id, path="/collection").one()
         assert visit is not None
