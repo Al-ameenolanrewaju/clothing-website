@@ -35,34 +35,68 @@
       else button.textContent = saved ? "♥" : "♡";
     });
   }
+  function createWishlistCard(item) {
+    const card = document.createElement("article");
+    card.className = "product-card luxury-product-card";
+    card.dataset.productCard = ""; card.dataset.productId = String(item.id); card.dataset.productSlug = item.slug || "";
+    card.dataset.productName = item.name || "Product"; card.dataset.productPrice = String(item.price || 0);
+    card.dataset.productDescription = item.description || ""; card.dataset.productCategory = item.category || "";
+    const photo = document.createElement("div"); photo.className = "product-photo";
+    const link = document.createElement("a"); link.className = "product-card-image-link";
+    link.href = item.url || (item.slug ? "/product/" + encodeURIComponent(item.slug) : "/collection");
+    if (item.image) { const img = document.createElement("img"); img.src = item.image; img.alt = item.name || "Saved product"; img.loading = "lazy"; img.decoding = "async"; link.append(img); }
+    else { const placeholder = document.createElement("div"); placeholder.className = "fashion-placeholder"; placeholder.textContent = "Photo coming soon"; link.append(placeholder); }
+    const remove = document.createElement("button"); remove.type = "button"; remove.className = "product-favourite wishlist-toggle is-saved";
+    remove.dataset.wishlistToggle = ""; remove.setAttribute("aria-pressed", "true"); remove.setAttribute("aria-label", "Remove " + item.name + " from wishlist"); remove.textContent = "♥";
+    photo.append(link, remove);
+    const info = document.createElement("div"); info.className = "luxury-product-info";
+    const titleLink = document.createElement("a"); titleLink.className = "product-card-title-link"; titleLink.href = link.href;
+    const title = document.createElement("h3"); title.textContent = item.name || "Product"; titleLink.append(title);
+    const price = document.createElement("p"); price.className = "luxury-price"; price.textContent = money(item.price);
+    const add = document.createElement("button"); add.type = "button"; add.className = "product-whatsapp-button add-to-cart-button"; add.dataset.addToCart = ""; add.textContent = "Add to Cart";
+    info.append(titleLink, price, add); card.append(photo, info);
+    return card;
+  }
   function renderWishlistPage(items) {
     const grid = document.querySelector("[data-wishlist-grid]");
     if (!grid) return;
     const empty = document.querySelector("[data-wishlist-empty]");
     grid.replaceChildren();
     if (empty) empty.hidden = items.length !== 0;
-    items.forEach(item => {
-      const card = document.createElement("article");
-      card.className = "product-card luxury-product-card";
-      card.dataset.productCard = ""; card.dataset.productId = String(item.id); card.dataset.productSlug = item.slug || "";
-      card.dataset.productName = item.name || "Product"; card.dataset.productPrice = String(item.price || 0);
-      card.dataset.productDescription = item.description || ""; card.dataset.productCategory = item.category || "";
-      const link = document.createElement("a"); link.className = "product-card-image-link";
-      link.href = item.url || (item.slug ? "/product/" + encodeURIComponent(item.slug) : "/collection");
-      const photo = document.createElement("div"); photo.className = "product-photo";
-      if (item.image) { const img = document.createElement("img"); img.src = item.image; img.alt = item.name || "Saved product"; img.loading = "lazy"; img.decoding = "async"; photo.append(img); }
-      else { const placeholder = document.createElement("div"); placeholder.className = "fashion-placeholder"; placeholder.textContent = "Photo coming soon"; photo.append(placeholder); }
-      link.append(photo);
-      const remove = document.createElement("button"); remove.type = "button"; remove.className = "product-favourite wishlist-toggle is-saved";
-      remove.dataset.wishlistToggle = ""; remove.setAttribute("aria-pressed", "true"); remove.setAttribute("aria-label", "Remove " + item.name + " from wishlist"); remove.textContent = "♥";
-      const info = document.createElement("div"); info.className = "luxury-product-info";
-      const titleLink = document.createElement("a"); titleLink.className = "product-card-title-link"; titleLink.href = link.href;
-      const title = document.createElement("h3"); title.textContent = item.name || "Product"; titleLink.append(title);
-      const price = document.createElement("p"); price.className = "luxury-price"; price.textContent = money(item.price);
-      const add = document.createElement("button"); add.type = "button"; add.className = "product-whatsapp-button add-to-cart-button"; add.dataset.addToCart = ""; add.textContent = "Add to Cart";
-      info.append(titleLink, price, add); card.append(link, remove, info); grid.append(card);
-    });
+    items.forEach(item => grid.append(createWishlistCard(item)));
     updateWishlist(items); renderProductButtons(readCart());
+  }
+  function renderWishlistDrawer() {
+    const grid = document.querySelector("[data-wishlist-drawer-items]");
+    if (!grid) return;
+    const items = readWishlist(), empty = document.querySelector("[data-wishlist-drawer-empty]");
+    grid.replaceChildren();
+    items.forEach(item => grid.append(createWishlistCard(item)));
+    if (empty) empty.hidden = items.length > 0;
+    const count = document.querySelector("[data-wishlist-drawer-count]");
+    if (count) count.textContent = "(" + items.length + ")";
+    renderProductButtons(readCart());
+  }
+  function openWishlistDrawer() {
+    const panel = document.querySelector("[data-wishlist-drawer]");
+    const overlay = document.querySelector("[data-wishlist-overlay]");
+    if (!panel) { window.location.assign("/wishlist"); return; }
+    renderWishlistDrawer();
+    panel.hidden = false; panel.setAttribute("aria-hidden", "false");
+    if (overlay) overlay.hidden = false;
+    document.body.classList.add("wishlist-is-open");
+    const close = panel.querySelector("[data-wishlist-close]");
+    if (close) close.focus();
+  }
+  function closeWishlistDrawer() {
+    const panel = document.querySelector("[data-wishlist-drawer]");
+    const overlay = document.querySelector("[data-wishlist-overlay]");
+    if (!panel) return;
+    panel.hidden = true; panel.setAttribute("aria-hidden", "true");
+    if (overlay) overlay.hidden = true;
+    document.body.classList.remove("wishlist-is-open");
+    const trigger = document.querySelector("[data-wishlist-open]");
+    if (trigger) trigger.focus();
   }
   function toggleWishlist(button) {
     const card = button.closest("[data-product-card]");
@@ -71,7 +105,7 @@
     const exists = items.some(entry => String(entry.id) === item.id);
     const next = exists ? items.filter(entry => String(entry.id) !== item.id) : items.concat(item);
     const unique = Array.from(new Map(next.map(entry => [String(entry.id), entry])).values());
-    localStorage.setItem(WISH_KEY, JSON.stringify(unique)); updateWishlist(unique); renderWishlistPage(unique);
+    localStorage.setItem(WISH_KEY, JSON.stringify(unique)); updateWishlist(unique); renderWishlistPage(unique); renderWishlistDrawer();
     button.classList.remove("wishlist-pop"); void button.offsetWidth; button.classList.add("wishlist-pop");
   }
   const saveCart = cart => {
@@ -270,19 +304,29 @@
     document.addEventListener("click", event => {
       const wishButton = event.target.closest("[data-wishlist-toggle]");
       if (wishButton) { event.preventDefault(); toggleWishlist(wishButton); return; }
+      const wishlistTrigger = event.target.closest("[data-wishlist-open]");
+      if (wishlistTrigger) { event.preventDefault(); openWishlistDrawer(); return; }
       const button = event.target.closest("[data-add-to-cart]");
       if (button) { event.preventDefault(); toggleCart(button); }
     });
     document.querySelectorAll("[data-cart-open]").forEach(button => button.addEventListener("click", openCart));
+    document.querySelectorAll("[data-wishlist-close]").forEach(button => button.addEventListener("click", closeWishlistDrawer));
+    const wishlistOverlay = document.querySelector("[data-wishlist-overlay]");
+    if (wishlistOverlay) wishlistOverlay.addEventListener("click", closeWishlistDrawer);
     document.querySelectorAll("[data-cart-close]").forEach(button => button.addEventListener("click", closeCart));
     const overlay = document.querySelector("[data-cart-overlay]");
     if (overlay) overlay.addEventListener("click", closeCart);
-    document.addEventListener("keydown", event => { if (event.key === "Escape" && drawer() && !drawer().hidden) closeCart(); });
+    document.addEventListener("keydown", event => {
+      if (event.key !== "Escape") return;
+      if (drawer() && !drawer().hidden) closeCart();
+      const wishlistPanel = document.querySelector("[data-wishlist-drawer]");
+      if (wishlistPanel && !wishlistPanel.hidden) closeWishlistDrawer();
+    });
     const checkoutButton = document.getElementById("whatsapp-checkout");
     if (checkoutButton) checkoutButton.addEventListener("click", checkout);
     window.addEventListener("storage", event => {
       if (event.key === KEY) { const latest = readCart(); updateCount(latest); renderCart(); renderProductButtons(latest); }
-      if (event.key === WISH_KEY) { const latest = readWishlist(); updateWishlist(latest); renderWishlistPage(latest); }
+      if (event.key === WISH_KEY) { const latest = readWishlist(); updateWishlist(latest); renderWishlistPage(latest); renderWishlistDrawer(); }
     });
     document.querySelectorAll("[data-gallery-image]").forEach(button => button.addEventListener("click", () => {
       const main = document.querySelector("[data-gallery-main]"), img = main && main.querySelector("img");
