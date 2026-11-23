@@ -1,4 +1,5 @@
 from flask import Blueprint, g, render_template, request, abort
+from sqlalchemy import case
 from sqlalchemy.orm import joinedload, selectinload
 
 from .. import db
@@ -55,7 +56,7 @@ def category_for_slug(business, slug):
     return next((item for item in candidates if " ".join((item.name or "").split()).casefold() == normalized), None)
 
 
-def render_listing(business, products, selected_category=None, selected_size="", selected_colour="", page=1):
+def render_listing(business, products, selected_category=None, selected_size="", selected_colour="", page=1, page_count=1):
     settings, categories = storefront_context(business)
     variant_rows = ProductVariant.query.filter_by(
         business_id=business.id, is_available=True
@@ -66,7 +67,7 @@ def render_listing(business, products, selected_category=None, selected_size="",
         "storefront/collection.html", business=business, products=products,
         categories=categories, selected_category=selected_category, settings=settings,
         sizes=sizes, colours=colours, selected_size=selected_size,
-        selected_colour=selected_colour, page=page,
+        selected_colour=selected_colour, page=page, page_count=page_count,
     )
 
 
@@ -111,7 +112,7 @@ def collection():
         query = query.filter(Product.id.in_(matching))
     total = query.count()
     products = query.order_by(Product.created_at.desc(), Product.id.desc()).offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
-    return render_listing(business, products, selected_category, selected_size, selected_colour, page)
+    return render_listing(business, products, selected_category, selected_size, selected_colour, page, max((total + PAGE_SIZE - 1) // PAGE_SIZE, 1))
 
 
 @bp.route("/category/<string:slug>")
@@ -125,15 +126,15 @@ def category(slug):
     query = public_products(business).filter(Product.category_id.in_(same_name_ids))
     selected_product_id = request.args.get("product", type=int)
     page = max(request.args.get("page", 1, type=int), 1)
-    ordered = query.order_by(Product.created_at.desc(), Product.id.desc())
-    products = ordered.all()
+    total = query.count()
     if selected_product_id:
-        selected = next((p for p in products if p.id == selected_product_id), None)
-        if selected:
-            products = [selected] + [p for p in products if p.id != selected.id]
-    start = (page - 1) * PAGE_SIZE
-    page_products = products[start:start + PAGE_SIZE]
-    return render_listing(business, page_products, selected_category, page=page)
+        ordered = query.order_by(case((Product.id == selected_product_id, 0), else_=1),
+                                 Product.created_at.desc(), Product.id.desc())
+    else:
+        ordered = query.order_by(Product.created_at.desc(), Product.id.desc())
+    products = ordered.offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
+    return render_listing(business, products, selected_category, page=page,
+                          page_count=max((total + PAGE_SIZE - 1) // PAGE_SIZE, 1))
 
 
 @bp.route("/product/<string:slug>")
