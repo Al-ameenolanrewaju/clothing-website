@@ -1,8 +1,8 @@
-from flask import Blueprint, g, render_template, request, abort
+from flask import Blueprint, g, render_template, request, abort, jsonify
 from sqlalchemy import case, func
 from sqlalchemy.orm import joinedload, selectinload
 
-from .. import db
+from .. import db, csrf
 from ..models import Category, Product, ProductVariant, StoreVisit, StoreSettings
 
 bp = Blueprint("storefront", __name__)
@@ -16,13 +16,17 @@ def public_business():
     return business
 
 
-@bp.before_app_request
-def track_store_visit():
-    if request.endpoint and request.endpoint.startswith("storefront.") and request.method == "GET":
-        business = getattr(g, "business", None)
-        if business:
-            db.session.add(StoreVisit(business_id=business.id, path=request.path))
-            db.session.commit()
+@bp.post("/track-visit")
+@csrf.exempt
+def track_visit():
+    """Record page views outside the navigation response so page changes stay fast."""
+    business = getattr(g, "business", None)
+    payload = request.get_json(silent=True) or {}
+    path = payload.get("path", "")
+    if business and isinstance(path, str) and path.startswith("/") and not path.startswith("//"):
+        db.session.add(StoreVisit(business_id=business.id, path=path[:500]))
+        db.session.commit()
+    return jsonify({"ok": True}), 202
 
 
 def storefront_context(business):
