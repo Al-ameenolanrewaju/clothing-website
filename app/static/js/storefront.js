@@ -1,6 +1,7 @@
 (function () {
   "use strict";
   const KEY = "storefront_cart_v1";
+  const WISH_KEY = "storefront_wishlist_v1";
   const money = value => new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(Number(value) || 0);
   const readCart = () => {
     try {
@@ -9,6 +10,70 @@
     } catch (_) { return []; }
   };
   const drawer = () => document.getElementById("store-cart-drawer");
+  const readWishlist = () => {
+    try { const value = JSON.parse(localStorage.getItem(WISH_KEY) || "[]"); return Array.isArray(value) ? value.filter(item => item && item.id != null) : []; }
+    catch (_) { return []; }
+  };
+  function productSnapshot(card) {
+    const image = card.querySelector(".product-photo img, .product-detail-main-image img");
+    return { id:String(card.dataset.productId), slug:card.dataset.productSlug || "", name:card.dataset.productName || "Product",
+      price:Number(card.dataset.productPrice) || 0, description:card.dataset.productDescription || "",
+      category:card.dataset.categoryName || card.dataset.productCategory || "", image:image ? image.currentSrc || image.src : "",
+      url:card.querySelector(".product-card-image-link")?.href || (card.dataset.productSlug ? "/product/" + encodeURIComponent(card.dataset.productSlug) : "") };
+  }
+  function updateWishlist(items) {
+    const ids = new Set(items.map(item => String(item.id)));
+    document.querySelectorAll("[data-wishlist-count]").forEach(el => { el.textContent = items.length; });
+    document.querySelectorAll("[data-product-card]").forEach(card => {
+      const button = card.querySelector("[data-wishlist-toggle]");
+      if (!button) return;
+      const saved = ids.has(String(card.dataset.productId));
+      button.classList.toggle("is-saved", saved);
+      button.setAttribute("aria-pressed", saved ? "true" : "false");
+      button.setAttribute("aria-label", (saved ? "Remove " : "Save ") + (card.dataset.productName || "product") + (saved ? " from wishlist" : " to wishlist"));
+      if (button.querySelector("span")) button.querySelector("span").textContent = saved ? "♥" : "♡";
+      else button.textContent = saved ? "♥" : "♡";
+    });
+  }
+  function renderWishlistPage(items) {
+    const grid = document.querySelector("[data-wishlist-grid]");
+    if (!grid) return;
+    const empty = document.querySelector("[data-wishlist-empty]");
+    grid.replaceChildren();
+    if (empty) empty.hidden = items.length !== 0;
+    items.forEach(item => {
+      const card = document.createElement("article");
+      card.className = "product-card luxury-product-card";
+      card.dataset.productCard = ""; card.dataset.productId = String(item.id); card.dataset.productSlug = item.slug || "";
+      card.dataset.productName = item.name || "Product"; card.dataset.productPrice = String(item.price || 0);
+      card.dataset.productDescription = item.description || ""; card.dataset.productCategory = item.category || "";
+      const link = document.createElement("a"); link.className = "product-card-image-link";
+      link.href = item.url || (item.slug ? "/product/" + encodeURIComponent(item.slug) : "/collection");
+      const photo = document.createElement("div"); photo.className = "product-photo";
+      if (item.image) { const img = document.createElement("img"); img.src = item.image; img.alt = item.name || "Saved product"; img.loading = "lazy"; img.decoding = "async"; photo.append(img); }
+      else { const placeholder = document.createElement("div"); placeholder.className = "fashion-placeholder"; placeholder.textContent = "Photo coming soon"; photo.append(placeholder); }
+      link.append(photo);
+      const remove = document.createElement("button"); remove.type = "button"; remove.className = "product-favourite wishlist-toggle is-saved";
+      remove.dataset.wishlistToggle = ""; remove.setAttribute("aria-pressed", "true"); remove.setAttribute("aria-label", "Remove " + item.name + " from wishlist"); remove.textContent = "♥";
+      const info = document.createElement("div"); info.className = "luxury-product-info";
+      const titleLink = document.createElement("a"); titleLink.className = "product-card-title-link"; titleLink.href = link.href;
+      const title = document.createElement("h3"); title.textContent = item.name || "Product"; titleLink.append(title);
+      const price = document.createElement("p"); price.className = "luxury-price"; price.textContent = money(item.price);
+      const add = document.createElement("button"); add.type = "button"; add.className = "product-whatsapp-button add-to-cart-button"; add.dataset.addToCart = ""; add.textContent = "Add to Cart";
+      info.append(titleLink, price, add); card.append(link, remove, info); grid.append(card);
+    });
+    updateWishlist(items); renderProductButtons(readCart());
+  }
+  function toggleWishlist(button) {
+    const card = button.closest("[data-product-card]");
+    if (!card) return;
+    const item = productSnapshot(card), items = readWishlist();
+    const exists = items.some(entry => String(entry.id) === item.id);
+    const next = exists ? items.filter(entry => String(entry.id) !== item.id) : items.concat(item);
+    const unique = Array.from(new Map(next.map(entry => [String(entry.id), entry])).values());
+    localStorage.setItem(WISH_KEY, JSON.stringify(unique)); updateWishlist(unique); renderWishlistPage(unique);
+    button.classList.remove("wishlist-pop"); void button.offsetWidth; button.classList.add("wishlist-pop");
+  }
   const saveCart = cart => {
     localStorage.setItem(KEY, JSON.stringify(cart));
     updateCount(cart);
@@ -97,7 +162,7 @@
       saveCart(cart.filter(item => String(item.id) !== id));
       return;
     }
-    const image = card.querySelector(".product-photo img");
+    const image = card.querySelector(".product-photo img, .product-detail-main-image img");
     cart.push({
       id,
       name: card.dataset.productName,
@@ -182,15 +247,8 @@
   }
   document.addEventListener("DOMContentLoaded", () => {
     const cart = readCart();
-    // Shuffle whole product cards, preserving each card's image and product data.
-    document.querySelectorAll(".luxury-product-grid").forEach(grid => {
-      const cards = Array.from(grid.children).filter(node => node.matches("[data-product-card]"));
-      for (let i = cards.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [cards[i], cards[j]] = [cards[j], cards[i]];
-      }
-      cards.forEach(card => grid.appendChild(card));
-    });
+    const wishlist = readWishlist();
+    updateWishlist(wishlist); renderWishlistPage(wishlist);
     updateCount(cart);
     renderCart();
     renderProductButtons(cart);
@@ -203,6 +261,8 @@
       applyCollectionFilters(filterForm);
     }
     document.addEventListener("click", event => {
+      const wishButton = event.target.closest("[data-wishlist-toggle]");
+      if (wishButton) { event.preventDefault(); toggleWishlist(wishButton); return; }
       const button = event.target.closest("[data-add-to-cart]");
       if (button) { event.preventDefault(); toggleCart(button); }
     });
@@ -215,6 +275,12 @@
     if (checkoutButton) checkoutButton.addEventListener("click", checkout);
     window.addEventListener("storage", event => {
       if (event.key === KEY) { const latest = readCart(); updateCount(latest); renderCart(); renderProductButtons(latest); }
+      if (event.key === WISH_KEY) { const latest = readWishlist(); updateWishlist(latest); renderWishlistPage(latest); }
     });
+    document.querySelectorAll("[data-gallery-image]").forEach(button => button.addEventListener("click", () => {
+      const main = document.querySelector("[data-gallery-main]"), img = main && main.querySelector("img");
+      if (img) { img.src = button.dataset.galleryImage; img.alt = button.dataset.galleryAlt || "Product photo"; }
+      document.querySelectorAll("[data-gallery-image]").forEach(item => item.classList.toggle("is-active", item === button));
+    }));
   });
 })();
