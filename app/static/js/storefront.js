@@ -75,9 +75,14 @@
     if (empty) empty.hidden = items.length > 0;
     const count = document.querySelector("[data-wishlist-drawer-count]");
     if (count) count.textContent = "(" + items.length + ")";
+    document.querySelectorAll("[data-wishlist-tab-count]").forEach(el => { el.textContent = items.length; });
     renderProductButtons(readCart());
   }
   function openWishlistDrawer() {
+    const cartPanel = drawer();
+    if (cartPanel && !cartPanel.hidden) { cartPanel.hidden = true; cartPanel.setAttribute("aria-hidden", "true"); }
+    const cartOverlay = document.querySelector("[data-cart-overlay]"); if (cartOverlay) cartOverlay.hidden = true;
+    document.body.classList.remove("cart-is-open");
     const panel = document.querySelector("[data-wishlist-drawer]");
     const overlay = document.querySelector("[data-wishlist-overlay]");
     if (!panel) return;
@@ -120,6 +125,8 @@
     const count = cart.length;
     document.querySelectorAll("[data-cart-count]").forEach(el => { el.textContent = count; });
     document.querySelectorAll("[data-cart-drawer-count]").forEach(el => { el.textContent = "(" + count + ")"; });
+    document.querySelectorAll("[data-cart-tab-count]").forEach(el => { el.textContent = count; });
+    document.querySelectorAll("[data-wishlist-tab-count]").forEach(el => { el.textContent = readWishlist().length; });
   }
   function renderProductButtons(cart) {
     const ids = new Set(cart.map(item => String(item.id)));
@@ -165,6 +172,10 @@
     if (empty) empty.hidden = visible !== 0;
   }
   function openCart() {
+    const wishlistPanel = document.querySelector("[data-wishlist-drawer]");
+    if (wishlistPanel && !wishlistPanel.hidden) { wishlistPanel.hidden = true; wishlistPanel.setAttribute("aria-hidden", "true"); }
+    const wishlistOverlay = document.querySelector("[data-wishlist-overlay]"); if (wishlistOverlay) wishlistOverlay.hidden = true;
+    document.body.classList.remove("wishlist-is-open");
     const panel = drawer();
     if (!panel) return;
     const trigger = document.querySelector("[data-cart-open]");
@@ -271,6 +282,13 @@
     saveCart(cart);
   }
   function removeItem(id) { saveCart(readCart().filter(item => String(item.id) !== String(id))); }
+  function clearWishlist() { localStorage.setItem(WISH_KEY, "[]"); updateWishlist([]); renderWishlistPage([]); renderWishlistDrawer(); }
+  function moveWishlistToCart() {
+    const saved = readWishlist(); if (!saved.length) return;
+    const cart = readCart(); const byId = new Map(cart.map(item => [String(item.id), item]));
+    saved.forEach(item => { const id = String(item.id); if (!byId.has(id)) byId.set(id, { id, name:item.name || "Product", price:Number(item.price)||0, description:item.description||"", image:item.image||"", quantity:1 }); });
+    saveCart(Array.from(byId.values())); clearWishlist(); openCart();
+  }
   function checkout() {
     const cart = readCart();
     const phone = (window.STORE_WHATSAPP || "").replace(/[^0-9]/g, "");
@@ -309,7 +327,12 @@
       const wishlistTrigger = event.target.closest("[data-wishlist-open]");
       if (wishlistTrigger) { event.preventDefault(); openWishlistDrawer(); return; }
       const button = event.target.closest("[data-add-to-cart]");
-      if (button) { event.preventDefault(); toggleCart(button); }
+      if (button) { event.preventDefault(); toggleCart(button); return; }
+      if (event.target.closest("[data-drawer-tab=\"wishlist\"]")) { event.preventDefault(); openWishlistDrawer(); return; }
+      if (event.target.closest("[data-drawer-tab=\"cart\"]")) { event.preventDefault(); openCart(); return; }
+      if (event.target.closest("[data-wishlist-clear]")) { clearWishlist(); return; }
+      if (event.target.closest("[data-wishlist-move]")) { moveWishlistToCart(); return; }
+      if (event.target.closest("[data-cart-clear]")) { saveCart([]); }
     });
     document.querySelectorAll("[data-cart-open]").forEach(button => button.addEventListener("click", openCart));
     document.querySelectorAll("[data-wishlist-close]").forEach(button => button.addEventListener("click", closeWishlistDrawer));
