@@ -1203,3 +1203,51 @@ def test_footer_social_links_only_render_when_owner_configures_them(app, client)
     footer = html.split('<footer class="store-footer luxury-footer">', 1)[1].split('</footer>', 1)[0]
     assert 'WhatsApp' not in footer
     assert b'>Email ' not in response.data
+
+
+def test_guest_wishlist_page_and_product_detail_routes(app, client):
+    business_id, _ = make_tenant(app)
+    category_id = None
+    with app.app_context():
+        category = Category(business_id=business_id, name="Agbada", slug="men-agbada", gender="Men")
+        db.session.add(category)
+        db.session.commit()
+        category_id = category.id
+    product_id = make_product(app, business_id, name="Royal Agbada", slug="royal-agbada", category_id=category_id)
+    with app.app_context():
+        product = Product.query.get(product_id)
+        db.session.add_all([
+            ProductImage(business_id=business_id, product_id=product_id, url="/media/products/101", sort_order=0),
+            ProductImage(business_id=business_id, product_id=product_id, url="/media/products/102", sort_order=1),
+            ProductImage(business_id=business_id, product_id=product_id, url="/media/products/103", sort_order=2),
+            ProductImage(business_id=business_id, product_id=product_id, url="/media/products/999", sort_order=3),
+        ])
+        db.session.commit()
+    detail = client.get("/product/royal-agbada", base_url="http://store-a.test")
+    assert detail.status_code == 200
+    assert b"Royal Agbada" in detail.data
+    assert b"/media/products/101" in detail.data
+    assert b"/media/products/102" in detail.data
+    assert b"/media/products/103" in detail.data
+    assert b"/media/products/999" not in detail.data
+    wishlist = client.get("/wishlist", base_url="http://store-a.test")
+    assert wishlist.status_code == 200
+    assert b"Saved for later" in wishlist.data
+
+
+def test_category_route_is_scoped_and_pins_requested_product_first(app, client):
+    business_id, _ = make_tenant(app)
+    with app.app_context():
+        agbada = Category(business_id=business_id, name="Agbada", slug="men-agbada", gender="Men")
+        unrelated = Category(business_id=business_id, name="Shoes", slug="men-shoes", gender="Men")
+        db.session.add_all([agbada, unrelated])
+        db.session.commit()
+        agbada_id, shoes_id = agbada.id, unrelated.id
+    first_id = make_product(app, business_id, name="Agbada One", slug="agbada-one", category_id=agbada_id)
+    pinned_id = make_product(app, business_id, name="Agbada Two", slug="agbada-two", category_id=agbada_id)
+    make_product(app, business_id, name="Leather Shoes", slug="leather-shoes", category_id=shoes_id)
+    response = client.get(f"/category/men-agbada?product={pinned_id}", base_url="http://store-a.test")
+    assert response.status_code == 200
+    body = response.data.decode()
+    assert body.index("Agbada Two") < body.index("Agbada One")
+    assert "Leather Shoes" not in body
