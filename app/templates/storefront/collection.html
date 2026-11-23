@@ -1,10 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Collection | {{ business.name }}{% endblock %}
+{% block title %}{% if selected_category %}{{ selected_category.name|trim }}{% else %}Collection{% endif %} | {{ business.name }}{% endblock %}
 {% block body_class %}fashion-store{% endblock %}
 {% block body %}
 {% include "storefront/_nav.html" %}
 <main class="collection-page">
   <header class="collection-page-heading"><span class="eyebrow">The collection</span><h1>{% if selected_category %}{{ selected_category.name|trim }}{% else %}Discover every piece.{% endif %}</h1><p>Explore the complete collection and add your favourites to your bag.</p></header>
+  <nav class="category-shortcuts" aria-label="Shop by category">
+    <a href="{{ url_for('storefront.collection') }}" {% if not selected_category %}aria-current="page"{% endif %}>All</a>
+    {% for category in categories %}<a href="{{ url_for('storefront.category', slug=category.slug) }}" {% if selected_category and selected_category.id == category.id %}aria-current="page"{% endif %}>{{ category.name|trim }}</a>{% endfor %}
+  </nav>
   <form class="collection-filters" data-collection-filters aria-label="Filter products">
     <label>Category
       <select name="category" data-filter-category>
@@ -13,16 +17,10 @@
       </select>
     </label>
     <label>Size
-      <select name="size" data-filter-size>
-        <option value="">All sizes</option>
-        {% for size in sizes %}<option value="{{ size }}" {% if selected_size|lower == size|lower %}selected{% endif %}>{{ size }}</option>{% endfor %}
-      </select>
+      <select name="size" data-filter-size><option value="">All sizes</option>{% for size in sizes %}<option value="{{ size }}" {% if selected_size|lower == size|lower %}selected{% endif %}>{{ size }}</option>{% endfor %}</select>
     </label>
     <label>Colour
-      <select name="colour" data-filter-colour>
-        <option value="">All colours</option>
-        {% for colour in colours %}<option value="{{ colour }}" {% if selected_colour|lower == colour|lower %}selected{% endif %}>{{ colour }}</option>{% endfor %}
-      </select>
+      <select name="colour" data-filter-colour><option value="">All colours</option>{% for colour in colours %}<option value="{{ colour }}" {% if selected_colour|lower == colour|lower %}selected{% endif %}>{{ colour }}</option>{% endfor %}</select>
     </label>
     <button class="clear-filters" type="reset" data-clear-filters>Clear filters</button>
   </form>
@@ -33,4 +31,4 @@
 </main>
 {% include "storefront/_footer.html" %}
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/storefront.js') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/storefront.js') }}?v=4" defer></script>{% endblock %}
