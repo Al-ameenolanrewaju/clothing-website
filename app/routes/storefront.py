@@ -1,5 +1,5 @@
 from flask import Blueprint, g, render_template, request, abort
-from sqlalchemy import case
+from sqlalchemy import case, func
 from sqlalchemy.orm import joinedload, selectinload
 
 from .. import db
@@ -74,7 +74,7 @@ def render_listing(business, products, selected_category=None, selected_size="",
 @bp.route("/")
 def home():
     business = public_business()
-    products = public_products(business).order_by(Product.created_at.desc(), Product.id.desc()).limit(4).all()
+    products = public_products(business).order_by(func.random()).limit(4).all()
     settings, categories = storefront_context(business)
     return render_template(
         "storefront/home.html", business=business, featured=products,
@@ -111,7 +111,7 @@ def collection():
         )
         query = query.filter(Product.id.in_(matching))
     total = query.count()
-    products = query.order_by(Product.created_at.desc(), Product.id.desc()).offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
+    products = query.order_by(func.random()).offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
     return render_listing(business, products, selected_category, selected_size, selected_colour, page, max((total + PAGE_SIZE - 1) // PAGE_SIZE, 1))
 
 
@@ -131,7 +131,7 @@ def category(slug):
         ordered = query.order_by(case((Product.id == selected_product_id, 0), else_=1),
                                  Product.created_at.desc(), Product.id.desc())
     else:
-        ordered = query.order_by(Product.created_at.desc(), Product.id.desc())
+        ordered = query.order_by(func.random())
     products = ordered.offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
     return render_listing(business, products, selected_category, page=page,
                           page_count=max((total + PAGE_SIZE - 1) // PAGE_SIZE, 1))
