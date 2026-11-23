@@ -6,7 +6,7 @@
 {% include "storefront/_nav.html" %}
 <main class="product-detail-page">
   <nav class="product-breadcrumb" aria-label="Breadcrumb"><a href="{{ url_for('storefront.home') }}">Home</a><span> / </span><a href="{{ url_for('storefront.category', slug=product.category.slug) if product.category else url_for('storefront.collection') }}">{{ product.category.name|trim if product.category else 'Collection' }}</a><span> / </span><span>{{ product.name }}</span></nav>
-  <section class="product-detail-layout" data-product-card data-product-id="{{ product.id }}" data-product-name="{{ product.name }}" data-product-price="{{ product.price }}" data-product-description="{{ product.description or '' }}" data-product-category="{{ product.category.name if product.category else '' }}" data-product-sizes="{{ variants|map(attribute='size')|unique|join('|') }}" data-product-colours="{{ variants|map(attribute='colour')|unique|join('|') }}">
+  <section class="product-detail-layout" data-product-card data-product-id="{{ product.id }}" data-product-slug="{{ product.slug }}" data-product-name="{{ product.name }}" data-product-price="{{ product.price }}" data-product-description="{{ product.description or '' }}" data-product-category="{{ product.category.name if product.category else '' }}" data-product-sizes="{{ variants|map(attribute='size')|unique|join('|') }}" data-product-colours="{{ variants|map(attribute='colour')|unique|join('|') }}">
     <div class="product-detail-gallery">
       <div class="product-detail-main-image" data-gallery-main>
         {% if images %}<img src="{{ images[0].url }}" alt="{{ images[0].alt_text or product.name }}" fetchpriority="high">{% else %}<div class="fashion-placeholder"><span>Photo coming soon</span></div>{% endif %}
