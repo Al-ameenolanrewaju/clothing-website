@@ -254,7 +254,14 @@
     renderProductButtons(cart);
     const filterForm = document.querySelector("[data-collection-filters]");
     if (filterForm) {
-      filterForm.addEventListener("change", () => applyCollectionFilters(filterForm));
+      filterForm.addEventListener("change", event => {
+        if (event.target.matches("[data-filter-category]")) {
+          const option = event.target.selectedOptions[0];
+          if (option && option.value && option.dataset.categoryUrl) { window.location.assign(option.dataset.categoryUrl); return; }
+          if (!option || !option.value) { window.location.assign("/collection"); return; }
+        }
+        applyCollectionFilters(filterForm);
+      });
       filterForm.addEventListener("reset", () => window.requestAnimationFrame(() => applyCollectionFilters(filterForm)));
       // Filtering is display-only: never submit/reload the page or touch cart state.
       filterForm.addEventListener("submit", event => event.preventDefault());
