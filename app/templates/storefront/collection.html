@@ -5,10 +5,6 @@
 {% include "storefront/_nav.html" %}
 <main class="collection-page">
   <header class="collection-page-heading"><span class="eyebrow">The collection</span><h1>{% if selected_category %}{{ selected_category.name|trim }}{% else %}Discover every piece.{% endif %}</h1><p>Explore the complete collection and add your favourites to your bag.</p></header>
-  <nav class="category-shortcuts" aria-label="Shop by category">
-    <a href="{{ url_for('storefront.collection') }}" {% if not selected_category %}aria-current="page"{% endif %}>All</a>
-    {% for category in categories %}<a href="{{ url_for('storefront.category', slug=category.slug) }}" {% if selected_category and selected_category.id == category.id %}aria-current="page"{% endif %}>{{ category.name|trim }}</a>{% endfor %}
-  </nav>
   <form class="collection-filters" data-collection-filters aria-label="Filter products">
     <label>Category
       <select name="category" data-filter-category>
