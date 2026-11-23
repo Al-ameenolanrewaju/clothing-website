@@ -19,6 +19,7 @@
       {% if business.banner_url %}<img src="{{ business.banner_url }}?v={{ business.updated_at.timestamp()|int }}" alt="{{ business.name }} collection">{% else %}<div class="editorial-brand-panel"><span class="editorial-brand-name">{{ business.name }}</span><span class="editorial-brand-caption">{{ settings.tagline if settings and settings.tagline else 'A considered collection' }}</span></div>{% endif %}
     </div>
   </section>
+  {% if categories %}<nav class="home-category-links" aria-label="Shop by category"><span class="eyebrow">Shop by category</span><div>{% for category in categories %}<a href="{{ url_for('storefront.category', slug=category.slug) }}">{{ category.name|trim }} <span aria-hidden="true">→</span></a>{% endfor %}</div></nav>{% endif %}
   <section class="luxury-collection" id="featured">
     <div class="luxury-section-head"><div><span class="eyebrow">{{ settings.catalogue_eyebrow if settings and settings.catalogue_eyebrow else 'The collection' }}</span><h2>{{ settings.catalogue_title if settings and settings.catalogue_title else 'Pieces to wear, and wear again.' }}</h2></div></div>
     <div class="product-grid luxury-product-grid">
