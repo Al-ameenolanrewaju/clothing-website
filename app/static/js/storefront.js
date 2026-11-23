@@ -338,22 +338,15 @@
     updateCount(cart);
     renderCart();
     renderProductButtons(cart);
-    const filterForm = document.querySelector("[data-collection-filters]");
-    if (filterForm) {
-      filterForm.addEventListener("change", event => {
-        if (event.target.matches("[data-filter-category]")) {
-          const option = event.target.selectedOptions[0];
-          if (option && option.value && option.dataset.categoryUrl) { window.location.assign(option.dataset.categoryUrl); return; }
-          if (!option || !option.value) { window.location.assign("/collection"); return; }
-        }
-        applyCollectionFilters(filterForm);
-      });
-      filterForm.addEventListener("reset", () => window.requestAnimationFrame(() => applyCollectionFilters(filterForm)));
-      // Filtering is display-only: never submit/reload the page or touch cart state.
-      filterForm.addEventListener("submit", event => event.preventDefault());
-      applyCollectionFilters(filterForm);
-    }
+    refreshPageContent();
     document.addEventListener("click", event => {
+      const galleryButton = event.target.closest("[data-gallery-image]");
+      if (galleryButton) {
+        const main = document.querySelector("[data-gallery-main]"), img = main && main.querySelector("img");
+        if (img) { img.src = galleryButton.dataset.galleryImage; img.alt = galleryButton.dataset.galleryAlt || "Product photo"; }
+        document.querySelectorAll("[data-gallery-image]").forEach(item => item.classList.toggle("is-active", item === galleryButton));
+        return;
+      }
       const wishButton = event.target.closest("[data-wishlist-toggle]");
       if (wishButton) { event.preventDefault(); toggleWishlist(wishButton); return; }
       const wishlistTrigger = event.target.closest("[data-wishlist-open]");
@@ -373,6 +366,23 @@
     document.querySelectorAll("[data-cart-close]").forEach(button => button.addEventListener("click", closeCart));
     const overlay = document.querySelector("[data-cart-overlay]");
     if (overlay) overlay.addEventListener("click", closeCart);
+    document.addEventListener("change", event => {
+      const form = event.target.closest("[data-collection-filters]");
+      if (!form) return;
+      if (event.target.matches("[data-filter-category]")) {
+        const option = event.target.selectedOptions[0];
+        navigateTo(option && option.value && option.dataset.categoryUrl ? option.dataset.categoryUrl : "/collection");
+        return;
+      }
+      applyCollectionFilters(form);
+    });
+    document.addEventListener("reset", event => {
+      const form = event.target.closest("[data-collection-filters]");
+      if (form) window.requestAnimationFrame(() => applyCollectionFilters(form));
+    });
+    document.addEventListener("submit", event => {
+      if (event.target.matches("[data-collection-filters]")) event.preventDefault();
+    });
     document.addEventListener("keydown", event => {
       if (event.key !== "Escape") return;
       if (drawer() && !drawer().hidden) closeCart();
@@ -385,10 +395,67 @@
       if (event.key === KEY) { const latest = readCart(); updateCount(latest); renderCart(); renderProductButtons(latest); }
       if (event.key === WISH_KEY) { const latest = readWishlist(); updateWishlist(latest); renderWishlistPage(latest); renderWishlistDrawer(); }
     });
-    document.querySelectorAll("[data-gallery-image]").forEach(button => button.addEventListener("click", () => {
-      const main = document.querySelector("[data-gallery-main]"), img = main && main.querySelector("img");
-      if (img) { img.src = button.dataset.galleryImage; img.alt = button.dataset.galleryAlt || "Product photo"; }
-      document.querySelectorAll("[data-gallery-image]").forEach(item => item.classList.toggle("is-active", item === button));
-    }));
+
   });
+
+  const pageCache = new Map();
+  const pendingPages = new Map();
+  let activeNavigation = 0;
+  function refreshPageContent() {
+    const cart = readCart(), wishlist = readWishlist();
+    updateWishlist(wishlist); renderWishlistPage(wishlist);
+    updateCount(cart); renderCart(); renderProductButtons(cart);
+    const form = document.querySelector("[data-collection-filters]");
+    if (form) applyCollectionFilters(form);
+  }
+  async function fetchPage(url) {
+    const key = new URL(url, location.href).href;
+    if (pageCache.has(key)) return pageCache.get(key);
+    if (pendingPages.has(key)) return pendingPages.get(key);
+    const request = fetch(key, { credentials: "same-origin", headers: { "X-Requested-With": "fetch" } })
+      .then(response => { if (!response.ok) throw new Error("Navigation request failed"); return response.text(); })
+      .then(html => { pageCache.set(key, html); if (pageCache.size > 8) pageCache.delete(pageCache.keys().next().value); return html; })
+      .finally(() => pendingPages.delete(key));
+    pendingPages.set(key, request);
+    return request;
+  }
+  async function navigateTo(url, addHistory = true) {
+    const target = new URL(url, location.href);
+    if (target.origin !== location.origin) { location.assign(target.href); return; }
+    if (target.href === location.href && addHistory) return;
+    const token = ++activeNavigation;
+    document.documentElement.classList.add("page-is-loading");
+    try {
+      const html = await fetchPage(target.href);
+      if (token !== activeNavigation) return;
+      const parsed = new DOMParser().parseFromString(html, "text/html");
+      const nextMain = parsed.querySelector("main"), currentMain = document.querySelector("main");
+      if (!nextMain || !currentMain) { location.assign(target.href); return; }
+      currentMain.replaceWith(nextMain);
+      document.title = parsed.title || document.title;
+      const nextDescription = parsed.querySelector('meta[name="description"]');
+      const description = document.querySelector('meta[name="description"]');
+      if (nextDescription && description) description.content = nextDescription.content;
+      if (addHistory) history.pushState({}, "", target.href);
+      refreshPageContent();
+      window.scrollTo(0, 0);
+    } catch (_) { location.assign(target.href); }
+    finally { if (token === activeNavigation) document.documentElement.classList.remove("page-is-loading"); }
+  }
+  document.addEventListener("click", event => {
+    const link = event.target.closest("a[href]");
+    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if ((link.target && link.target !== "_self") || link.hasAttribute("download")) return;
+    const target = new URL(link.href, location.href);
+    if (target.origin !== location.origin || target.pathname.startsWith("/media/") || (target.hash && target.pathname === location.pathname) || !/^https?:$/.test(target.protocol)) return;
+    event.preventDefault(); navigateTo(target.href);
+  });
+  const warmPage = link => {
+    if (!link) return;
+    const target = new URL(link.href, location.href);
+    if (target.origin === location.origin && !target.pathname.startsWith("/media/") && target.href !== location.href) fetchPage(target.href).catch(() => {});
+  };
+  document.addEventListener("pointerover", event => warmPage(event.target.closest("a[href]")), { passive: true });
+  document.addEventListener("touchstart", event => warmPage(event.target.closest("a[href]")), { passive: true });
+  window.addEventListener("popstate", () => navigateTo(location.href, false));
 })();
