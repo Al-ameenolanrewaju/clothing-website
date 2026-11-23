@@ -1269,3 +1269,22 @@ def test_storefront_wishlist_opens_as_client_drawer_and_hearts_are_inside_produc
     assert b'data-wishlist-toggle' in home.data
     assert b'Shop by category' not in home.data
     assert b'category-shortcuts' not in collection.data
+
+
+
+def test_storefront_visit_tracking_does_not_block_get_navigation(app, client):
+    business_id, _ = make_tenant(app)
+    response = client.get("/", base_url="http://store-a.test")
+    assert response.status_code == 200
+    with app.app_context():
+        from app.models import StoreVisit
+        assert StoreVisit.query.filter_by(business_id=business_id).count() == 0
+    tracked = client.post(
+        "/track-visit",
+        json={"path": "/collection"},
+        base_url="http://store-a.test",
+    )
+    assert tracked.status_code == 202
+    with app.app_context():
+        visit = StoreVisit.query.filter_by(business_id=business_id, path="/collection").one()
+        assert visit is not None

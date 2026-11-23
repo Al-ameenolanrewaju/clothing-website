@@ -301,6 +301,37 @@
     window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(message), "_blank", "noopener");
   }
   document.addEventListener("DOMContentLoaded", () => {
+    // Track visits after rendering so analytics never delays page navigation.
+    const visitPayload = JSON.stringify({ path: window.location.pathname });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon("/track-visit", new Blob([visitPayload], { type: "application/json" }));
+    } else {
+      fetch("/track-visit", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: visitPayload, keepalive: true, credentials: "same-origin" }).catch(() => {});
+    }
+
+    // Prefetch same-origin pages when a visitor shows intent to open a link.
+    const prefetched = new Set();
+    const prefetchLink = link => {
+      if (!link || link.origin !== window.location.origin || !/^https?:$/.test(link.protocol)) return;
+      if (link.pathname.startsWith("/media/") || link.pathname === window.location.pathname) return;
+      if (prefetched.has(link.href)) return;
+      prefetched.add(link.href);
+      const hint = document.createElement("link");
+      hint.rel = "prefetch";
+      hint.href = link.href;
+      hint.as = "document";
+      document.head.appendChild(hint);
+    };
+    document.addEventListener("pointerover", event => {
+      const anchor = event.target.closest("a[href]");
+      if (anchor) prefetchLink(anchor);
+    }, { passive: true });
+    document.addEventListener("touchstart", event => {
+      const anchor = event.target.closest("a[href]");
+      if (anchor) prefetchLink(anchor);
+    }, { passive: true });
+
     const cart = readCart();
     const wishlist = readWishlist();
     updateWishlist(wishlist); renderWishlistPage(wishlist);
