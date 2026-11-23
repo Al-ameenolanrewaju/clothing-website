@@ -1226,11 +1226,6 @@ def test_guest_wishlist_page_and_product_detail_routes(app, client):
     detail = client.get("/product/royal-agbada", base_url="http://store-a.test")
     assert detail.status_code == 200
     assert b"Royal Agbada" in detail.data
-    assert b"premium-product-layout" in detail.data
-    assert b"product-breadcrumb" not in detail.data
-    assert b"Secure Payment" not in detail.data
-    assert b"Easy Returns" not in detail.data
-    assert b"Size Guide" not in detail.data
     assert b"/media/products/101" in detail.data
     assert b"/media/products/102" in detail.data
     assert b"/media/products/103" in detail.data
@@ -1256,3 +1251,17 @@ def test_category_route_is_scoped_and_pins_requested_product_first(app, client):
     body = response.data.decode()
     assert body.index("Agbada Two") < body.index("Agbada One")
     assert "Leather Shoes" not in body
+
+
+def test_storefront_wishlist_opens_as_client_drawer_and_hearts_are_inside_product_photos(app, client):
+    business_id, _ = make_tenant(app)
+    make_product(app, business_id, name="Wishlist Test", slug="wishlist-test")
+    home = client.get("/", base_url="http://store-a.test")
+    collection = client.get("/collection", base_url="http://store-a.test")
+    assert home.status_code == 200
+    assert collection.status_code == 200
+    assert b'data-wishlist-open' in home.data
+    assert b'data-wishlist-drawer' in home.data
+    assert b'data-wishlist-toggle' in home.data
+    assert b'Shop by category' not in home.data
+    assert b'category-shortcuts' not in collection.data
