@@ -13,7 +13,7 @@
     <label>Category
       <select name="category" data-filter-category>
         <option value="">All categories</option>
-        {% for category in categories %}<option value="{{ category.id }}" data-category-name="{{ category.name|trim }}" {% if selected_category and selected_category.id == category.id %}selected{% endif %}>{{ category.name|trim }}</option>{% endfor %}
+        {% for category in categories %}<option value="{{ category.id }}" data-category-name="{{ category.name|trim }}" data-category-url="{{ url_for('storefront.category', slug=category.slug) }}" {% if selected_category and selected_category.id == category.id %}selected{% endif %}>{{ category.name|trim }}</option>{% endfor %}
       </select>
     </label>
     <label>Size
