@@ -24,6 +24,7 @@
   function updateWishlist(items) {
     const ids = new Set(items.map(item => String(item.id)));
     document.querySelectorAll("[data-wishlist-count]").forEach(el => { el.textContent = items.length; });
+    document.querySelectorAll("[data-wishlist-tab-count]").forEach(el => { el.textContent = items.length; });
     document.querySelectorAll("[data-product-card]").forEach(card => {
       const button = card.querySelector("[data-wishlist-toggle]");
       if (!button) return;
