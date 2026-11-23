@@ -1734,3 +1734,91 @@ body.cart-is-open { overflow:hidden; }
 .fashion-store .catalogue-pagination { display:flex; align-items:center; justify-content:center; gap:18px; margin:30px auto; }
 .fashion-store .catalogue-pagination a { padding:9px 16px; border:1px solid #d8cbbf; border-radius:22px; color:#3b2113; text-decoration:none; }
 .fashion-store .catalogue-pagination span { color:#766a60; font-size:12px; }
+
+
+/* Premium product detail page — presentation only, using existing catalogue data */
+.fashion-store .premium-product-page {
+  width:min(1240px,100%); margin:0 auto; padding:clamp(26px,4vw,54px) clamp(18px,4vw,48px) 72px;
+}
+.fashion-store .premium-product-layout {
+  display:grid; grid-template-columns:minmax(0,1.08fr) minmax(320px,.92fr);
+  gap:clamp(30px,5vw,72px); align-items:start;
+}
+.fashion-store .premium-product-gallery {
+  display:grid; grid-template-columns:88px minmax(0,1fr); gap:14px; align-items:start;
+}
+.fashion-store .premium-product-main-image {
+  grid-column:2; grid-row:1; aspect-ratio:4/5; overflow:hidden;
+  border-radius:15px; background:#f0e9e0; min-width:0;
+}
+.fashion-store .premium-product-main-image img {
+  display:block; width:100%; height:100%; object-fit:contain;
+}
+.fashion-store .premium-product-no-image {
+  display:grid; width:100%; height:100%; min-height:300px; place-items:center;
+  color:#81766d; font-size:13px;
+}
+.fashion-store .premium-product-thumbnails {
+  grid-column:1; grid-row:1; display:flex; flex-direction:column; gap:12px;
+}
+.fashion-store .premium-product-thumb {
+  display:block; width:88px; height:108px; padding:3px; overflow:hidden;
+  border:1px solid #e1d7cd; border-radius:10px; background:#fffdf9; cursor:pointer;
+}
+.fashion-store .premium-product-thumb.is-active { border:2px solid #56301e; padding:2px; }
+.fashion-store .premium-product-thumb img { display:block; width:100%; height:100%; object-fit:cover; border-radius:6px; }
+.fashion-store .premium-product-info { position:sticky; top:24px; padding:12px 0 20px; min-width:0; }
+.fashion-store .premium-product-category {
+  margin:0 0 13px; color:#887b70; font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+}
+.fashion-store .premium-product-info h1 {
+  margin:0 0 12px; color:#261910; font:400 clamp(36px,4.2vw,56px)/1.05 var(--serif);
+}
+.fashion-store .premium-product-price {
+  margin:0 0 20px; color:#261910; font-size:clamp(20px,2.2vw,27px); font-weight:650;
+}
+.fashion-store .premium-product-description {
+  margin:0 0 28px; color:#665b52; font-size:14px; line-height:1.8; white-space:pre-line;
+}
+.fashion-store .premium-product-options { margin:0 0 26px; }
+.fashion-store .premium-product-options h2 {
+  margin:0 0 12px; color:#32241c; font-size:13px; font-weight:650;
+}
+.fashion-store .premium-product-option-list { display:flex; flex-wrap:wrap; gap:9px; }
+.fashion-store .premium-product-option {
+  display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:7px 12px;
+  border:1px solid #e1d6cb; border-radius:8px; background:#fffdfa;
+  color:#4d4036; font-size:12px;
+}
+.fashion-store .premium-product-actions {
+  display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:12px; margin-top:30px;
+}
+.fashion-store .premium-product-actions > button {
+  min-height:54px; width:100%; justify-content:center; border-radius:10px;
+  font-size:13px; white-space:nowrap;
+}
+.fashion-store .premium-add-cart { display:flex; align-items:center; gap:10px; }
+.fashion-store .premium-save-later {
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:0 14px; border:1px solid #ded3c9; background:#fffdf9; color:#38291f;
+}
+.fashion-store .premium-save-later.is-saved { color:#a33b36; border-color:#d8b8b5; }
+@media(max-width:760px) {
+  .fashion-store .premium-product-page { padding:18px 16px 44px; }
+  .fashion-store .premium-product-layout { grid-template-columns:1fr; gap:20px; }
+  .fashion-store .premium-product-gallery { grid-template-columns:minmax(0,1fr); gap:10px; }
+  .fashion-store .premium-product-main-image { grid-column:1; grid-row:1; aspect-ratio:4/4.7; max-height:560px; }
+  .fashion-store .premium-product-thumbnails {
+    grid-column:1; grid-row:2; flex-direction:row; overflow-x:auto; padding:2px 1px 7px;
+  }
+  .fashion-store .premium-product-thumb { flex:0 0 72px; width:72px; height:88px; }
+  .fashion-store .premium-product-info { position:static; padding:5px 2px 12px; }
+  .fashion-store .premium-product-info h1 { font-size:38px; }
+  .fashion-store .premium-product-price { margin-bottom:15px; }
+  .fashion-store .premium-product-description { margin-bottom:22px; font-size:13px; }
+  .fashion-store .premium-product-actions { grid-template-columns:1fr 1fr; gap:9px; margin-top:24px; }
+  .fashion-store .premium-product-actions > button { min-height:50px; padding:0 9px; font-size:12px; }
+}
+@media(max-width:360px) {
+  .fashion-store .premium-product-actions { grid-template-columns:1fr; }
+}

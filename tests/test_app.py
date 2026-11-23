@@ -1226,6 +1226,11 @@ def test_guest_wishlist_page_and_product_detail_routes(app, client):
     detail = client.get("/product/royal-agbada", base_url="http://store-a.test")
     assert detail.status_code == 200
     assert b"Royal Agbada" in detail.data
+    assert b"premium-product-layout" in detail.data
+    assert b"product-breadcrumb" not in detail.data
+    assert b"Secure Payment" not in detail.data
+    assert b"Easy Returns" not in detail.data
+    assert b"Size Guide" not in detail.data
     assert b"/media/products/101" in detail.data
     assert b"/media/products/102" in detail.data
     assert b"/media/products/103" in detail.data
