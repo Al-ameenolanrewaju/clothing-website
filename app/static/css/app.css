@@ -1874,3 +1874,95 @@ body.wishlist-is-open { overflow:hidden; }
   .fashion-store .wishlist-drawer { width:min(420px,96vw); }
   .fashion-store .luxury-product-card .product-photo > .product-favourite { top:7px; right:7px; width:32px; min-width:32px; height:32px; min-height:32px; }
 }
+
+
+/* Unified cream-and-cocoa shopping drawers — approved SULEX direction */
+.fashion-store .cart-drawer,
+.fashion-store .wishlist-drawer {
+  width:min(500px,100vw); background:#fffaf4; color:#2b211b;
+  box-shadow:-18px 0 55px rgba(48,29,16,.16);
+}
+.fashion-store .cart-drawer-header,
+.fashion-store .wishlist-drawer-header {
+  padding:25px 26px 18px; border-bottom:0; background:#fffaf4;
+}
+.fashion-store .cart-drawer-header .eyebrow,
+.fashion-store .wishlist-drawer-header .eyebrow { color:#9b7960; letter-spacing:.18em; }
+.fashion-store .cart-drawer-header h2,
+.fashion-store .wishlist-drawer-header h2 { color:#342319; font-size:30px; }
+.fashion-store .cart-close { width:38px; height:38px; border-color:#e7d9cb; color:#4a3020; }
+.fashion-store .drawer-tabs {
+  display:grid; grid-template-columns:1fr 1fr; gap:5px; margin:0 25px 18px;
+  padding:5px; border:1px solid #eadfd4; border-radius:14px; background:#f7eee6;
+}
+.fashion-store .drawer-tab {
+  min-height:43px; padding:8px 10px; border:0; border-radius:10px;
+  background:transparent; color:#715b4b; font:500 12px Inter,"Segoe UI",sans-serif;
+  cursor:pointer; transition:background .18s,color .18s;
+}
+.fashion-store .drawer-tab.is-active { color:#fffaf4; background:#704126; box-shadow:0 3px 9px rgba(65,38,20,.12); }
+.fashion-store .drawer-tab span { margin-left:3px; opacity:.8; }
+.fashion-store .wishlist-drawer-body,
+.fashion-store .cart-drawer-body { padding:0 25px 18px; }
+.fashion-store .wishlist-drawer-items { display:flex; flex-direction:column; gap:12px; }
+.fashion-store .wishlist-drawer-items .luxury-product-card {
+  display:grid; grid-template-columns:104px minmax(0,1fr); align-items:center; gap:15px;
+  padding:10px; border:1px solid #eee2d7; border-radius:15px; background:#fffdf9;
+}
+.fashion-store .wishlist-drawer-items .product-photo {
+  width:104px; aspect-ratio:1/1.12; border-radius:10px; background:#f0e8df;
+}
+.fashion-store .wishlist-drawer-items .product-card-image-link { height:100%; }
+.fashion-store .wishlist-drawer-items .product-favourite {
+  top:6px; right:6px; width:27px; min-width:27px; height:27px; min-height:27px;
+  color:#76523a; font-size:16px; box-shadow:0 1px 5px rgba(0,0,0,.12);
+}
+.fashion-store .wishlist-drawer-items .luxury-product-info { min-width:0; padding:3px 0; }
+.fashion-store .wishlist-drawer-items .luxury-product-info h3 {
+  margin:0 0 7px; color:#38271c; font:500 15px/1.35 Inter,"Segoe UI",sans-serif;
+}
+.fashion-store .wishlist-drawer-items .luxury-price { margin:0 0 10px; color:#38271c; font-size:14px; font-weight:600; }
+.fashion-store .wishlist-drawer-items .add-to-cart-button {
+  min-height:36px; margin:0; padding:0 13px; border:0; border-radius:8px;
+  background:#704126; color:#fffaf4; font-size:10px; letter-spacing:.04em;
+}
+.fashion-store .wishlist-drawer-footer {
+  display:grid; grid-template-columns:.8fr 1.2fr; gap:10px;
+  padding:16px 25px calc(18px + env(safe-area-inset-bottom));
+  border-top:1px solid #eadfd4; background:#fffaf4;
+}
+.fashion-store .drawer-secondary-action,
+.fashion-store .drawer-primary-action {
+  min-height:49px; padding:0 14px; border-radius:11px; font:600 12px Inter,"Segoe UI",sans-serif; cursor:pointer;
+}
+.fashion-store .drawer-secondary-action { border:1px solid #e5d5c7; background:#fffaf4; color:#4d3829; }
+.fashion-store .drawer-primary-action { border:1px solid #704126; background:#704126; color:#fffaf4; }
+.fashion-store .drawer-full-link { grid-column:1/-1; padding-top:3px; color:#80634e; text-align:center; font-size:11px; text-decoration:none; }
+.fashion-store .drawer-cart-actions { display:grid; grid-template-columns:.75fr 1.25fr; gap:10px; align-items:center; }
+.fashion-store .drawer-cart-actions .cart-checkout-button { min-height:49px; border-radius:11px; }
+.fashion-store .cart-drawer-footer { padding:17px 25px calc(20px + env(safe-area-inset-bottom)); background:#fffaf4; border-top:1px solid #eadfd4; }
+.fashion-store .cart-row { grid-template-columns:104px minmax(0,1fr); gap:15px; padding:15px 10px; border:1px solid #eee2d7; border-radius:15px; margin-bottom:11px; background:#fffdf9; }
+.fashion-store .cart-row>img,.fashion-store .cart-row>.cart-image-placeholder { width:104px; height:116px; border-radius:10px; }
+.fashion-store .cart-item-info h3 { font:500 15px/1.35 Inter,"Segoe UI",sans-serif; color:#38271c; }
+.fashion-store .cart-item-price { margin-bottom:9px; color:#6d6258; }
+.fashion-store .cart-quantity button { border-radius:8px; border-color:#e5d5c7; }
+.fashion-store .cart-line-total { margin-top:-3px; color:#38271c; }
+.fashion-store .cart-empty { border-radius:14px; background:#f7eee6; }
+.fashion-store .cart-overlay,.fashion-store .wishlist-overlay { background:rgba(35,23,15,.38); backdrop-filter:blur(3px); }
+@media(max-width:600px) {
+  .fashion-store .cart-drawer,.fashion-store .wishlist-drawer { width:100vw; }
+  .fashion-store .cart-drawer-header,.fashion-store .wishlist-drawer-header { padding:22px 18px 15px; }
+  .fashion-store .cart-drawer-header h2,.fashion-store .wishlist-drawer-header h2 { font-size:27px; }
+  .fashion-store .drawer-tabs { margin:0 18px 15px; }
+  .fashion-store .drawer-tab { min-height:42px; padding:7px 5px; font-size:11px; }
+  .fashion-store .wishlist-drawer-body,.fashion-store .cart-drawer-body { padding:0 16px 14px; }
+  .fashion-store .wishlist-drawer-items .luxury-product-card { grid-template-columns:88px minmax(0,1fr); gap:12px; padding:8px; }
+  .fashion-store .wishlist-drawer-items .product-photo { width:88px; }
+  .fashion-store .wishlist-drawer-items .luxury-product-info h3 { font-size:14px; }
+  .fashion-store .wishlist-drawer-footer { padding:13px 16px calc(15px + env(safe-area-inset-bottom)); gap:8px; }
+  .fashion-store .drawer-secondary-action,.fashion-store .drawer-primary-action { min-height:46px; padding:0 8px; font-size:11px; }
+  .fashion-store .cart-row { grid-template-columns:88px minmax(0,1fr); gap:12px; padding:10px; }
+  .fashion-store .cart-row>img,.fashion-store .cart-row>.cart-image-placeholder { width:88px; height:102px; }
+  .fashion-store .cart-drawer-footer { padding:14px 16px calc(17px + env(safe-area-inset-bottom)); }
+  .fashion-store .drawer-cart-actions { grid-template-columns:.75fr 1.25fr; }
+}
