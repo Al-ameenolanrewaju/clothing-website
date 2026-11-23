@@ -1734,3 +1734,55 @@ body.cart-is-open { overflow:hidden; }
 .fashion-store .catalogue-pagination { display:flex; align-items:center; justify-content:center; gap:18px; margin:30px auto; }
 .fashion-store .catalogue-pagination a { padding:9px 16px; border:1px solid #d8cbbf; border-radius:22px; color:#3b2113; text-decoration:none; }
 .fashion-store .catalogue-pagination span { color:#766a60; font-size:12px; }
+
+
+/* Instant wishlist drawer and consistently visible product hearts */
+.fashion-store .wishlist-overlay {
+  position:fixed; inset:0; z-index:1090; background:rgba(20,14,10,.42);
+  opacity:1; backdrop-filter:blur(2px);
+}
+.fashion-store .wishlist-drawer {
+  position:fixed; z-index:1091; top:0; right:0; bottom:0;
+  display:flex; flex-direction:column; width:min(440px,94vw); height:100dvh;
+  padding:0; background:#fffdf9; box-shadow:-14px 0 42px rgba(24,16,10,.18);
+  transform:translateX(0); transition:transform .22s ease;
+}
+.fashion-store .wishlist-drawer[hidden],.fashion-store .wishlist-overlay[hidden] { display:none !important; }
+.fashion-store .wishlist-drawer-header {
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:22px 20px; border-bottom:1px solid #e8dfd5;
+}
+.fashion-store .wishlist-drawer-header h2 { margin:5px 0 0; color:#2a1b13; font:400 27px/1.1 var(--serif); }
+.fashion-store .wishlist-drawer-body { flex:1; overflow:auto; padding:18px; }
+.fashion-store .wishlist-drawer-items { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 12px; }
+.fashion-store .wishlist-drawer-items .product-photo { position:relative; aspect-ratio:1/1.15; overflow:hidden; border-radius:9px; background:#eee7df; }
+.fashion-store .wishlist-drawer-items .product-card-image-link { display:block; width:100%; height:100%; }
+.fashion-store .wishlist-drawer-items .product-card-image-link img { display:block; width:100%; height:100%; object-fit:cover; }
+.fashion-store .wishlist-drawer-items .product-favourite { position:absolute; top:8px; right:8px; z-index:4; display:grid; place-items:center; width:32px; height:32px; min-height:32px; padding:0; border:0; border-radius:50%; color:#a33b36; background:#fffdf9; font-size:20px; line-height:1; }
+.fashion-store .wishlist-drawer-items .luxury-product-info { padding:8px 2px; }
+.fashion-store .wishlist-drawer-items .luxury-product-info h3 { color:#2b211a; font:500 13px/1.35 Inter,"Segoe UI",sans-serif; }
+.fashion-store .wishlist-drawer-items .luxury-price { margin:4px 0 8px; color:#2b211a; font-size:13px; }
+.fashion-store .wishlist-drawer-items .add-to-cart-button { min-height:34px; padding:0 10px; font-size:11px; }
+.fashion-store .wishlist-drawer-empty { padding:65px 15px; text-align:center; }
+.fashion-store .wishlist-drawer-empty h3 { margin:14px 0 7px; color:#2b211a; font:400 24px var(--serif); }
+.fashion-store .wishlist-drawer-empty p { color:#766a60; font-size:13px; }
+.fashion-store .wishlist-drawer-footer { padding:16px 20px calc(16px + env(safe-area-inset-bottom)); border-top:1px solid #e8dfd5; }
+.fashion-store .wishlist-drawer-footer a { display:block; color:#6b472b; text-align:center; font-size:13px; font-weight:600; text-decoration:none; }
+.fashion-store .luxury-product-card .product-photo { position:relative; }
+.fashion-store .luxury-product-card .product-photo > .product-favourite {
+  position:absolute; top:9px; right:9px; z-index:5; display:grid;
+  width:34px; min-width:34px; height:34px; min-height:34px;
+  padding:0; place-items:center; border:1px solid rgba(42,28,19,.12);
+  border-radius:50%; color:#21160f; background:#fffdf9;
+  font-size:23px; line-height:1; opacity:1; visibility:visible;
+  box-shadow:0 1px 6px rgba(0,0,0,.14); cursor:pointer;
+}
+.fashion-store .luxury-product-card .product-photo > .product-favourite.is-saved { color:#b33d42; }
+.fashion-store .luxury-product-card .product-card-image-link { position:absolute; inset:0; z-index:1; }
+.fashion-store .luxury-product-card .product-card-image-link img { display:block; }
+.fashion-store .luxury-product-card .product-photo > .product-favourite { z-index:2; }
+body.wishlist-is-open { overflow:hidden; }
+@media(max-width:760px) {
+  .fashion-store .wishlist-drawer { width:min(420px,96vw); }
+  .fashion-store .luxury-product-card .product-photo > .product-favourite { top:7px; right:7px; width:32px; min-width:32px; height:32px; min-height:32px; }
+}
