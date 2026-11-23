@@ -74,7 +74,7 @@ def render_listing(business, products, selected_category=None, selected_size="",
 @bp.route("/")
 def home():
     business = public_business()
-    products = public_products(business).order_by(Product.created_at.desc(), Product.id.desc()).limit(8).all()
+    products = public_products(business).order_by(Product.created_at.desc(), Product.id.desc()).limit(4).all()
     settings, categories = storefront_context(business)
     return render_template(
         "storefront/home.html", business=business, featured=products,
