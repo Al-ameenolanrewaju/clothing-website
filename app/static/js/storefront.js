@@ -80,9 +80,11 @@
   function openWishlistDrawer() {
     const panel = document.querySelector("[data-wishlist-drawer]");
     const overlay = document.querySelector("[data-wishlist-overlay]");
-    if (!panel) { window.location.assign("/wishlist"); return; }
+    if (!panel) return;
     renderWishlistDrawer();
     panel.hidden = false; panel.setAttribute("aria-hidden", "false");
+    const trigger = document.querySelector("[data-wishlist-open]");
+    if (trigger) trigger.setAttribute("aria-expanded", "true");
     if (overlay) overlay.hidden = false;
     document.body.classList.add("wishlist-is-open");
     const close = panel.querySelector("[data-wishlist-close]");
@@ -96,7 +98,7 @@
     if (overlay) overlay.hidden = true;
     document.body.classList.remove("wishlist-is-open");
     const trigger = document.querySelector("[data-wishlist-open]");
-    if (trigger) trigger.focus();
+    if (trigger) { trigger.setAttribute("aria-expanded", "false"); trigger.focus(); }
   }
   function toggleWishlist(button) {
     const card = button.closest("[data-product-card]");
