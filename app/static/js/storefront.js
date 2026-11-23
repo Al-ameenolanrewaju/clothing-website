@@ -105,7 +105,7 @@
     const exists = items.some(entry => String(entry.id) === item.id);
     const next = exists ? items.filter(entry => String(entry.id) !== item.id) : items.concat(item);
     const unique = Array.from(new Map(next.map(entry => [String(entry.id), entry])).values());
-    localStorage.setItem(WISH_KEY, JSON.stringify(unique)); updateWishlist(unique); renderWishlistPage(unique);
+    localStorage.setItem(WISH_KEY, JSON.stringify(unique)); updateWishlist(unique); renderWishlistPage(unique); renderWishlistDrawer();
     button.classList.remove("wishlist-pop"); void button.offsetWidth; button.classList.add("wishlist-pop");
   }
   const saveCart = cart => {
