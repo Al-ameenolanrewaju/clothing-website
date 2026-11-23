@@ -1,13 +1,17 @@
 {% if settings and settings.announcement %}<div class="luxury-announcement">{{ settings.announcement }}</div>{% endif %}
 <nav class="store-nav luxury-nav" aria-label="Main navigation">
   <a class="store-brand luxury-brand" href="{{ url_for('storefront.home') }}" aria-label="{{ business.name }} home">
-    <img src="{{ url_for('static', filename='images/sulex-logo.svg') }}?v=2" alt="SULEX Fashion Store">
+    {% if business.logo_url %}<img src="{{ business.logo_url }}" alt="{{ business.name }}">{% else %}<strong>{{ business.name }}</strong>{% endif %}
   </a>
   <div class="store-menu luxury-menu" id="store-menu">
     <a href="{{ url_for('storefront.home') }}" aria-current="page">Home</a>
     {% if business.whatsapp_number %}<a href="https://wa.me/{{ business.whatsapp_number|replace('+','')|replace(' ','')|replace('-','') }}" target="_blank" rel="noopener noreferrer">Contact</a>{% endif %}
   </div>
   <div class="luxury-nav-actions">
+    <a class="wishlist-nav-link" href="{{ url_for('storefront.wishlist') }}" aria-label="Open saved products">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg>
+      <span class="wishlist-count" data-wishlist-count>0</span>
+    </a>
     <button class="cart-nav-link" type="button" data-cart-open aria-controls="store-cart-drawer" aria-expanded="false" aria-label="Open cart">
       <svg class="cart-nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 7H6"/><circle cx="10" cy="20" r="1.2"/><circle cx="18" cy="20" r="1.2"/></svg>
       <span class="bag-count" data-cart-count>0</span>
