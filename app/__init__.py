@@ -7,6 +7,7 @@ from flask_login import LoginManager
 from flask_wtf import CSRFProtect
 from flask_wtf.csrf import CSRFError
 from werkzeug.utils import safe_join
+from sqlalchemy.orm import undefer
 
 
 db = SQLAlchemy()
@@ -261,7 +262,7 @@ def create_app(config_object=None):
 
     @app.get("/media/products/<int:image_id>")
     def product_image(image_id):
-        image = models.ProductImage.query.filter_by(id=image_id).first_or_404()
+        image = models.ProductImage.query.options(undefer(models.ProductImage.image_data)).filter_by(id=image_id).first_or_404()
         if not image.image_data or not image.mime_type:
             # Preserve old filesystem-backed catalogue image URLs.
             from flask import abort
@@ -273,7 +274,7 @@ def create_app(config_object=None):
 
     @app.get("/media/businesses/<int:business_id>/logo")
     def business_logo(business_id):
-        business = models.Business.query.filter_by(id=business_id).first_or_404()
+        business = models.Business.query.options(undefer(models.Business.logo_data)).filter_by(id=business_id).first_or_404()
         if not business.logo_data or not business.logo_mime_type:
             from flask import abort
             abort(404)
@@ -284,7 +285,7 @@ def create_app(config_object=None):
 
     @app.get("/media/businesses/<int:business_id>/banner")
     def business_banner(business_id):
-        business = models.Business.query.filter_by(id=business_id).first_or_404()
+        business = models.Business.query.options(undefer(models.Business.banner_data)).filter_by(id=business_id).first_or_404()
         if not business.banner_data or not business.banner_mime_type:
             from flask import abort
             abort(404)

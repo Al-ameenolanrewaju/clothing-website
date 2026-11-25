@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import deferred
 
 from . import db
 
@@ -25,11 +26,12 @@ class Business(db.Model, TimestampMixin):
     whatsapp_number = db.Column(db.String(40))
     logo_url = db.Column(db.String(500))
     logo_public_id = db.Column(db.String(255))
-    logo_data = db.Column(db.LargeBinary)
+    # Keep binary assets out of ordinary Business queries; load only when serving the asset.
+    logo_data = deferred(db.Column(db.LargeBinary))
     logo_mime_type = db.Column(db.String(50))
     banner_url = db.Column(db.String(500))
     banner_public_id = db.Column(db.String(255))
-    banner_data = db.Column(db.LargeBinary)
+    banner_data = deferred(db.Column(db.LargeBinary))
     banner_mime_type = db.Column(db.String(50))
     brand_color = db.Column(db.String(7), default="#171717")
     status = db.Column(db.String(20), nullable=False, default="ACTIVE", index=True)
@@ -155,7 +157,8 @@ class ProductImage(db.Model, TimestampMixin):
     product_id = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, index=True)
     url = db.Column(db.String(500), nullable=False)
     cloudinary_public_id = db.Column(db.String(255))
-    image_data = db.Column(db.LargeBinary)
+    # Product listings need image metadata/URLs, not the full binary payload.
+    image_data = deferred(db.Column(db.LargeBinary))
     mime_type = db.Column(db.String(50))
     original_filename = db.Column(db.String(255))
     alt_text = db.Column(db.String(255))
