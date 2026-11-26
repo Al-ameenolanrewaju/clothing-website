@@ -242,11 +242,19 @@ def create_app(config_object=None):
                 g.domain_status = domain.status
             return None
 
-        # This app is configured as a single-business catalogue. Use the
-        # first active business automatically; no store slug setting is needed.
+        # This Render service shares a database with other storefronts.
+        # Never select the first active business: that can expose another
+        # store's catalogue on this host. Resolve this service's configured
+        # store explicitly, defaulting to the Sulex store bootstrapped here.
+        store_slug = (
+            os.getenv("STORE_SLUG", "").strip()
+            or app.config.get("DEFAULT_STORE_SLUG")
+            or "sulex"
+        )
         business = models.Business.query.filter_by(
-            status="ACTIVE"
-        ).order_by(models.Business.id.asc()).first()
+            slug=store_slug,
+            status="ACTIVE",
+        ).first()
         g.business = business
         g.domain_status = "default" if business else "NOT_CONFIGURED"
 
