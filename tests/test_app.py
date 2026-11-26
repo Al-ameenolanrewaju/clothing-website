@@ -1288,3 +1288,21 @@ def test_storefront_visit_tracking_does_not_block_get_navigation(app, client):
     with app.app_context():
         visit = StoreVisit.query.filter_by(business_id=business_id, path="/collection").one()
         assert visit is not None
+
+
+def test_unmapped_host_uses_configured_store_not_first_active_business(app, client):
+    with app.app_context():
+        electronics = Business(name="Electronics", slug="electronics", status="ACTIVE")
+        clothing = Business(name="Sulex", slug="sulex", status="ACTIVE")
+        db.session.add_all([electronics, clothing])
+        db.session.flush()
+        db.session.add_all([
+            StoreSettings(business_id=electronics.id, hero_title="Technology for better living."),
+            StoreSettings(business_id=clothing.id, hero_title="Pieces to wear, and wear again."),
+        ])
+        db.session.commit()
+
+    response = client.get("/", base_url="http://clothing-service.test")
+    assert response.status_code == 200
+    assert b"Pieces to wear" in response.data
+    assert b"Technology for better living" not in response.data
